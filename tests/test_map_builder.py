@@ -6,21 +6,28 @@ import pandas as pd
 from shapely.geometry import LineString, Polygon
 
 from core.city_config import CityConfig
+from core.hvi import HVI_FORMULA_VERSION
 from core.map_builder import (
     _base_map,
     _build_explanation_column,
+    _build_manifest,
     _load_night_lst,
     _night_layer_js,
     _prepare_layers,
     _prepare_night_data,
+    _read_scene_summaries,
     _round_coords,
     _slugify,
     _write_city_stats,
     _write_embedded,
     _write_fetch_based,
+    _write_manifest,
     build_hvi_map,
     swatch,
 )
+from core.raster import MOSAIC_VERSION
+from core.roads import RISK_TIMESERIES_VERSION
+from core.satellite import SCENE_FETCH_VERSION
 
 CRS = "EPSG:32635"
 
@@ -397,3 +404,117 @@ def test_write_fetch_based_splits_data_into_separate_geojson_files(tmp_path, mon
     assert "dosyaYollari" in html
     assert "tumVeriYilBazli" not in html
     assert (docs_dir / "testcity" / "data" / "dusuk_2020.geojson").exists()
+
+
+# --- _build_manifest / _write_manifest: tekrar üretilebilirlik kaydı (issue #16) ---
+
+def test_build_manifest_includes_config_and_versions():
+    config = _make_config()
+
+    manifest = _build_manifest(config, ["2020", "2026"], "2026", night_lst_requested=False)
+
+    assert manifest["city_id"] == "testcity"
+    assert manifest["city_name"] == "Test City"
+    assert manifest["years"] == ["2020", "2026"]
+    assert manifest["default_year"] == "2026"
+    assert manifest["night_lst_requested"] is False
+    # generated_at ISO 8601 UTC olmalı - biçim hatası ValueError fırlatır.
+    from datetime import datetime
+    datetime.fromisoformat(manifest["generated_at"])
+
+    assert manifest["config"] == {
+        "bbox": config.bbox, "crs": config.crs, "max_cloud_cover": config.max_cloud_cover,
+        "max_scenes_per_tile": config.max_scenes_per_tile, "buffer_meters": config.buffer_meters,
+        "admin_level_ilce": config.admin_level_ilce, "admin_level_mahalle": config.admin_level_mahalle,
+        "osm_pbf_url": config.osm_pbf_url,
+    }
+    # Sürüm numaraları core/hvi.py, core/roads.py, core/raster.py,
+    # core/satellite.py'deki gerçek sabitlerle birebir aynı olmalı - kod
+    # formülü değiştirip bu sabitleri artırdığında manifest de otomatik
+    # güncel kalmalı, elle senkronize edilen ayrı bir kopya olmamalı.
+    assert manifest["versions"] == {
+        "hvi_formula_version": HVI_FORMULA_VERSION,
+        "risk_timeseries_version": RISK_TIMESERIES_VERSION,
+        "mosaic_version": MOSAIC_VERSION,
+        "scene_fetch_version": SCENE_FETCH_VERSION,
+    }
+
+
+def test_build_manifest_records_night_lst_request():
+    config = _make_config()
+    manifest = _build_manifest(config, ["2026"], "2026", night_lst_requested=True)
+    assert manifest["night_lst_requested"] is True
+
+
+def test_read_scene_summaries_extracts_id_date_tile_cloud_cover(tmp_path, monkeypatch):
+    data_raw = tmp_path / "raw"
+    data_raw.mkdir()
+    monkeypatch.setattr("core.map_builder.year_paths", lambda city_id, year, default_year: (data_raw, tmp_path))
+    (data_raw / "scene_metadata.json").write_text(json.dumps({
+        "bbox": [27.0, 38.0, 27.1, 38.1], "bands": ["band4_red.tif"], "catalog": "http://example.com",
+        "scenes": [
+            {"tile": "178_33", "scene_id": "LC09_L2SP_178033_20260715", "date": "2026-07-15",
+             "cloud_cover": 4.2, "folder": "LC09_L2SP_178033_20260715"},
+        ],
+    }))
+    config = _make_config()
+
+    summaries = _read_scene_summaries(config, ["2026"], "2026")
+
+    assert summaries == {"2026": [
+        {"scene_id": "LC09_L2SP_178033_20260715", "date": "2026-07-15", "tile": "178_33", "cloud_cover": 4.2},
+    ]}
+    # "folder" (yerel dizin adı) manifest'e sızmamalı - dış dünyaya anlamlı
+    # bir bilgi değil, sadece bu makinedeki bir dosya yolu parçası.
+    assert "folder" not in summaries["2026"][0]
+
+
+def test_read_scene_summaries_is_empty_when_metadata_missing(tmp_path, monkeypatch):
+    # scene_metadata.json hiç üretilmemiş olabilir (ör. HVI önbellekten
+    # geldi, sahne indirme adımı bu koşuda hiç çalışmadı) - manifest yine
+    # de üretilebilmeli, sadece o yıl için boş liste dönmeli.
+    monkeypatch.setattr("core.map_builder.year_paths", lambda city_id, year, default_year: (tmp_path, tmp_path))
+    config = _make_config()
+
+    summaries = _read_scene_summaries(config, ["2020", "2026"], "2026")
+
+    assert summaries == {"2020": [], "2026": []}
+
+
+def test_write_manifest_writes_next_to_both_map_outputs(tmp_path, monkeypatch):
+    output_dir = tmp_path / "output"
+    docs_dir = tmp_path / "docs"
+    monkeypatch.setattr("core.map_builder.OUTPUT_DIR", output_dir)
+    monkeypatch.setattr("core.map_builder.DOCS_DIR", docs_dir)
+    config = _make_config()
+    manifest = _build_manifest(config, ["2026"], "2026", night_lst_requested=False)
+
+    _write_manifest(config, manifest)
+
+    offline_manifest = output_dir / "testcity_hvi_manifest.json"
+    hosted_manifest = docs_dir / "testcity" / "manifest.json"
+    assert offline_manifest.exists()
+    assert hosted_manifest.exists()
+    assert json.loads(offline_manifest.read_text()) == manifest
+    assert json.loads(hosted_manifest.read_text()) == manifest
+
+
+def test_build_hvi_map_also_writes_manifest_next_to_both_outputs(tmp_path, monkeypatch):
+    output_dir = tmp_path / "output"
+    docs_dir = tmp_path / "docs"
+    proc_dir = tmp_path / "proc"
+    proc_dir.mkdir()
+    monkeypatch.setattr("core.map_builder.OUTPUT_DIR", output_dir)
+    monkeypatch.setattr("core.map_builder.DOCS_DIR", docs_dir)
+    monkeypatch.setattr("core.map_builder.city_data_proc", lambda city_id: proc_dir)
+
+    roads = _make_roads()
+    roads.to_file(proc_dir / "roads_with_hvi.geojson", driver="GeoJSON")
+    config = _make_config()
+
+    build_hvi_map(config, ["2020", "2026"], "2026", night_lst_requested=True)
+
+    manifest = json.loads((output_dir / "testcity_hvi_manifest.json").read_text())
+    assert manifest["city_id"] == "testcity"
+    assert manifest["night_lst_requested"] is True
+    assert (docs_dir / "testcity" / "manifest.json").exists()

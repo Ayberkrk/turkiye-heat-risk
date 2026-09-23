@@ -70,7 +70,7 @@ def run(city_id: str, years: list[str], main_year: str, open_browser: bool,
         night_lst_tif = fetch_night_lst(config, main_year)
         compute_neighborhood_night_lst(config, pbf_path, night_lst_tif, main_year)
 
-    output_html = build_hvi_map(config, years, main_year)
+    output_html = build_hvi_map(config, years, main_year, night_lst_requested=night_lst)
 
     if open_browser:
         # macOS'a özel `open` komutu yerine taşınabilir yol.

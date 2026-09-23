@@ -477,6 +477,32 @@ katmanı indirir - ilk sayfa yükü birkaç yüz KB). İkincisini yayınlamak i�
 3. `docs/` klasörünü commit'le, GitHub'da Settings → Pages → Branch: `main`,
    klasör: `/docs` seç.
 
+## Tekrar üretilebilirlik: harita manifest'i
+
+Her iki harita çıktısının (`output/<sehir>_hvi_map.html` ve
+`docs/<sehir>/index.html`) yanına, hangi girdi/ayarlarla üretildiklerini
+kaydeden küçük bir JSON dosyası da yazılır: sırasıyla
+`output/<sehir>_hvi_manifest.json` ve `docs/<sehir>/manifest.json` (bkz.
+`core/map_builder.py`, `_build_manifest`). İçeriği:
+
+- şehir kimliği/adı, üretim zamanı (UTC)
+- istenen yıllar ve ana (main) yıl
+- şehir config'inin ilgili alanları (bbox, CRS, bulut oranı/karo başına
+  sahne sayısı sınırı, yol tamponu, OSM admin_level'ları, pbf URL'i)
+- her yıl için kullanılan Landsat sahnelerinin kimliği/tarihi/karosu/bulut
+  oranı (`scene_metadata.json`'dan, bkz. `core/satellite.py`)
+- formül/önbellek sürüm numaraları (`HVI_FORMULA_VERSION`,
+  `RISK_TIMESERIES_VERSION`, `MOSAIC_VERSION`, `SCENE_FETCH_VERSION`)
+- gece ısı adası katmanının (`--night-lst`) istenip istenmediği
+
+Ham raster'lar, tam `roads_with_hvi.geojson` gibi büyük ara çıktılar veya
+kimlik bilgisi (zaten hiçbiri saklanmıyor) manifest'e YAZILMAZ - sadece
+küçük, tanımlayıcı metadata. İncelemek için:
+
+```bash
+python -m json.tool docs/izmir/manifest.json
+```
+
 ## Proje yapısı
 
 ```
@@ -514,9 +540,10 @@ turkiye-heat-risk/
 ├── tests/                     # Saf/mantık fonksiyonları için birim testler (ağ gerektirmez)
 ├── docs/                      # GitHub Pages'in servis ettiği, küçük/fetch tabanlı harita sürümü
 │   ├── index.html             #   şehirler arası karşılaştırma sayfası (build_docs_index.py üretir)
-│   └── <sehir>/                #   her şehrin index.html'i + ayrı küçük GeoJSON veri dosyaları
+│   └── <sehir>/                #   index.html + GeoJSON veri dosyaları + manifest.json (bkz. Tekrar üretilebilirlik)
 ├── output/                    # pipeline.py tarafından üretilir, git'e dahil değil
-│   └── <sehir>_hvi_map.html  #   tamamen çevrimdışı, tek dosyalık harita (çift tıklayıp açılabilir)
+│   ├── <sehir>_hvi_map.html  #   tamamen çevrimdışı, tek dosyalık harita (çift tıklayıp açılabilir)
+│   └── <sehir>_hvi_manifest.json  #   o haritayı üreten girdi/ayarların kaydı
 ├── data/                      # pipeline.py tarafından üretilir, git'e dahil değil
 │   ├── raw/<sehir>/           #   indirilen Landsat bantları, OSM özütü, nüfus CSV'leri (şehir bazlı ayrılır)
 │   └── processed/<sehir>/     #   LST/NDVI mozaikleri, ara GeoJSON'lar (şehir bazlı ayrılır)

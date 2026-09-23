@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -27,8 +28,11 @@ import folium
 import geopandas as gpd
 
 from core.city_config import CityConfig
-from core.hvi import CATEGORY_COLORS_5, CATEGORY_ORDER_5, bucket_5
-from core.paths import DOCS_DIR, OUTPUT_DIR, city_data_proc
+from core.hvi import CATEGORY_COLORS_5, CATEGORY_ORDER_5, HVI_FORMULA_VERSION, bucket_5
+from core.paths import DOCS_DIR, OUTPUT_DIR, city_data_proc, year_paths
+from core.raster import MOSAIC_VERSION
+from core.roads import RISK_TIMESERIES_VERSION
+from core.satellite import SCENE_FETCH_VERSION
 
 _COMPONENT_LABELS = [
     ("_label_saglik", "Hastaneye uzaklık"),
@@ -551,7 +555,85 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
     return output_html
 
 
-def build_hvi_map(config: CityConfig, years: list[str], default_year: str) -> Path:
+def _read_scene_summaries(config: CityConfig, years: list[str], default_year: str) -> dict[str, list[dict]]:
+    """Her yıl için indirilen Landsat sahnelerinin kimlik/tarih özetini döner.
+
+    Kaynak `scene_metadata.json`dır (bkz. `core/satellite.py`). Bir yıl için
+    bu dosya henüz yoksa veya okunamıyorsa (ör. sadece HVI'nin önbellekten
+    yeniden üretildiği, sahne indirmenin hiç çalışmadığı bir koşu) o yıl
+    için boş liste döner - manifest yine de üretilir, eksik sahne verisi
+    sessizce atlanır, pipeline'ı bozmaz.
+    """
+    summaries: dict[str, list[dict]] = {}
+    for year in years:
+        data_raw, _ = year_paths(config.city_id, year, default_year)
+        metadata_path = data_raw / "scene_metadata.json"
+        try:
+            metadata = json.loads(metadata_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            summaries[year] = []
+            continue
+        summaries[year] = [
+            {"scene_id": s.get("scene_id"), "date": s.get("date"),
+             "tile": s.get("tile"), "cloud_cover": s.get("cloud_cover")}
+            for s in metadata.get("scenes", [])
+        ]
+    return summaries
+
+
+def _build_manifest(config: CityConfig, years: list[str], default_year: str,
+                     night_lst_requested: bool) -> dict:
+    """Üretilen haritanın yanına yazılan, küçük bir tekrar-üretilebilirlik kaydı.
+
+    Amaç: "bu haritayı hangi girdi/ayarlarla ürettim?" sorusuna, günlükleri
+    veya ara çıktıları aramadan, sadece bu dosyaya bakarak cevap
+    verilebilmesi - şehir config'i, seçilen yıllar, kullanılan Landsat
+    sahneleri ve formül/önbellek sürüm numaraları. Ham raster'lar veya
+    tam `roads_with_hvi.geojson` gibi büyük ara çıktılar YA DA kimlik
+    bilgisi (API anahtarı vb. zaten hiçbiri saklanmıyor) buraya YAZILMAZ -
+    sadece küçük, tanımlayıcı metadata.
+    """
+    return {
+        "city_id": config.city_id,
+        "city_name": config.name,
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "years": list(years),
+        "default_year": default_year,
+        "config": {
+            "bbox": config.bbox,
+            "crs": config.crs,
+            "max_cloud_cover": config.max_cloud_cover,
+            "max_scenes_per_tile": config.max_scenes_per_tile,
+            "buffer_meters": config.buffer_meters,
+            "admin_level_ilce": config.admin_level_ilce,
+            "admin_level_mahalle": config.admin_level_mahalle,
+            "osm_pbf_url": config.osm_pbf_url,
+        },
+        "scenes": _read_scene_summaries(config, years, default_year),
+        "versions": {
+            "hvi_formula_version": HVI_FORMULA_VERSION,
+            "risk_timeseries_version": RISK_TIMESERIES_VERSION,
+            "mosaic_version": MOSAIC_VERSION,
+            "scene_fetch_version": SCENE_FETCH_VERSION,
+        },
+        "night_lst_requested": night_lst_requested,
+    }
+
+
+def _write_manifest(config: CityConfig, manifest: dict) -> None:
+    """Manifest'i üretilen HER iki haritanın (çevrimdışı + barındırma) yanına yazar."""
+    payload = json.dumps(manifest, ensure_ascii=False, indent=2)
+
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    (OUTPUT_DIR / f"{config.city_id}_hvi_manifest.json").write_text(payload)
+
+    docs_dir = DOCS_DIR / config.city_id
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    (docs_dir / "manifest.json").write_text(payload)
+
+
+def build_hvi_map(config: CityConfig, years: list[str], default_year: str,
+                   night_lst_requested: bool = False) -> Path:
     """Kategori bazlı tembel yükleme + yıl seçici içeren interaktif harita üretir.
 
     44 bin yolun 5 kategorisini aynı anda çizmek tarayıcıyı kilitliyordu;
@@ -560,7 +642,9 @@ def build_hvi_map(config: CityConfig, years: list[str], default_year: str) -> Pa
     yükler (`overlayadd` olayı). Yıl değiştirmek de aynı mekanizmayı
     kullanır: sadece o an açık olan katmanlar yeniden doldurulur.
 
-    İki çıktı üretilir - bkz. modül docstring'i.
+    İki harita çıktısı üretilir - bkz. modül docstring'i - artı her ikisinin
+    yanına da küçük bir `manifest.json`/`<sehir>_hvi_manifest.json`
+    (bkz. `_build_manifest`), hangi girdi/ayarlarla üretildiklerini kaydeder.
     """
     roads = gpd.read_file(city_data_proc(config.city_id) / "roads_with_hvi.geojson")
     night_gdf = _load_night_lst(config, default_year)
@@ -583,5 +667,7 @@ def build_hvi_map(config: CityConfig, years: list[str], default_year: str) -> Pa
     )
     _write_fetch_based(config, m2, geojson_vars2, group_vars2, data_by_year, years, default_year,
                         night_geojson_vars2, night_group_vars2, night_data)
+
+    _write_manifest(config, _build_manifest(config, years, default_year, night_lst_requested))
 
     return offline_html
