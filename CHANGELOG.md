@@ -3,6 +3,18 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## v1.6.0 - 2026-09-23
+
+- `landsat.max_cloud_cover` ve `landsat.max_scenes_per_tile` artık config
+  doğrulamasında kontrol ediliyor - `max_scenes_per_tile: 0` gibi bir
+  değer önceden sahne seçimini sessizce boşaltıp hatayı çok daha geç,
+  anlaşılmaz bir noktada (mozaikleme aşamasında) veriyordu. (#15)
+- Üretilen her HVI haritasının (`output/<sehir>_hvi_map.html` ve
+  `docs/<sehir>/index.html`) yanına, o haritayı hangi şehir config'i,
+  yıllar, Landsat sahneleri ve formül/önbellek sürümleriyle üretildiğini
+  kaydeden bir `manifest.json`/`<sehir>_hvi_manifest.json` yazılıyor
+  (bkz. README "Tekrar üretilebilirlik"). (#16)
+
 ## v1.5.0 - 2026-09-19
 
 - Repo `izmir-heat-risk` -> `turkiye-heat-risk` olarak yeniden
