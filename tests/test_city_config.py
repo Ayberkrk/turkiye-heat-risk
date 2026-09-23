@@ -75,3 +75,43 @@ def test_non_mapping_required_section_is_reported(section, bad_value):
     cfg = {**VALID_CONFIG, section: bad_value}
     errors = validate_config_dict(cfg)
     assert any(f"'{section}' bölümü bir sözlük olmalı" == error for error in errors)
+
+
+# --- landsat.max_cloud_cover / max_scenes_per_tile -------------------------
+#
+# `landsat` isteğe bağlı bir bölüm, bu yüzden hiç verilmemesi geçerli (zaten
+# VALID_CONFIG'te yok, test_valid_config_has_no_errors bunu kapsıyor). Ama
+# verildiğinde alanları anlamlı olmalı - aksi halde select_best_scenes_per_tile
+# max_scenes_per_tile=0 ile her karoyu sessizce boş listeye keser (bkz.
+# core/satellite.py) ve hata çok daha geç, anlaşılmaz bir noktada ortaya çıkar.
+
+@pytest.mark.parametrize("bad_max_scenes", [0, -1, True, False, 1.5, "3"])
+def test_invalid_max_scenes_per_tile_is_rejected(bad_max_scenes):
+    cfg = {**VALID_CONFIG, "landsat": {"max_scenes_per_tile": bad_max_scenes}}
+    errors = validate_config_dict(cfg)
+    assert any("max_scenes_per_tile" in e for e in errors)
+
+
+@pytest.mark.parametrize("good_max_scenes", [1, 3, 10])
+def test_valid_max_scenes_per_tile_is_accepted(good_max_scenes):
+    cfg = {**VALID_CONFIG, "landsat": {"max_scenes_per_tile": good_max_scenes}}
+    assert validate_config_dict(cfg) == []
+
+
+@pytest.mark.parametrize("bad_max_cloud_cover", [0, -10, 101, True, False, "30"])
+def test_invalid_max_cloud_cover_is_rejected(bad_max_cloud_cover):
+    cfg = {**VALID_CONFIG, "landsat": {"max_cloud_cover": bad_max_cloud_cover}}
+    errors = validate_config_dict(cfg)
+    assert any("max_cloud_cover" in e for e in errors)
+
+
+@pytest.mark.parametrize("good_max_cloud_cover", [1, 30, 30.5, 100])
+def test_valid_max_cloud_cover_is_accepted(good_max_cloud_cover):
+    cfg = {**VALID_CONFIG, "landsat": {"max_cloud_cover": good_max_cloud_cover}}
+    assert validate_config_dict(cfg) == []
+
+
+def test_non_mapping_landsat_section_is_reported():
+    cfg = {**VALID_CONFIG, "landsat": "geçersiz"}
+    errors = validate_config_dict(cfg)
+    assert any("'landsat' bölümü bir sözlük olmalı" == e for e in errors)

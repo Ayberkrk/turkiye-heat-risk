@@ -112,6 +112,32 @@ def validate_config_dict(cfg: Any) -> list[str]:
             if key not in population:
                 errors.append(f"'population' altında eksik alan: '{key}'")
 
+    # `landsat` isteğe bağlı (bkz. REQUIRED_TOP_KEYS'in üstündeki not), ama
+    # verilmişse alanları anlamlı olmalı - aksi halde hata çok geç, ağ
+    # isteğinden sonra ("Landsat sahnesi bulunamadı") ya da hiç ortaya
+    # çıkmadan (bkz. max_scenes_per_tile=0 -> select_best_scenes_per_tile
+    # her karoyu boş listeye kesip sessizce sıfır sahne seçer) görünür.
+    landsat = cfg.get("landsat")
+    if landsat is not None:
+        if not isinstance(landsat, dict):
+            errors.append("'landsat' bölümü bir sözlük olmalı")
+        else:
+            max_cloud_cover = landsat.get("max_cloud_cover")
+            if max_cloud_cover is not None:
+                if isinstance(max_cloud_cover, bool) or not isinstance(max_cloud_cover, (int, float)):
+                    errors.append("'landsat.max_cloud_cover' sayısal olmalı")
+                elif not (0 < max_cloud_cover <= 100):
+                    errors.append(
+                        f"'landsat.max_cloud_cover' 0 (hariç) ile 100 (dahil) arasında olmalı: {max_cloud_cover}"
+                    )
+
+            max_scenes_per_tile = landsat.get("max_scenes_per_tile")
+            if max_scenes_per_tile is not None:
+                if isinstance(max_scenes_per_tile, bool) or not isinstance(max_scenes_per_tile, int):
+                    errors.append("'landsat.max_scenes_per_tile' bir tam sayı olmalı")
+                elif max_scenes_per_tile < 1:
+                    errors.append(f"'landsat.max_scenes_per_tile' en az 1 olmalı: {max_scenes_per_tile}")
+
     return errors
 
 
