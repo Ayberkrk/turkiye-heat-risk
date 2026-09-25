@@ -38,7 +38,6 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Karaman | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/71994/karaman.pdf) |
 | Kars | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94789/kars.pdf) |
 | Kırıkkale | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94793/kirikkale.pdf) |
-
 | İzmir | 2022 | Mevcut şehir verisi | Belediye açık veri / şehir kaynağı |
 | Karabük | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/94787/karabuk.pdf) |
 | Kayseri | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94791/kayseri.pdf) |
@@ -59,8 +58,11 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Bingöl | 2021 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/71969/bingol.pdf) |
 | Burdur | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94764/burdur.pdf) |
 | Kastamonu | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94790/kastamonu.pdf) |
+| Manisa | 2025 | Eklendi; Yunusemre ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
 
 SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırmayla Bakanlığın [SEGE-2022 ilçe raporuna](https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf) göre kaydedilir.
+
+81 ilin tamamı için 2007–2025 ilçe yaş grubu serisi sunan [DrDataStats sorgusu](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) verinin kaynağını TÜİK olarak belirtir. Sorgu aday taraması ve karşılaştırma için kullanılır; şehir eklemesinde seçilen ilçenin 0–14, 15–64 ve 65+ değerleri aynı yılın ilçe toplamıyla karşılaştırılır. Manisa/Yunusemre için 2025 değerleri sırasıyla 56.329, 190.289, 23.737 ve toplam 270.355'tir; yaş grupları toplamı nüfusla eşleşir. SEGE satırı Bakanlığın raporunda kontrol edilmiştir: 68. sıra, il içinde 1. sıra, 1,581 skor, 2. kademe.
 
 ## Kaynakta sorun görülen adaylar
 
@@ -76,7 +78,7 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-Bilecik, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Manisa, Mardin, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
+Bilecik, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 
