@@ -1,0 +1,35 @@
+city:
+  name: "Tokat"
+  # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
+  bbox: [36.45, 40.25, 36.70, 40.50]
+  crs: "EPSG:32637"
+  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Tokat İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+
+landsat:
+  max_cloud_cover: 30
+  max_scenes_per_tile: 3
+
+osm:
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/central_anatolia-latest.osm.pbf"
+  admin_level_ilce: 6
+  admin_level_mahalle: 8
+  highway_types:
+    - motorway
+    - trunk
+    - primary
+    - secondary
+    - tertiary
+    - residential
+    - living_street
+    - unclassified
+    - motorway_link
+    - trunk_link
+    - primary_link
+    - secondary_link
+    - tertiary_link
+
+roads:
+  buffer_meters: 10
+
+population:
+  adapter: "cities.tokat.adapter"

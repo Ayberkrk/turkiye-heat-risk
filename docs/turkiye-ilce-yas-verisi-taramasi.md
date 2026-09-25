@@ -13,6 +13,7 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Afyonkarahisar | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/72033/afyonkarahisar.pdf) |
 | Amasya | 2021 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/57061/amasya.pdf) |
 | Aksaray | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/94366/aksaray.pdf) |
+| Ardahan | 2021 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/71960/ardahan.pdf) |
 | Çankırı | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/71975/cankiri.pdf) |
 | Ankara | 2021 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/71959/ankara.pdf) |
 | Antalya | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94375/antalya.pdf) |
@@ -45,13 +46,17 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Kocaeli | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94796/kocaeli.pdf) |
 | Konya | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94797/konya.pdf) |
 | Kütahya | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/94798/kutahya.pdf) |
+| Tokat | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/72023/tokat.pdf) |
 | Mersin | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94399/mersin.pdf) |
+| Niğde | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94342/nigde.pdf) |
 | Muğla | 2022 | Eklendi; Menteşe ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94803/mugla.pdf) |
 | Nevşehir | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94341/nevsehir.pdf) |
 | Siirt | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/100474/siirt.pdf) |
 | Sivas | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94350/sivas.pdf) |
 | Şanlıurfa | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94419/sanliurfa.pdf) |
 | Bartın | 2021 | Eklendi; rapor 2021 TÜİK ADNKS tablosunu içeriyor | [İŞKUR raporu](https://media.iskur.gov.tr/71965/bartin.pdf) |
+| Batman | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94375/batman.pdf) |
+| Bingöl | 2021 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/71969/bingol.pdf) |
 | Burdur | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94764/burdur.pdf) |
 | Kastamonu | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94790/kastamonu.pdf) |
 
@@ -71,7 +76,7 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-Ardahan, Batman, Bilecik, Bingöl, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Manisa, Mardin, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
+Bilecik, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Manisa, Mardin, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 

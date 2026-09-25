@@ -20,7 +20,7 @@ categorization shared across years. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; Izmir, Eskişehir,
 Şanlıurfa, Antalya, Mersin, Adana, Gaziantep, Bursa, Ankara, Aydın,
 Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya, Nevşehir,
-Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hatay, Muğla, Burdur, Kastamonu and Kars are the forty-four supported cities today (see
+Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hatay, Muğla, Burdur, Kastamonu, Kars, Tokat, Ardahan, Batman, Bingöl and Niğde are the forty-nine supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -42,7 +42,7 @@ Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
 mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
 Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
-Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hatay, Muğla, Burdur, Kastamonu ve Kars ile birlikte şu an kırk dört
+Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hatay, Muğla, Burdur, Kastamonu, Kars, Tokat, Ardahan, Batman, Bingöl ve Niğde ile birlikte şu an kırk dokuz
 şehir destekleniyor. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
