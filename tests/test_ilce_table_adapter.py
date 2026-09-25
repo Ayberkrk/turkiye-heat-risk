@@ -6,7 +6,7 @@ import pytest
 from shapely.geometry import box
 
 from core.city_config import CITIES_DIR, CityConfig, load_city_config
-from core.ilce_table_adapter import build_neighborhood_layer_from_ilce_tables
+from core.ilce_table_adapter import build_neighborhood_layer_from_ilce_tables, resolve_merkez_aliases
 
 CRS = "EPSG:32636"
 
@@ -134,6 +134,58 @@ def test_same_named_mahalle_in_two_ilce_keeps_each_ilce_values(tmp_path, monkeyp
     assert by_ilce == {"Muratpaşa": 3.0, "Kepez": 1.0}
 
 
+# --- "<Il> Merkez" (OSM) <-> "Merkez" (TUIK/SEGE tablosu) eslemesi -------------
+#
+# Gercek OSM verisiyle bulunan hata: Burdur/Isparta/Osmaniye/Adiyaman/Siirt/
+# Sirnak'ta OSM ilce adi "Burdur Merkez" iken tabloda "Merkez" yaziyordu, hicbir
+# mahalle eslesmiyor ve HVI kapsami %0 cikiyordu.
+
+def test_merkez_alias_maps_the_single_il_merkez_candidate():
+    assert resolve_merkez_aliases(["BURDUR MERKEZ", "BUCAK"], {"MERKEZ"}) == {"BURDUR MERKEZ": "MERKEZ"}
+
+
+def test_merkez_alias_is_skipped_when_table_has_no_merkez_row():
+    assert resolve_merkez_aliases(["BURDUR MERKEZ"], {"FATIH"}) == {}
+
+
+def test_merkez_alias_works_in_the_reverse_direction_too():
+    # Tabloda "Amasya Merkez", OSM'de yalnızca "Merkez".
+    assert resolve_merkez_aliases(["MERKEZ", "TASOVA"], {"AMASYA MERKEZ"}) == {"MERKEZ": "AMASYA MERKEZ"}
+
+
+def test_merkez_alias_is_skipped_when_two_provinces_merkez_are_present():
+    # bbox iki ilin merkez ilcesine tasiyorsa hangisinin tablodaki "Merkez"
+    # oldugu bilinemez; yanlis ile eslemektense eslememek dogrudur.
+    assert resolve_merkez_aliases(["BURDUR MERKEZ", "ISPARTA MERKEZ"], {"MERKEZ"}) == {}
+
+
+def test_merkez_alias_ignores_names_that_already_match_the_table():
+    assert resolve_merkez_aliases(["MERKEZ"], {"MERKEZ"}) == {}
+
+
+def test_il_merkez_in_osm_gets_demographics_from_plain_merkez_row(tmp_path, monkeypatch):
+    osm = _osm_frame({"Burdur Merkez": ILCE["Muratpaşa"]}, [("Bir Mahallesi", (30.62, 36.82, 30.64, 36.84))])
+    monkeypatch.setattr("core.ilce_table_adapter.gpd.read_file", lambda *a, **k: osm)
+    nufus, sege = _write_tables(tmp_path, [("Merkez", 100000, 0.1, 0.2)], [("Merkez", 2.0)])
+
+    result = build_neighborhood_layer_from_ilce_tables(Path("dummy.pbf"), _make_config(), nufus, sege)
+
+    assert result["nufus_yogunlugu"].notna().all()
+    assert result["sosyoekonomik_skor"].tolist() == [2.0]
+
+
+def test_two_il_merkez_in_bbox_stay_unmatched_and_warn(tmp_path, monkeypatch, capsys):
+    osm = _osm_frame({"Burdur Merkez": ILCE["Muratpaşa"], "Isparta Merkez": ILCE["Kepez"]},
+                     [("Bir Mahallesi", (30.62, 36.82, 30.64, 36.84)), ("Iki Mahallesi", (30.72, 36.82, 30.74, 36.84))])
+    monkeypatch.setattr("core.ilce_table_adapter.gpd.read_file", lambda *a, **k: osm)
+    nufus, sege = _write_tables(tmp_path, [("Merkez", 100000, 0.1, 0.2)], [("Merkez", 2.0)])
+
+    result = build_neighborhood_layer_from_ilce_tables(Path("dummy.pbf"), _make_config(), nufus, sege)
+
+    assert result["nufus_yogunlugu"].isna().all()
+    assert "UYARI" in capsys.readouterr().out
+
+
 # --- Repoyla gelen gerçek şehir verilerinin bütünlüğü -----------------------
 #
 # Yeni bir TÜİK-şablonlu şehir eklendiğinde CSV yazım hatası, ilçe adı
@@ -181,3 +233,23 @@ def test_shipped_city_tables_are_consistent(city_id):
 def test_shipped_city_config_loads_and_points_at_its_own_adapter(city_id):
     config = load_city_config(city_id)
     assert config.population_adapter_path == f"cities.{city_id}.adapter"
+
+
+def _expected_kademe(skor: float) -> int:
+    """SEGE-2022 raporunun kademe sinirlari (rapor, Sonuc ve Degerlendirme): 1.
+    kademe >= 1,632; 2. 1,581 ... 0,396; 3. 0,379 ... -0,173; 4. -0,178 ...
+    -0,493; 5. -0,500 ... -0,824; 6. <= -0,831. Kademeler arasindaki bosluklarin
+    ortasindan kesilir (hicbir ilce bu bosluklara dusmez).
+    """
+    for esik, kademe in ((1.6, 1), (0.388, 2), (-0.1755, 3), (-0.4965, 4), (-0.8275, 5)):
+        if skor >= esik:
+            return kademe
+    return 6
+
+
+@pytest.mark.parametrize("city_id", _table_cities())
+def test_shipped_city_kademe_matches_sege_score_thresholds(city_id):
+    # KADEME hesapta kullanilmaz ama yayimlanan tabloya yanlis yazilirsa
+    # (ornegin 0,466 skorlu bir ilceye 3. kademe) kaynaga guveni zedeler.
+    for row in _read_semicolon_csv(CITIES_DIR / city_id / "sege_2022_ilce.csv"):
+        assert _expected_kademe(float(row["SKOR"])) == int(row["KADEME"]), (city_id, row)

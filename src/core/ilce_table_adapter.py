@@ -28,6 +28,33 @@ from core.city_config import CityConfig
 from core.text_utils import normalize_name
 
 
+MERKEZ_KEY = "MERKEZ"
+
+
+def is_merkez_key(key: str) -> bool:
+    return key == MERKEZ_KEY or key.endswith(" " + MERKEZ_KEY)
+
+
+def resolve_merkez_aliases(osm_ilce_keys: list[str], csv_keys: set[str]) -> dict[str, str]:
+    """OSM'deki merkez ilçe adını referans tablodaki yazımına eşler (OSM anahtarı -> CSV anahtarı).
+
+    Bir ilin merkez ilçesi bir kaynakta "Merkez", ötekinde "<İl> Merkez"
+    ("Burdur Merkez", "Amasya Merkez") yazılabilir ve `normalize_name` bu
+    yazımları eşlemediği için o ilçenin tüm demografisi sessizce NaN kalır,
+    şehrin HVI'sı boş çıkardı (gerçek OSM'de 8 şehirde kapsam %0'dı).
+
+    Yalnızca eşleşmemiş TAM BİR merkez-türü OSM adı ile TAM BİR merkez-türü
+    tablo satırı varsa eşleme döner. Birden fazlası varsa (bbox iki farklı ilin
+    merkez ilçesine taşıyor) hangisinin hangisi olduğu belirsiz olduğundan
+    bilerek eşleme yapılmaz - bbox'ı daraltmak gerekir (bkz. UYARI).
+    """
+    csv_merkez = sorted(k for k in csv_keys if is_merkez_key(k))
+    osm_merkez = sorted({k for k in osm_ilce_keys if is_merkez_key(k) and k not in csv_keys})
+    if len(csv_merkez) == 1 and len(osm_merkez) == 1 and csv_merkez[0] not in osm_ilce_keys:
+        return {osm_merkez[0]: csv_merkez[0]}
+    return {}
+
+
 def build_neighborhood_layer_from_ilce_tables(
     pbf_path: Path, config: CityConfig, ilce_nufus_csv: Path, sege_csv: Path,
 ) -> gpd.GeoDataFrame:
@@ -35,7 +62,7 @@ def build_neighborhood_layer_from_ilce_tables(
     sosyoekonomik skorla zenginleştirir.
     """
     west, south, east, north = config.bbox
-    osm_gdf = gpd.read_file(pbf_path, layer="multipolygons", bbox=(west, south, east, north))
+    osm_gdf = gpd.read_file(pbf_path, layer="multipolygons", bbox=(west, south, east, north), on_invalid="ignore")
 
     ilce_gdf = osm_gdf[
         (osm_gdf["admin_level"] == config.admin_level_ilce) & (osm_gdf["boundary"] == "administrative")
@@ -62,12 +89,18 @@ def build_neighborhood_layer_from_ilce_tables(
     # rakamı yerine, mahalle-ilçe eşlemesiyle aynı geometriden türetilerek
     # tutarlılık sağlanır.
     ilce_gdf["ilce_norm"] = ilce_gdf["ilce_adi"].apply(normalize_name)
+
+    nufus = pd.read_csv(ilce_nufus_csv, sep=";", encoding="utf-8")
+    nufus["ilce_norm"] = nufus["ILCE"].apply(normalize_name)
+    aliases = resolve_merkez_aliases(list(ilce_gdf["ilce_norm"]), set(nufus["ilce_norm"]))
+    if aliases:
+        ilce_gdf["ilce_norm"] = ilce_gdf["ilce_norm"].replace(aliases)
+        mahalle_gdf["ilce_norm"] = mahalle_gdf["ilce_norm"].replace(aliases)
+
     ilce_utm = ilce_gdf.to_crs(config.crs)
     ilce_alan_km2 = (ilce_utm.geometry.area / 1e6).rename("ilce_alan_km2")
     ilce_alan_km2.index = ilce_gdf["ilce_norm"]
 
-    nufus = pd.read_csv(ilce_nufus_csv, sep=";", encoding="utf-8")
-    nufus["ilce_norm"] = nufus["ILCE"].apply(normalize_name)
     nufus = nufus.set_index("ilce_norm").join(ilce_alan_km2, how="left")
     nufus["nufus_yogunlugu"] = nufus["NUFUS"] / nufus["ilce_alan_km2"]
 

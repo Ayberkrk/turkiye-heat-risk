@@ -136,3 +136,35 @@ def test_validate_passes_with_well_formed_adapter_and_crs(tmp_path, monkeypatch,
     )
 
     assert validate("testcity") == []
+
+
+# --- --osm-coverage: gerçek OSM sınırlarıyla HVI kapsamı kontrolü -----------
+
+def _fake_config():
+    return object()
+
+
+def test_coverage_errors_reports_missing_pbf(tmp_path):
+    errors = validate_city._coverage_errors(_fake_config(), tmp_path / "yok.osm.pbf", 0.6)
+    assert len(errors) == 1 and "bulunamadı" in errors[0]
+
+
+def test_coverage_errors_flags_low_coverage(tmp_path, monkeypatch):
+    pbf = tmp_path / "x.osm.pbf"
+    pbf.write_bytes(b"")
+    monkeypatch.setattr(validate_city, "measure_city_coverage",
+                        lambda config, path: {"mahalle": 35, "yol": 2395, "ilce": ["Burdur Merkez"], "coverage": 0.0})
+
+    errors = validate_city._coverage_errors(_fake_config(), pbf, 0.6)
+
+    assert len(errors) == 1
+    assert "%0.0" in errors[0] and "Burdur Merkez" in errors[0]
+
+
+def test_coverage_errors_accepts_sufficient_coverage(tmp_path, monkeypatch):
+    pbf = tmp_path / "x.osm.pbf"
+    pbf.write_bytes(b"")
+    monkeypatch.setattr(validate_city, "measure_city_coverage",
+                        lambda config, path: {"mahalle": 82, "yol": 14000, "ilce": ["Toroslar"], "coverage": 0.85})
+
+    assert validate_city._coverage_errors(_fake_config(), pbf, 0.6) == []
