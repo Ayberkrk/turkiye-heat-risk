@@ -32,6 +32,7 @@ import rasterio
 import rasterstats
 from rasterio.warp import Resampling, calculate_default_transform, reproject
 
+from core.cache import is_cache_valid, write_cache_meta
 from core.city_config import CityConfig
 from core.paths import city_data_proc
 
@@ -41,6 +42,8 @@ NIGHT_LST_ASSET = "LST_Night_1km"
 KELVIN_SCALE = 0.02  # ham piksel × 0.02 = Kelvin (bkz. koleksiyon raster:bands şeması)
 DOWNLOAD_TIMEOUT_SECONDS = 120
 OUT_PIXEL_DEGREES = 0.01  # ~1 km - MODIS'in kendi çözünürlüğüyle uyumlu
+NIGHT_LST_RASTER_VERSION = 1
+NEIGHBORHOOD_NIGHT_LST_VERSION = 1
 
 
 def _raw_to_celsius(raw: np.ndarray) -> np.ndarray:
@@ -52,13 +55,13 @@ def _raw_to_celsius(raw: np.ndarray) -> np.ndarray:
     return np.where(raw == 0, np.nan, raw * KELVIN_SCALE - 273.15).astype(np.float32)
 
 
-def fetch_night_lst(config: CityConfig, year: str) -> Path:
+def fetch_night_lst(config: CityConfig, year: str, force: bool = False) -> Path:
     """Yazın tüm 8-günlük MODIS gece LST kompozitlerinin ortalamasını,
     şehrin bbox'ına kırpılmış tek bir GeoTIFF (°C, EPSG:4326) olarak yazar.
     """
     out_path = city_data_proc(config.city_id) / f"night_lst_{year}.tif"
-    if out_path.exists():
-        print(f"[{year}] night_lst_{year}.tif zaten mevcut, atlanıyor")
+    if is_cache_valid(out_path, NIGHT_LST_RASTER_VERSION, force=force):
+        print(f"[{year}] night_lst_{year}.tif zaten mevcut ve güncel, atlanıyor")
         return out_path
 
     catalog = pystac_client.Client.open(CATALOG_URL, modifier=planetary_computer.sign_inplace)
@@ -116,6 +119,7 @@ def fetch_night_lst(config: CityConfig, year: str) -> Path:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with rasterio.open(out_path, "w", **out_profile) as dst:
         dst.write(np.where(np.isnan(mean_c), -9999.0, mean_c).astype(np.float32), 1)
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION)
 
     valid_ratio = (count > 0).mean()
     print(f"[{year}] gece LST kaydedildi: {out_path.name} "
@@ -123,7 +127,9 @@ def fetch_night_lst(config: CityConfig, year: str) -> Path:
     return out_path
 
 
-def compute_neighborhood_night_lst(config: CityConfig, pbf_path: Path, night_lst_tif_path: Path, year: str) -> Path:
+def compute_neighborhood_night_lst(
+    config: CityConfig, pbf_path: Path, night_lst_tif_path: Path, year: str, force: bool = False,
+) -> Path:
     """Mahalle sınırları başına ortalama gece LST'sini hesaplar.
 
     1 km'lik MODIS pikseli çoğu zaman bir mahalleden büyük olduğu için bu
@@ -132,8 +138,8 @@ def compute_neighborhood_night_lst(config: CityConfig, pbf_path: Path, night_lst
     (bkz. modül docstring'i).
     """
     out_path = city_data_proc(config.city_id) / f"night_lst_by_mahalle_{year}.geojson"
-    if out_path.exists():
-        print(f"[{year}] night_lst_by_mahalle_{year}.geojson zaten mevcut, atlanıyor")
+    if is_cache_valid(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, force=force):
+        print(f"[{year}] night_lst_by_mahalle_{year}.geojson zaten mevcut ve güncel, atlanıyor")
         return out_path
 
     west, south, east, north = config.bbox
@@ -148,5 +154,6 @@ def compute_neighborhood_night_lst(config: CityConfig, pbf_path: Path, night_lst
     mahalle_gdf["gece_lst_c"] = mahalle_gdf["gece_lst_c"].round(1)
 
     mahalle_gdf.to_file(out_path, driver="GeoJSON")
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION)
     print(f"[{year}] kaydedildi: {out_path.name} ({len(mahalle_gdf):,} mahalle)")
     return out_path

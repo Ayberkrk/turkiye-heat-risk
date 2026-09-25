@@ -1,12 +1,20 @@
 import geopandas as gpd
 import numpy as np
+import pytest
 import rasterio
 from rasterio.transform import from_origin
 from shapely.geometry import Polygon, box
 
 import core.night_lst as night_lst
+from core.cache import write_cache_meta
 from core.city_config import CityConfig
-from core.night_lst import _raw_to_celsius, compute_neighborhood_night_lst
+from core.night_lst import (
+    NIGHT_LST_RASTER_VERSION,
+    NEIGHBORHOOD_NIGHT_LST_VERSION,
+    _raw_to_celsius,
+    compute_neighborhood_night_lst,
+    fetch_night_lst,
+)
 
 CRS = "EPSG:32635"
 
@@ -115,3 +123,57 @@ def test_compute_neighborhood_night_lst_drops_mahalle_with_no_valid_pixels(tmp_p
     monkeypatch.undo()
     result = gpd.read_file(out_path)
     assert len(result) == 0
+
+
+def test_fetch_night_lst_cache_requires_current_version_and_respects_force(tmp_path, monkeypatch):
+    output_dir = tmp_path / "processed"
+    output_dir.mkdir()
+    out_path = output_dir / "night_lst_2026.tif"
+    out_path.write_bytes(b"cached")
+    monkeypatch.setattr("core.night_lst.city_data_proc", lambda city_id: output_dir)
+    monkeypatch.setattr(
+        night_lst.pystac_client.Client,
+        "open",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("cache rebuild requested")),
+    )
+
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION)
+    assert fetch_night_lst(_make_config(), "2026") == out_path
+
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION - 1)
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        fetch_night_lst(_make_config(), "2026")
+
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION)
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        fetch_night_lst(_make_config(), "2026", force=True)
+
+
+def test_neighborhood_night_lst_cache_requires_current_version_and_respects_force(tmp_path, monkeypatch):
+    output_dir = tmp_path / "processed"
+    output_dir.mkdir()
+    out_path = output_dir / "night_lst_by_mahalle_2026.geojson"
+    out_path.write_text("cached", encoding="utf-8")
+    monkeypatch.setattr("core.night_lst.city_data_proc", lambda city_id: output_dir)
+    monkeypatch.setattr(
+        night_lst.gpd,
+        "read_file",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("cache rebuild requested")),
+    )
+
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION)
+    assert compute_neighborhood_night_lst(
+        _make_config(), Path("dummy.pbf"), Path("night_lst.tif"), "2026"
+    ) == out_path
+
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION - 1)
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        compute_neighborhood_night_lst(
+            _make_config(), Path("dummy.pbf"), Path("night_lst.tif"), "2026"
+        )
+
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION)
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        compute_neighborhood_night_lst(
+            _make_config(), Path("dummy.pbf"), Path("night_lst.tif"), "2026", force=True
+        )
