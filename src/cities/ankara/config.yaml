@@ -1,7 +1,8 @@
 city:
   name: "Ankara"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [32.45, 39.75, 33.05, 40.05]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %83 (11,523 yol).
+  bbox: [32.78, 39.86, 32.89, 40.01]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2021 (Ankara İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

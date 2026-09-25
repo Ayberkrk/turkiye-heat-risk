@@ -1,7 +1,8 @@
 city:
   name: "Edirne"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [26.35, 41.55, 26.75, 41.85]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %100 (2,693 yol).
+  bbox: [26.53, 41.65, 26.61, 41.70]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

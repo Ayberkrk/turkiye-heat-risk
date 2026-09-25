@@ -1,7 +1,8 @@
 city:
   name: "Karabük"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [32.55, 41.15, 32.8, 41.35]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %65 (1,452 yol).
+  bbox: [32.59, 41.18, 32.68, 41.25]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Karabük İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

@@ -1,9 +1,10 @@
 city:
   name: "Ağrı"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [42.95, 39.60, 43.15, 39.80]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %97 (1,030 yol).
+  bbox: [43.03, 39.70, 43.08, 39.76]
   crs: "EPSG:32638"
-  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2021 (Ağrı İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2021 (Ağrı İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); yaş oranları: il düzeyi TÜİK ADNKS 2025; SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 
 landsat:
   max_cloud_cover: 30

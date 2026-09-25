@@ -1,7 +1,8 @@
 city:
   name: "Rize"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [40.40, 40.90, 40.70, 41.15]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %91 (2,319 yol).
+  bbox: [40.46, 40.94, 40.60, 41.05]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

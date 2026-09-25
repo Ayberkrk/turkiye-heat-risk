@@ -1,7 +1,8 @@
 city:
   name: "Zonguldak"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [31.65, 41.35, 32.10, 41.60]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %80 (932 yol).
+  bbox: [31.76, 41.42, 31.83, 41.49]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

@@ -1,7 +1,8 @@
 city:
   name: "Amasya"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [35.5, 40.55, 35.85, 40.75]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %90 (1,468 yol).
+  bbox: [35.77, 40.59, 35.87, 40.68]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2021 (Amasya İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 
@@ -10,7 +11,7 @@ landsat:
   max_scenes_per_tile: 3
 
 osm:
-  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/central_anatolia-latest.osm.pbf"
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/black_sea-latest.osm.pbf"
   admin_level_ilce: 6
   admin_level_mahalle: 8
   highway_types:

@@ -1,7 +1,8 @@
 city:
   name: "Kastamonu"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [33.65, 41.30, 33.95, 41.55]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %92 (1,932 yol).
+  bbox: [33.74, 41.34, 33.82, 41.43]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Kastamonu İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

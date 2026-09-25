@@ -1,7 +1,8 @@
 city:
   name: "Yalova"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [29.15, 40.50, 29.45, 40.80]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %100 (1,438 yol).
+  bbox: [29.24, 40.60, 29.30, 40.67]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

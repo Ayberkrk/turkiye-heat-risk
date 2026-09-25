@@ -1,7 +1,8 @@
 city:
   name: "Tekirdağ"
   # 2025 district age counts are verified for Süleymanpaşa.
-  bbox: [27.35, 40.85, 27.70, 41.10]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %100 (3,020 yol).
+  bbox: [27.45, 40.93, 27.61, 41.01]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

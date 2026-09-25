@@ -1,7 +1,8 @@
 city:
   name: "Adıyaman"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [38.15, 37.65, 38.45, 37.90]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %87 (3,469 yol).
+  bbox: [38.22, 37.73, 38.34, 37.80]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Adıyaman İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

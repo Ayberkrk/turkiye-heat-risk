@@ -1,7 +1,8 @@
 city:
   name: "Sinop"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [35.00, 41.90, 35.35, 42.15]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %100 (766 yol).
+  bbox: [35.10, 42.00, 35.17, 42.04]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

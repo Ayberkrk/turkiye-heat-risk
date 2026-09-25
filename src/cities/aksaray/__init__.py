@@ -1,1 +1,0 @@
-"""Aksaray city data adapter."""

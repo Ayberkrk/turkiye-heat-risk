@@ -1,7 +1,8 @@
 city:
   name: "Kilis"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [36.55, 36.55, 36.90, 36.90]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %96 (1,823 yol).
+  bbox: [37.06, 36.69, 37.19, 36.76]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

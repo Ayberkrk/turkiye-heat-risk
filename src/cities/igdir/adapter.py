@@ -1,6 +1,8 @@
 """Iğdır merkez ilçesi ADNKS yaş oranları ve SEGE-2022 verileri.
 
-Yaş grubu sayımları: 2022 TÜİK ADNKS, İŞKUR faaliyet raporunda
+Yaş oranları: tek ilçeli şehirde ilçe sayımı il düzeyinden çok saptığı için il düzeyi
+ADNKS 2025 (0-14 ve 65+ sayıları nufusune.com il sayfası, üç yaş grubu il toplamına eşit).
+Nüfus: 2022 ADNKS, İŞKUR faaliyet raporu
 (https://media.iskur.gov.tr/71988/igdir.pdf). SEGE: Sanayi ve Teknoloji Bakanlığı
 SEGE-2022 (https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf).
 """
@@ -20,7 +22,7 @@ SEGE_CSV_PATH = _CITY_DIR / "sege_2022_ilce.csv"
 
 
 def fetch_population_data(config: CityConfig) -> dict[str, Path]:
-    """Data are versioned in the repository; no download is required."""
+    """Veri depoda sürümlü tutulur, indirme gerekmez."""
     return {}
 
 

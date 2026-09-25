@@ -1,7 +1,8 @@
 city:
   name: "Samsun"
   # 2025 district age counts are verified for the İlkadım urban core.
-  bbox: [36.15, 41.15, 36.55, 41.45]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %82 (2,931 yol).
+  bbox: [36.30, 41.26, 36.36, 41.32]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

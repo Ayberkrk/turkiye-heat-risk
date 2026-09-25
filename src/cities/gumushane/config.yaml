@@ -1,7 +1,8 @@
 city:
   name: "Gümüşhane"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [39.7, 40.4, 39.9, 40.6]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %87 (336 yol).
+  bbox: [39.44, 40.44, 39.52, 40.50]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Gümüşhane İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

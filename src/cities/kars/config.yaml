@@ -1,7 +1,8 @@
 city:
   name: "Kars"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [43.05, 40.55, 43.25, 40.80]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %91 (898 yol).
+  bbox: [43.06, 40.57, 43.15, 40.65]
   crs: "EPSG:32638"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Kars İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

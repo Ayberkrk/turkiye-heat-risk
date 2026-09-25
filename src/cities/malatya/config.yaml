@@ -1,7 +1,8 @@
 city:
   name: "Malatya"
   # 2025 district age counts are verified for the Yeşilyurt urban core.
-  bbox: [38.00, 38.15, 38.50, 38.55]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %81 (3,066 yol).
+  bbox: [38.26, 38.31, 38.32, 38.38]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

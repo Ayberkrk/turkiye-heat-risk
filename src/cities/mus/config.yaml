@@ -1,7 +1,8 @@
 city:
   name: "Muş"
   # 2025 district age counts are verified for Merkez.
-  bbox: [41.35, 38.65, 41.65, 38.90]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %76 (593 yol).
+  bbox: [41.48, 38.72, 41.53, 38.77]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

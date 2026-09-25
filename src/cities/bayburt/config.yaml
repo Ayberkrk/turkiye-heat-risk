@@ -1,7 +1,8 @@
 city:
   name: "Bayburt"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [40.10, 40.15, 40.45, 40.45]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %97 (762 yol).
+  bbox: [40.20, 40.22, 40.27, 40.28]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

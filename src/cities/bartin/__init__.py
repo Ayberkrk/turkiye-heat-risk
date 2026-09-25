@@ -1,1 +1,0 @@
-"""Bartın city data adapter."""

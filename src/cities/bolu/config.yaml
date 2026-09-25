@@ -1,7 +1,8 @@
 city:
   name: "Bolu"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [31.45, 40.60, 31.80, 40.85]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %91 (4,635 yol).
+  bbox: [31.50, 40.60, 31.68, 40.80]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

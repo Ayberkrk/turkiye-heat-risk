@@ -1,7 +1,8 @@
 city:
   name: "Sakarya"
   # 2025 district age counts are verified for Adapazarı.
-  bbox: [30.25, 40.65, 30.60, 40.90]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %60 (4,263 yol).
+  bbox: [30.37, 40.74, 30.43, 40.81]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

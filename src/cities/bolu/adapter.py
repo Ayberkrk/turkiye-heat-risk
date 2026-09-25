@@ -15,7 +15,7 @@ SEGE_CSV_PATH = _CITY_DIR / "sege_2022_ilce.csv"
 
 
 def fetch_population_data(config: CityConfig) -> dict[str, Path]:
-    """Data are versioned in the repository; no download is required."""
+    """Veri depoda sürümlü tutulur, indirme gerekmez."""
     return {}
 
 

@@ -1,7 +1,8 @@
 city:
   name: "Bilecik"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [29.85, 40.05, 30.15, 40.25]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %87 (859 yol).
+  bbox: [29.94, 40.10, 30.01, 40.19]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

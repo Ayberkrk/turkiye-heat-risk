@@ -1,7 +1,8 @@
 city:
   name: "Bursa"
   # Osmangazi + Nilüfer + Yıldırım kent çekirdeği.
-  bbox: [28.85, 40.15, 29.20, 40.30]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %97 (21,857 yol).
+  bbox: [28.95, 40.16, 29.19, 40.28]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2023 (Bursa İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu 2023 faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

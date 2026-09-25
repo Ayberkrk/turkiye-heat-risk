@@ -1,7 +1,8 @@
 city:
   name: "İstanbul"
   # 2025 district age counts are verified for Fatih.
-  bbox: [28.88, 40.99, 29.02, 41.07]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %65 (4,963 yol).
+  bbox: [28.92, 40.99, 28.99, 41.04]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

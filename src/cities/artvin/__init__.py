@@ -1,1 +1,0 @@
-"""Artvin city data adapter."""

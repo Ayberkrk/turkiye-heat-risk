@@ -1,7 +1,8 @@
 city:
   name: "Tunceli"
   # 2025 district age counts are verified for Merkez district.
-  bbox: [39.00, 39.00, 39.25, 39.25]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %68 (271 yol).
+  bbox: [39.52, 39.09, 39.56, 39.13]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

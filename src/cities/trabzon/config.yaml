@@ -1,7 +1,8 @@
 city:
   name: "Trabzon"
   # 2025 district age counts are verified for Ortahisar.
-  bbox: [39.55, 40.85, 39.90, 41.15]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %98 (3,044 yol).
+  bbox: [39.68, 40.97, 39.79, 41.02]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

@@ -1,7 +1,8 @@
 city:
   name: "Çanakkale"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [26.25, 40.05, 26.55, 40.30]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %89 (2,408 yol).
+  bbox: [26.38, 40.08, 26.46, 40.17]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

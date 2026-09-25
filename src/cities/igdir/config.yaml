@@ -1,9 +1,10 @@
 city:
   name: "Iğdır"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [43.70, 39.80, 44.00, 40.05]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (cekirdek); gerçek OSM'de HVI kapsamı %60 (911 yol).
+  bbox: [44.02, 39.91, 44.08, 39.95]
   crs: "EPSG:32638"
-  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Iğdır İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+  attribution: "Nüfus: TÜİK ADNKS 2022 (Iğdır İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); yaş oranları: il düzeyi TÜİK ADNKS 2025; SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 
 landsat:
   max_cloud_cover: 30

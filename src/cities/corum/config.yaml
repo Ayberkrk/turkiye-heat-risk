@@ -1,7 +1,8 @@
 city:
   name: "Çorum"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [34.75, 40.40, 35.20, 40.75]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %92 (3,799 yol).
+  bbox: [34.89, 40.50, 35.01, 40.59]
   crs: "EPSG:32636"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

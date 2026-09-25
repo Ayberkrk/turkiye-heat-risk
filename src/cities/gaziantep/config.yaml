@@ -1,7 +1,8 @@
 city:
   name: "Gaziantep"
   # Şahinbey + Şehitkamil kent çekirdeği.
-  bbox: [37.25, 36.95, 37.55, 37.25]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %100 (16,031 yol).
+  bbox: [37.29, 36.98, 37.46, 37.16]
   crs: "EPSG:32637"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2023 (Gaziantep İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu 2023 faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

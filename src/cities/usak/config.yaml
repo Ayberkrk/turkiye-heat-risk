@@ -1,7 +1,8 @@
 city:
   name: "Uşak"
-  # 2025 district age counts are verified for the Merkez urban core.
-  bbox: [29.25, 38.55, 29.60, 38.85]
+  # Merkez ilçe yaş verisi il düzeyi/ilçe sayımlarıyla doğrulandı.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %98 (3,294 yol).
+  bbox: [29.37, 38.66, 29.46, 38.70]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 

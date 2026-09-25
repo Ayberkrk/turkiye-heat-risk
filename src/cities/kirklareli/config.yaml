@@ -1,9 +1,10 @@
 city:
   name: "Kırklareli"
   # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
-  bbox: [27.1, 41.65, 27.35, 41.85]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %100 (1,961 yol).
+  bbox: [27.16, 41.64, 27.25, 41.76]
   crs: "EPSG:32635"
-  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2023 (Kırklareli İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2023 (Kırklareli İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); yaş oranları: il düzeyi TÜİK ADNKS 2025; SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 
 landsat:
   max_cloud_cover: 30

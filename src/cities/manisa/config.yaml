@@ -1,7 +1,8 @@
 city:
   name: "Manisa"
   # 2025 age counts are verified for the Yunusemre urban core district.
-  bbox: [27.25, 38.45, 27.65, 38.75]
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %73 (3,729 yol).
+  bbox: [27.35, 38.59, 27.45, 38.66]
   crs: "EPSG:32635"
   attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
 
