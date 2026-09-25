@@ -1,0 +1,35 @@
+city:
+  name: "Giresun"
+  # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
+  bbox: [38.20, 40.80, 38.55, 41.05]
+  crs: "EPSG:32637"
+  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2022 (Giresun İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+
+landsat:
+  max_cloud_cover: 30
+  max_scenes_per_tile: 3
+
+osm:
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/black_sea-latest.osm.pbf"
+  admin_level_ilce: 6
+  admin_level_mahalle: 8
+  highway_types:
+    - motorway
+    - trunk
+    - primary
+    - secondary
+    - tertiary
+    - residential
+    - living_street
+    - unclassified
+    - motorway_link
+    - trunk_link
+    - primary_link
+    - secondary_link
+    - tertiary_link
+
+roads:
+  buffer_meters: 10
+
+population:
+  adapter: "cities.giresun.adapter"
