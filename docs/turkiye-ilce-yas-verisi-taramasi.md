@@ -66,10 +66,15 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Denizli | 2025 | Eklendi; Merkezefendi ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
 | Düzce | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
 | Edirne | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Kahramanmaraş | 2025 | Eklendi; Onikişubat ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Kilis | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Kırşehir | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Malatya | 2025 | Eklendi; Yeşilyurt ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Mardin | 2025 | Eklendi; Artuklu ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
 
 SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırmayla Bakanlığın [SEGE-2022 ilçe raporuna](https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf) göre kaydedilir.
 
-81 ilin tamamı için 2007–2025 ilçe yaş grubu serisi sunan [DrDataStats sorgusu](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) verinin kaynağını TÜİK olarak belirtir. Sorgu aday taraması ve karşılaştırma için kullanılır; şehir eklemesinde seçilen ilçenin 0–14, 15–64 ve 65+ değerleri aynı yılın ilçe toplamıyla karşılaştırılır. Manisa/Yunusemre için 2025 değerleri sırasıyla 56.329, 190.289, 23.737 ve toplam 270.355'tir; Bilecik Merkez için 14.430, 59.960, 8.473 ve 82.863; Bolu Merkez için 38.018, 159.060, 25.511 ve 222.589; Çanakkale Merkez için 31.420, 149.887, 27.306 ve 208.613; Çorum Merkez için 55.428, 205.544, 38.593 ve 299.565; Denizli/Merkezefendi için 71.295, 244.813, 34.977 ve 351.085; Düzce Merkez için 54.185, 185.325, 27.739 ve 267.249; Edirne Merkez için 28.439, 145.612, 26.702 ve 200.753'tür. Her ilçede yaş grupları toplamı nüfusla eşleşir. İlçe SEGE kayıtları Bakanlığın [raporunda](https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf) kontrol edilmiştir.
+81 ilin tamamı için 2007–2025 ilçe yaş grubu serisi sunan [DrDataStats sorgusu](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) verinin kaynağını TÜİK olarak belirtir. Sorgu aday taraması ve karşılaştırma için kullanılır; şehir eklemesinde seçilen ilçenin 0–14, 15–64 ve 65+ değerleri aynı yılın ilçe toplamıyla karşılaştırılır. Manisa/Yunusemre için 2025 değerleri sırasıyla 56.329, 190.289, 23.737 ve toplam 270.355'tir; Bilecik Merkez için 14.430, 59.960, 8.473 ve 82.863; Bolu Merkez için 38.018, 159.060, 25.511 ve 222.589; Çanakkale Merkez için 31.420, 149.887, 27.306 ve 208.613; Çorum Merkez için 55.428, 205.544, 38.593 ve 299.565; Denizli/Merkezefendi için 71.295, 244.813, 34.977 ve 351.085; Düzce Merkez için 54.185, 185.325, 27.739 ve 267.249; Edirne Merkez için 28.439, 145.612, 26.702 ve 200.753; Kahramanmaraş/Onikişubat için 112.588, 300.352, 34.651 ve 447.591; Kilis Merkez için 35.574, 89.683, 10.173 ve 135.430; Kırşehir Merkez için 30.406, 114.076, 18.886 ve 163.368; Malatya/Yeşilyurt için 68.611, 211.455, 29.824 ve 309.890; Mardin/Artuklu için 60.479, 127.984, 10.255 ve 198.718'dir. Her ilçede üç yaş grubunun toplamı nüfusla eşleşir. İlçe SEGE kayıtları Bakanlığın [raporunda](https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf) kontrol edilmiş; tarama bulguları [araştırma notlarında](https://www.sanayi.gov.tr/assets/pdf/birimler/2022-ilce-sege.pdf) karşılaştırılmıştır.
 
 ## Kaynakta sorun görülen adaylar
 
@@ -85,7 +90,7 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
+İstanbul, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 
