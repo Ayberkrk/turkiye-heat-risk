@@ -17,8 +17,8 @@ geometric-mean HVI (temperature, tree canopy, population density,
 elderly/child population share, distance to hospital/pharmacy, distance to
 green space, built-up density), and pixel-level Jenks natural-breaks
 categorization shared across years. The architecture is city-agnostic -
-`src/core/` never changes when a new city is added; Izmir, Eskişehir and
-Şanlıurfa are the three supported examples today (see
+`src/core/` never changes when a new city is added; Izmir, Eskişehir,
+Şanlıurfa, Antalya, Mersin and Adana are the six supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -38,8 +38,8 @@ repository.
 Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
 Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; İzmir, Eskişehir ve Şanlıurfa şu an desteklenen üç örnek,
-yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
+mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin ve Adana şu an desteklenen
+altı şehir, yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 **Canlı harita:** GitHub Pages'te barındırılan, veri talep üzerine yüklenen
@@ -109,7 +109,9 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
   - `src/cities/eskisehir/adapter.py`: böyle bir portal YOKSA, TÜİK'in
     herkese açık ilçe seviyesindeki ADNKS yayınlarını statik CSV olarak
     kullanan şablon - kendi CKAN'ı olmayan başka bir Türkiye şehri için
-    neredeyse değişiklik yapmadan uyarlanabilir.
+    neredeyse değişiklik yapmadan uyarlanabilir. Ortak mantık
+    `src/core/ilce_table_adapter.py`'de; Şanlıurfa, Antalya, Mersin ve Adana
+    bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi.
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
@@ -521,6 +523,7 @@ turkiye-heat-risk/
 │   │   ├── map_builder.py     #   interaktif Folium haritası (çevrimdışı + barındırma sürümü)
 │   │   ├── night_lst.py       #   isteğe bağlı: mahalle ölçeğinde MODIS gece ısı adası katmanı
 │   │   ├── cache.py           #   ara çıktılar için sürüm damgalı önbellek geçerliliği
+│   │   ├── ilce_table_adapter.py #  TÜİK-şablonlu şehirlerin ortak mahalle-katmanı mantığı (2 CSV -> mahalle)
 │   │   └── text_utils.py      #   şehirler arası paylaşılan Türkçe metin normalizasyonu
 │   └── cities/
 │       ├── izmir/
@@ -532,11 +535,11 @@ turkiye-heat-risk/
 │       │   ├── adapter.py          #   TÜİK tabanlı nüfus/demografi mantığı (CKAN'sız şablon)
 │       │   ├── ilce_nufus.csv      #   İlçe nüfusu + yaşlı/çocuk oranı (TÜİK ADNKS 2025)
 │       │   └── sege_2022_ilce.csv  #   İlçe bazlı sosyoekonomik gelişmişlik skoru (resmi SEGE-2022)
-│       └── sanliurfa/              #   Eskişehir ile aynı TÜİK tabanlı şablon (bkz. adapter.py)
-│           ├── config.yaml
-│           ├── adapter.py
-│           ├── ilce_nufus.csv
-│           └── sege_2022_ilce.csv
+│       └── sanliurfa/, antalya/, mersin/, adana/  # Eskişehir ile aynı TÜİK tabanlı şablon
+│           ├── config.yaml         #   şehre özel bbox/CRS/OSM bölge özütü
+│           ├── adapter.py          #   ince sarmalayıcı (core/ilce_table_adapter.py'yi çağırır)
+│           ├── ilce_nufus.csv      #   ilçe nüfusu + il düzeyi yaşlı/çocuk (0-14) oranı
+│           └── sege_2022_ilce.csv  #   ilçe SEGE-2022 skorları (resmi PDF'ten)
 ├── tests/                     # Saf/mantık fonksiyonları için birim testler (ağ gerektirmez)
 ├── docs/                      # GitHub Pages'in servis ettiği, küçük/fetch tabanlı harita sürümü
 │   ├── index.html             #   şehirler arası karşılaştırma sayfası (build_docs_index.py üretir)
@@ -587,13 +590,16 @@ turkiye-heat-risk/
   daha değişken olabilir. Ayrıca 2022 tarihli, tek seferlik bir araştırma;
   gelecekte güncellenmiş bir SEGE raporu yayımlanırsa
   `sege_2022_ilce.csv` güncellenmelidir.
-- **Eskişehir'de bir kademe daha kaba çözünürlük**: İzmir'in mahalle
-  seviyesinde CKAN nüfus verisinin aksine, Eskişehir'in adapter'ı yaşlı/
-  çocuk oranı için ilçe bazlı bir TÜİK yayını bulamadığından İL'in genel
-  yaş dağılımını her iki ilçeye de aynı şekilde uyguluyor; nüfus yoğunluğu
-  da mahalle değil ilçe bazında sabit. Gerçek ilçe-içi/mahalle-içi
-  eşitsizlik bu yüzden İzmir'e göre daha az görünür (bkz.
-  `cities/eskisehir/adapter.py` docstring'i).
+- **TÜİK-şablonlu şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
+  bir kademe daha kaba çözünürlük**: İzmir'in mahalle seviyesinde CKAN
+  nüfus verisinin aksine bu adapter'lar yaşlı/çocuk oranı için ilçe bazlı
+  bir TÜİK yayını bulamadığından İL'in genel yaş dağılımını (0-14 ve 65+)
+  tüm ilçelere aynı şekilde uyguluyor; nüfus yoğunluğu da mahalle değil
+  ilçe bazında sabit (ilçe alanı OSM idari sınırından hesaplandığı için
+  kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
+  ilçe-içi/mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
+  (bkz. `core/ilce_table_adapter.py` ve her şehrin `adapter.py`
+  docstring'i).
 
 ## Lisans
 

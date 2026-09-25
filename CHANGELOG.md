@@ -3,6 +3,40 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## v1.7.0 - 2026-09-25
+
+- Üç yeni şehir eklendi: **Antalya** (Muratpaşa + Konyaaltı + Kepez +
+  Döşemealtı + Aksu), **Mersin** (Yenişehir + Akdeniz + Mezitli +
+  Toroslar) ve **Adana** (Seyhan + Yüreğir + Çukurova + Sarıçam) - hepsi
+  TÜİK-statik-CSV şablonuyla, aynı `mediterranean` OSM özütünü paylaşarak.
+  İlçe nüfusları (ADNKS 2025) il toplamına tam eşit çıkana kadar
+  doğrulandı (Adana'da iki kaynak arasındaki çelişki bu toplam kontrolüyle
+  çözüldü); il düzeyi 0-14/65+ oranları üç yaş grubunun il toplamına
+  eşitliği kontrol edilerek alındı; SEGE-2022 skorları resmi PDF'ten
+  makine okumasıyla aktarıldı (elle yazılmadı). bbox'lar yoğun-mahalle
+  yöntemiyle çizildi ve yalnızca CSV'deki ilçelerle kesiştiği gerçek OSM
+  verisiyle doğrulandı; her üç şehirde `build_neighborhood_layer` gerçek
+  veriyle sıfır NaN üretti. Landsat/HVI pipeline'ı bu şehirler için henüz
+  çalıştırılmadı.
+- Ortak TÜİK-şablonu mantığı `core/ilce_table_adapter.py`'ye alındı;
+  Eskişehir ve Şanlıurfa adapter'ları ince sarmalayıcıya dönüştü (kod
+  kopyası yerine). Şanlıurfa'nın çıktısı gerçek OSM verisiyle refactor
+  öncesi/sonrası birebir aynı (`assert_frame_equal`). CSV'de olmayan bir
+  ilçenin mahalleleri bbox'a girerse artık bir UYARI basılıyor (önceden o
+  yollar sessizce HVI'dan dışlanıyordu).
+- **Veri düzeltmesi**: Şanlıurfa'nın `COCUK_ORAN`'ı TÜİK'in 0-17 tanımlı
+  %43,3'ü idi (projenin 0-14 tanımıyla uyumsuz); gerçek il 0-14 oranı
+  %36,79 ile değiştirildi (yaşlı %4,51). Eskişehir'in oranları da
+  gerçek 2025 değerlerine çekildi (çocuk %16,45 -> %16,11, yaşlı %13,05 ->
+  %13,72). `docs/eskisehir/` altındaki yayınlanmış çıktı eski oranlarla
+  üretilmişti, bir sonraki `--force` çalıştırmasında yenilenir.
+- Gece ısı adası (MODIS) çıktıları da artık sürüm damgalı önbellek
+  kullanıyor ve `--force` ile yeniden üretilebiliyor (#18).
+- Yeni testler: ortak modülün davranışı (konumsal mahalle-ilçe eşlemesi,
+  Türkçe isim normalizasyonu, yoğunluk formülü, eksik-ilçe uyarısı) ve
+  repoyla gelen tüm şehir CSV'lerinin bütünlüğü (oran birimi, ilçe
+  eşleşmesi, SEGE aralığı).
+
 ## v1.6.0 - 2026-09-23
 
 - `landsat.max_cloud_cover` ve `landsat.max_scenes_per_tile` artık config

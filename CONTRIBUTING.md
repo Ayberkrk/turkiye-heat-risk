@@ -98,12 +98,32 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
   OLMADIĞINDA kullanılabilecek şablon - TÜİK'in herkese açık, ilçe
   seviyesindeki ADNKS nüfus/yaş yayınlarını statik CSV olarak kullanır.
   Bu şablon, kendi CKAN portalı olmayan HERHANGİ bir Türkiye şehri için
-  neredeyse değişiklik yapmadan uyarlanabilir - sadece `ilce_nufus.csv`
-  ve `sege_2022_ilce.csv` içindeki satırları o şehrin ilçeleriyle
-  değiştirmek yeterlidir. Not: bu yaklaşım nüfus yoğunluğunu ve yaşlı/
+  neredeyse değişiklik yapmadan uyarlanabilir - ortak mantık
+  `src/core/ilce_table_adapter.py`'de, o şehrin adapter'ı sadece kendi
+  `ilce_nufus.csv` ve `sege_2022_ilce.csv` yollarını verir (Şanlıurfa,
+  Antalya, Mersin ve Adana böyle eklendi; en kısa örnek
+  `src/cities/adana/`). Not: bu yaklaşım nüfus yoğunluğunu ve yaşlı/
   çocuk oranını ilçe seviyesinde sabitler (mahalle içi farklılığı
   yakalayamaz) - CKAN gibi daha ince taneli bir kaynak varsa İzmir'in
   yöntemi tercih edilmeli.
+
+**TÜİK-şablonlu bir şehir eklerken dikkat (yapılan hatalardan):**
+- `ilce_nufus.csv` için ilçe nüfuslarının toplamının resmi il toplamına
+  eşit çıktığını kontrol et (toplamı tutmayan kaynak yanlıştır).
+- `YASLI_ORAN`/`COCUK_ORAN` **0-1 arası kesir** olmalı ve çocuk oranı
+  **0-14** yaş tanımıyla verilmeli. Haberlerdeki "çocuk nüfus oranı"
+  genellikle TÜİK'in 0-17 tanımıdır (Şanlıurfa'da %43,3 vs gerçek 0-14
+  %36,8) - kullanma; il için 0-14 / 15-64 / 65+ sayılarını al ve üç
+  grubun toplamının il toplamına eşitliğini doğrula.
+- SEGE-2022 skorlarını ikincil kaynaklardan değil resmi rapordan al
+  (baka.gov.tr'deki PDF; Ek-1 ve il tabloları). Metin `pypdf` ile
+  çıkarılabilir; ondalık ayraç virgüldür (`3,173` = 3.173).
+- bbox'ı tam idari sınırdan değil, küçük/yoğun (<3 km²) mahalle
+  kümesinden çiz ve yalnızca CSV'deki ilçelerle kesiştiğini kontrol et
+  (`build_neighborhood_layer` CSV'de olmayan ilçe görürse UYARI basar).
+- OSM özütünü indirirken `curl -C -` (devam ettirme) KULLANMA: sunucudaki
+  `-latest` dosyası güncellenirse yarım eski + yeni parçadan bozuk bir
+  dosya oluşur; Content-Length ile boyutu doğrula.
 
 Farklı bir veri kaynağı biçimin varsa (ör. GeoJSON, doğrudan bir API)
 sadece bu iki fonksiyonun imzasına uymak yeterlidir - CKAN'a veya

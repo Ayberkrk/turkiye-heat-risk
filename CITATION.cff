@@ -12,8 +12,8 @@ abstract: >-
   Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
   birleştirerek sokak ölçekli, açıklanabilir bir Isı Hassasiyet Endeksi
   (HVI) üreten, tekrar üretilebilir kentsel ısı riski analiz hattı.
-  Şehirden bağımsız bir mimariye sahiptir; İzmir, Eskişehir ve Şanlıurfa
-  şu an desteklenen üç örnektir.
+  Şehirden bağımsız bir mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa,
+  Antalya, Mersin ve Adana şu an desteklenen altı şehirdir.
 authors:
   - family-names: Korkmaz
     given-names: Ayberk
@@ -29,5 +29,5 @@ keywords:
   - turkey
   - python
   - folium
-version: 1.6.0
-date-released: "2026-09-23"
+version: 1.7.0
+date-released: "2026-09-25"
