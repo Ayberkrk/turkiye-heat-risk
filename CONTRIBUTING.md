@@ -95,8 +95,13 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
   normalizasyonu, konumsal (isme göre değil) mahalle-ilçe eşlemesi ve
   resmi bir raporu (SEGE-2022) küçük bir referans CSV olarak repoya gömme.
 - `src/cities/eskisehir/adapter.py`: belediyeye özel bir portal
-  OLMADIĞINDA kullanılabilecek şablon - TÜİK'in herkese açık, ilçe
-  seviyesindeki ADNKS nüfus/yaş yayınlarını statik CSV olarak kullanır.
+  OLMADIĞINDA kullanılabilecek şablon - TÜİK ADNKS ilçe yaş sayımlarını
+  (İŞKUR il faaliyet raporları ya da TÜİK tabloları) statik CSV olarak
+  kullanır. İlçe düzeyinde doğrulanabilir sayım varsa onu tercih et; yoksa
+  ya da şüpheliyse il düzeyi 0-14/15-64/65+ oranlarını kullanmak kabul
+  edilebilir bir yedektir (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana
+  böyle), ama bunu adapter docstring'inde açıkça yaz. Veri yılını ve
+  kaynağı adapter ve config atfında belirt.
   Bu şablon, kendi CKAN portalı olmayan HERHANGİ bir Türkiye şehri için
   neredeyse değişiklik yapmadan uyarlanabilir - ortak mantık
   `src/core/ilce_table_adapter.py`'de, o şehrin adapter'ı sadece kendi
@@ -118,9 +123,25 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
 - SEGE-2022 skorlarını ikincil kaynaklardan değil resmi rapordan al
   (baka.gov.tr'deki PDF; Ek-1 ve il tabloları). Metin `pypdf` ile
   çıkarılabilir; ondalık ayraç virgüldür (`3,173` = 3.173).
-- bbox'ı tam idari sınırdan değil, küçük/yoğun (<3 km²) mahalle
-  kümesinden çiz ve yalnızca CSV'deki ilçelerle kesiştiğini kontrol et
-  (`build_neighborhood_layer` CSV'de olmayan ilçe görürse UYARI basar).
+- bbox'ı elle yazma, tam idari sınırdan da alma: `tools/fit_city_bbox.py`
+  ilçenin küçük/yoğun (<3 km²) mahalle kümesinden çizer ve sonucu gerçek
+  OSM'de ölçer (aşağıdaki kapsam). Bölge özütlerini bir dizine
+  `<bolge>.osm.pbf` adıyla koyup `python tools/fit_city_bbox.py <sehir>
+  --pbf-dir <dizin> [--apply]` çalıştır.
+- **Kapsam** = bbox'taki yolların kaçının demografisi eşlenmiş bir mahalleye
+  düştüğü. CSV bütünlük testleri bunu ölçemez; yalnızca gerçek OSM sınırları
+  gösterir. `python validate_city.py <sehir> --osm-coverage` en az %60
+  ister. Bulunan tuzaklar: OSM'de merkez ilçe "<İl> Merkez" yazılır, tabloda
+  "Merkez" (adapter bunu eşler); OSM'deki mahalle sınırları küçük şehirlerde
+  bazen kentin yarısını örtmez; sabit bir koordinat karesi (0,2 derece)
+  çoğu zaman yanlış yere düşer (Kilis, Kilis'e değil Gaziantep'e düşüyordu).
+- **Tek ilçeli şehirlerde** nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE
+  bileşenlerinin hepsi bir sabittir (tek bir değer) ve HVI sıralamasına katkı
+  vermez; HVI fiilen sıcaklık, ağaç örtüsü, sağlık/yeşil alan erişimi ve
+  yapılaşmadan oluşur. Bunu şehrin adapter'ında belirt, mümkünse komşu
+  ilçelerin verisini de ekleyerek çok ilçeli bir çekirdek kur.
+- `sege_2022_ilce.csv` içindeki `KADEME` rapordaki skor eşiklerine
+  uymalıdır (bunu bir test doğrular).
 - OSM özütünü indirirken `curl -C -` (devam ettirme) KULLANMA: sunucudaki
   `-latest` dosyası güncellenirse yarım eski + yeni parçadan bozuk bir
   dosya oluşur; Content-Length ile boyutu doğrula.
@@ -137,15 +158,19 @@ yapmana gerek yok, `src/core/paths.py` bunu senin için halleder.
 
 ```bash
 python validate_city.py <sehir>
+python validate_city.py <sehir> --osm-coverage --pbf <bolge>.osm.pbf   # gerçek OSM ile kapsam
 ```
 
-Bu, hiçbir veri indirmeden/işlemeden şunları kontrol eder:
+Bu, hiçbir veri indirmeden/işlemeden şunları kontrol eder (`--osm-coverage`
+hariç, o indirilmiş bir OSM özütü ister):
 - `config.yaml`'ın gerekli tüm alanları içerdiğini
 - `bbox`'ın geçerli bir koordinat aralığı olduğunu
 - Adapter modülünün import edilebildiğini ve iki fonksiyonu da
   uyguladığını
 - OSM pbf URL'inin ve (varsa) CKAN tabanlı nüfus kaynağının gerçekten
   erişilebilir olduğunu
+- (`--osm-coverage` ile) bbox'taki yolların yeterli payının demografisi
+  eşlenmiş bir mahalleye düştüğünü
 
 Hata varsa script bunları listeleyip çıkış kodu 1 ile sonlanır.
 

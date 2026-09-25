@@ -1,7 +1,7 @@
 """Yeni bir şehir config.yaml'ının temel doğruluğunu kontrol eder.
 
 Kullanım:
-    python validate_city.py <sehir>
+    python validate_city.py <sehir> [--osm-coverage [--pbf DOSYA] [--min-coverage 0.6]]
 
 Kontrol ettikleri:
   1. `src/cities/<sehir>/config.yaml` var mı ve gerekli tüm alanları içeriyor mu
@@ -10,6 +10,8 @@ Kontrol ettikleri:
      (`fetch_population_data`, `build_neighborhood_layer`) uyguluyor mu
   4. OSM `.pbf` adresi erişilebilir mi
   5. Nüfus veri kaynağı (CKAN vb.) gerçekten erişilebilir mi (varsa)
+  6. (`--osm-coverage` ile) bbox'taki yolların yeterli payı, gerçek OSM
+     sınırlarıyla demografisi eşlenmiş bir mahalleye düşüyor mu
 
 Bu script hiçbir veri indirmez/işlemez - sadece config'in "çalışmaya hazır"
 olup olmadığını hızlıca doğrular. Tam bir doğrulama için pipeline.py'ı
@@ -30,8 +32,15 @@ if str(SRC_DIR) not in sys.path:
 import requests  # noqa: E402
 
 from core.city_config import CITIES_DIR, load_city_config, validate_config_dict  # noqa: E402
+from core.coverage import measure_city_coverage  # noqa: E402
+from core.paths import resolve_pbf_path  # noqa: E402
 
 CKAN_CHECK_TIMEOUT_SECONDS = 15
+
+# bbox'taki yolların en az bu payı demografisi eşlenmiş bir mahalleye düşmeli
+# (aşağıya bkz. _coverage_errors); komşu ilçelerin mahalleleri bbox'ın
+# kenarlarına her zaman biraz taşar, o yüzden %100 beklenmez.
+DEFAULT_MIN_COVERAGE = 0.6
 
 # Gerçek çağrı yerlerindeki (hvi.py) pozisyonel argüman sayısı - isim değil
 # sayı karşılaştırılıyor, çünkü adapter yazarları parametrelere farklı isim
@@ -127,12 +136,38 @@ def validate(city_id: str) -> list[str]:
     return errors
 
 
+def _coverage_errors(config, pbf_path: Path, min_coverage: float) -> list[str]:
+    """Şehrin adapter'ını gerçek OSM özütüne karşı çalıştırıp HVI kapsamını
+    kontrol eder (bkz. `core/coverage.py`). CSV bütünlük testlerinin
+    yakalayamadığı bbox/ilçe-adı hatalarını (kapsam %0) burada görürsün.
+    """
+    if not pbf_path.exists():
+        return [f"OSM özütü bulunamadı ({pbf_path}); --osm-coverage için önce indir (bkz. config.yaml osm.pbf_url)"]
+    result = measure_city_coverage(config, pbf_path)
+    if result["coverage"] < min_coverage:
+        return [
+            f"OSM kapsamı yetersiz: bbox'taki {result['yol']:,} yolun yalnızca %{result['coverage'] * 100:.1f}'i "
+            f"demografisi olan bir mahalleye düşüyor (en az %{min_coverage * 100:.0f} bekleniyor; "
+            f"bulunan ilçeler: {result['ilce']}). bbox'ı yoğun kentsel çekirdeğe göre yeniden çiz "
+            f"ya da ilçe adının OSM'deki yazımını kontrol et."
+        ]
+    return []
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("city", help="src/cities/<sehir>/config.yaml içindeki şehir kimliği")
+    parser.add_argument("--osm-coverage", action="store_true",
+                        help="Gerçek OSM özütüyle adapter'ı çalıştırıp HVI kapsamını da kontrol et (özüt indirilmiş olmalı)")
+    parser.add_argument("--pbf", type=Path, default=None,
+                        help="--osm-coverage için OSM .pbf yolu (varsayılan: data/raw/<sehir>/<sehir>.osm.pbf)")
+    parser.add_argument("--min-coverage", type=float, default=DEFAULT_MIN_COVERAGE,
+                        help=f"--osm-coverage için en düşük kabul edilen kapsam, 0-1 (varsayılan {DEFAULT_MIN_COVERAGE})")
     args = parser.parse_args()
 
     errors = validate(args.city)
+    if not errors and args.osm_coverage:
+        errors = _coverage_errors(load_city_config(args.city), args.pbf or resolve_pbf_path(args.city), args.min_coverage)
     if errors:
         print(f"'{args.city}' doğrulaması BAŞARISIZ:")
         for e in errors:

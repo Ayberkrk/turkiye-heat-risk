@@ -1,0 +1,1 @@
+"""Bitlis city data adapter."""

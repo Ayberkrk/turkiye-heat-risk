@@ -1,0 +1,36 @@
+city:
+  name: "Kocaeli"
+  # İlçe yaş verisinin doğrulandığı kentsel çekirdek ilçeler.
+  # bbox: tools/fit_city_bbox.py ile yoğun mahalle kümesinden çizildi (tam); gerçek OSM'de HVI kapsamı %99 (17,336 yol).
+  bbox: [29.72, 40.63, 30.09, 40.94]
+  crs: "EPSG:32635"
+  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2023 (Kocaeli İŞKUR İl İstihdam ve Mesleki Eğitim Kurulu faaliyet raporu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+
+landsat:
+  max_cloud_cover: 30
+  max_scenes_per_tile: 3
+
+osm:
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/marmara-latest.osm.pbf"
+  admin_level_ilce: 6
+  admin_level_mahalle: 8
+  highway_types:
+    - motorway
+    - trunk
+    - primary
+    - secondary
+    - tertiary
+    - residential
+    - living_street
+    - unclassified
+    - motorway_link
+    - trunk_link
+    - primary_link
+    - secondary_link
+    - tertiary_link
+
+roads:
+  buffer_meters: 10
+
+population:
+  adapter: "cities.kocaeli.adapter"

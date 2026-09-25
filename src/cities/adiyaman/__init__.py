@@ -1,0 +1,1 @@
+"""Adıyaman city data adapter."""

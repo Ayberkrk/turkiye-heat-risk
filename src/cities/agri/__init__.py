@@ -1,0 +1,1 @@
+"""Ağrı city data adapter."""

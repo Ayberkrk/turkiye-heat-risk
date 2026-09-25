@@ -17,9 +17,13 @@ geometric-mean HVI (temperature, tree canopy, population density,
 elderly/child population share, distance to hospital/pharmacy, distance to
 green space, built-up density), and pixel-level Jenks natural-breaks
 categorization shared across years. The architecture is city-agnostic -
-`src/core/` never changes when a new city is added; Izmir, Eskişehir,
-Şanlıurfa, Antalya, Mersin and Adana are the six supported cities today (see
-[CONTRIBUTING.md](CONTRIBUTING.md) to add another).
+`src/core/` never changes when a new city is added; 63 cities are supported
+today (Izmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana and 57 more, listed
+with their data sources and measured OSM coverage in
+[the register](docs/turkiye-ilce-yas-verisi-taramasi.md); see
+[CONTRIBUTING.md](CONTRIBUTING.md) to add another). Cities that cover a single
+district have constant demographic components, so their maps show heat and
+green cover, not demographic vulnerability.
 
 Quick start (produces a single-file interactive HTML map):
 
@@ -38,8 +42,10 @@ repository.
 Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
 Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin ve Adana şu an desteklenen
-altı şehir, yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
+mimariye sahiptir; şu an 63 şehir destekleniyor (İzmir, Eskişehir, Şanlıurfa,
+Antalya, Mersin, Adana ve 57 şehir daha; kaynakları ve gerçek OSM ile ölçülen
+kapsamları [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
+Yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 **Canlı harita:** GitHub Pages'te barındırılan, veri talep üzerine yüklenen
@@ -111,7 +117,14 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
     kullanan şablon - kendi CKAN'ı olmayan başka bir Türkiye şehri için
     neredeyse değişiklik yapmadan uyarlanabilir. Ortak mantık
     `src/core/ilce_table_adapter.py`'de; Şanlıurfa, Antalya, Mersin ve Adana
-    bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi.
+    bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi. Diğer
+    şehirler de aynı şablonla, ilçe yaş sayımları İŞKUR il faaliyet
+    raporlarından ya da il düzeyi ADNKS oranlarından alınarak eklendi; her
+    şehrin veri yılı ve kaynağı kayıt sayfasında.
+    `tools/fit_city_bbox.py` bbox'ı yoğun mahalle kümesinden çizer ve gerçek
+    OSM ile HVI kapsamını ölçer (eşik %60, bkz. `validate_city.py
+    --osm-coverage`). Merkez ilçe OSM'de "<İl> Merkez", CSV'de "Merkez"
+    (ya da tersi) yazılmış olabilir; `core/ilce_table_adapter.py` bunu eşler.
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
@@ -590,7 +603,13 @@ turkiye-heat-risk/
   daha değişken olabilir. Ayrıca 2022 tarihli, tek seferlik bir araştırma;
   gelecekte güncellenmiş bir SEGE raporu yayımlanırsa
   `sege_2022_ilce.csv` güncellenmelidir.
-- **TÜİK-şablonlu şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
+- **Tek ilçeli şehirler**: 63 şehrin 47'si tek ilçe kapsar; bu şehirlerde
+  nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE bileşenleri tüm mahallelerde
+  aynı değeri alır ve HVI'ı ayırt etmez. Harita yalnızca LST, NDVI ve
+  altyapı bileşenlerini yansıtır. Ayrıca Ağrı, Iğdır, Kırklareli ve
+  Karaman'da ilçe sayımı il düzeyinden inandırıcı olmayacak kadar
+  saptığı için il düzeyi 0-14/65+ oranları kullanılır.
+- **TÜİK-şablonlu ana şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
   bir kademe daha kaba çözünürlük**: İzmir'in mahalle seviyesinde CKAN
   nüfus verisinin aksine bu adapter'lar yaşlı/çocuk oranı için ilçe bazlı
   bir TÜİK yayını bulamadığından İL'in genel yaş dağılımını (0-14 ve 65+)
