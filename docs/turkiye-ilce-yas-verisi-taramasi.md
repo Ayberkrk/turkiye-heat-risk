@@ -18,6 +18,7 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Artvin | 2021 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/71961/artvin.pdf) |
 | Aydın | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/71962/aydin.pdf) |
 | Balıkesir | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94373/balikesir.pdf) |
+| Bitlis | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/71970/bitlis.pdf) |
 | Bursa | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94382/bursa.pdf) |
 | Diyarbakır | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94770/diyarbakir.pdf) |
 | Elazığ | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94773/elazig.pdf) |
@@ -55,7 +56,7 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-Adıyaman, Aksaray, Ardahan, Batman, Bilecik, Bingöl, Bitlis, Bolu, Burdur, Çanakkale, Çankırı, Çorum, Denizli, Düzce, Edirne, Erzincan, Giresun, Hatay, Iğdır, Isparta, İstanbul, Kahramanmaraş, Karaman, Kars, Kastamonu, Kilis, Kırıkkale, Kırşehir, Malatya, Manisa, Mardin, Muğla, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
+Adıyaman, Aksaray, Ardahan, Batman, Bilecik, Bingöl, Bolu, Burdur, Çanakkale, Çankırı, Çorum, Denizli, Düzce, Edirne, Erzincan, Giresun, Hatay, Iğdır, Isparta, İstanbul, Kahramanmaraş, Karaman, Kars, Kastamonu, Kilis, Kırıkkale, Kırşehir, Malatya, Manisa, Mardin, Muğla, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 
