@@ -1,0 +1,46 @@
+# Mersin'a özel parametreler.
+#
+# İzmir'in aksine Mersin Büyükşehir Belediyesi'nden mahalle düzeyinde nüfus/yaş
+# veren bir CKAN portalı kullanılmıyor - Eskişehir/Şanlıurfa'daki gibi
+# TÜİK-statik-CSV şablonu kullanıldı (bkz. adapter.py ve core/ilce_table_adapter.py).
+
+city:
+  name: "Mersin"
+  # Kentsel çekirdek: Yenişehir + Akdeniz + Mezitli + Toroslar (büyükşehrin dört merkez
+  # ilçesi). Tarsus ayrı bir yerleşim (doğuda ~25 km) ve Erdemli/Silifke gibi kıyı
+  # ilçeleri bilinçli olarak dışarıda bırakıldı; bbox'ın doğu kenarı Tarsus'a
+  # taşmayacak şekilde çekildi.
+  bbox: [34.48, 36.71, 34.84, 36.91]  # [batı, güney, doğu, kuzey]
+  crs: "EPSG:32636"  # UTM 36N - 30°E-36°E dilimi (Antalya/Mersin/Adana bu dilimde)
+  attribution: "Nüfus: TÜİK ADNKS 2025, SEGE-2022 (T.C. Sanayi ve Teknoloji Bakanlığı)."
+
+landsat:
+  max_cloud_cover: 30
+  max_scenes_per_tile: 3
+
+osm:
+  # download.openstreetmap.fr Türkiye'yi bölgelere ayırıyor - Mersin Akdeniz
+  # bölgesinde (Antalya/Mersin/Adana aynı `mediterranean` özütünü paylaşır).
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/mediterranean-latest.osm.pbf"
+  admin_level_ilce: 6
+  admin_level_mahalle: 8
+  highway_types:
+    - motorway
+    - trunk
+    - primary
+    - secondary
+    - tertiary
+    - residential
+    - living_street
+    - unclassified
+    - motorway_link
+    - trunk_link
+    - primary_link
+    - secondary_link
+    - tertiary_link
+
+roads:
+  buffer_meters: 10
+
+population:
+  adapter: "cities.mersin.adapter"
