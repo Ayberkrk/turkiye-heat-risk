@@ -12,8 +12,10 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Adana | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94370/adana.pdf) |
 | Afyonkarahisar | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/72033/afyonkarahisar.pdf) |
 | Amasya | 2021 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/57061/amasya.pdf) |
+| Aksaray | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/94366/aksaray.pdf) |
 | Ankara | 2021 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/71959/ankara.pdf) |
 | Antalya | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94375/antalya.pdf) |
+| Adıyaman | 2022 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/94746/adiyaman.pdf) |
 | Ağrı | 2021 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/57059/agri.pdf) |
 | Artvin | 2021 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/71961/artvin.pdf) |
 | Aydın | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/71962/aydin.pdf) |
@@ -56,7 +58,7 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-Adıyaman, Aksaray, Ardahan, Batman, Bilecik, Bingöl, Bolu, Burdur, Çanakkale, Çankırı, Çorum, Denizli, Düzce, Edirne, Erzincan, Giresun, Hatay, Iğdır, Isparta, İstanbul, Kahramanmaraş, Karaman, Kars, Kastamonu, Kilis, Kırıkkale, Kırşehir, Malatya, Manisa, Mardin, Muğla, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
+Ardahan, Batman, Bilecik, Bingöl, Bolu, Burdur, Çanakkale, Çankırı, Çorum, Denizli, Düzce, Edirne, Erzincan, Giresun, Hatay, Iğdır, Isparta, İstanbul, Kahramanmaraş, Karaman, Kars, Kastamonu, Kilis, Kırıkkale, Kırşehir, Malatya, Manisa, Mardin, Muğla, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 
