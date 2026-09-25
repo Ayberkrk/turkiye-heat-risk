@@ -3,6 +3,34 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## v1.8.0 - 2026-09-25
+
+- 57 yeni şehir eklendi (toplam 63): her biri iki CSV (`ilce_nufus.csv`,
+  `sege_2022_ilce.csv`) ve ince bir `adapter.py` ile. Kaynaklar, kapsanan
+  ilçeler ve gerçek OSM ile ölçülen HVI kapsamı
+  `docs/turkiye-ilce-yas-verisi-taramasi.md` kayıt sayfasında.
+- **Kapsam denetimi**: `core/coverage.py` ve `validate_city.py --osm-coverage`
+  bbox'taki yolların kaçının demografisi eşlenmiş bir mahalleye düştüğünü
+  gerçek OSM özütüyle ölçer (eşik %60). Gerçek OSM'de denenen şehirlerin
+  önemli bölümünde kapsam sıfırdı (ilçe adı ya da bbox uyuşmazlığı); HVI
+  aşamasında boş dizide Jenks hatasıyla çöküyordu. Kapsamı %60'ın altında
+  kalan 18 aday elendi.
+- `tools/fit_city_bbox.py`: bbox'ı ilçenin tamamından ya da elle yazılmış
+  koordinat karesinden değil, yoğun mahalle kümesinden çizer ve kapsamı
+  ölçer.
+- **Adapter düzeltmesi**: Merkez ilçe OSM'de "<İl> Merkez", CSV'de "Merkez"
+  (ya da tersi) yazıldığında hiçbir mahalle eşleşmiyordu. Ortak modül artık
+  bunu, yalnızca tek adaylı ve belirsizlik olmayan durumda eşler. Geçersiz
+  OSM poligonları (ör. Kars) artık okumayı çökertmiyor.
+- **Veri düzeltmeleri**: SEGE `KADEME`/`IL_ICI_SIRALAMA` alanları resmi PDF'e
+  göre düzeltildi (Diyarbakır Yenişehir, Eskişehir Tepebaşı, Iğdır, Kırıkkale,
+  Muğla Menteşe, Samsun İlkadım) ve `KADEME` skor eşiklerinden bir testle
+  doğrulanıyor. İlçe çocuk oranı il ortalamasından inandırıcı olmayacak
+  kadar sapan Kırklareli, Ağrı, Iğdır ve Karaman için il düzeyi 0-14/65+
+  oranları kullanıldı.
+- 47 şehir tek ilçe kapsar: nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE
+  bileşenleri bu şehirlerde sabittir (bkz. README sınırlamalar).
+
 ## v1.7.0 - 2026-09-25
 
 - Üç yeni şehir eklendi: **Antalya** (Muratpaşa + Konyaaltı + Kepez +

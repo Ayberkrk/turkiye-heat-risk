@@ -17,11 +17,13 @@ geometric-mean HVI (temperature, tree canopy, population density,
 elderly/child population share, distance to hospital/pharmacy, distance to
 green space, built-up density), and pixel-level Jenks natural-breaks
 categorization shared across years. The architecture is city-agnostic -
-`src/core/` never changes when a new city is added; Izmir, Eskişehir,
-Şanlıurfa, Antalya, Mersin, Adana, Gaziantep, Bursa, Ankara, Aydın,
-Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya, Nevşehir,
-Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hakkâri, Hatay, Muğla, Burdur, Kastamonu, Kars, Tokat, Ardahan, Batman, Bingöl, Niğde, Manisa, Bilecik, Bayburt, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Yozgat, Zonguldak, Rize, Van, Samsun, Osmaniye, Uşak, Sinop, Yalova, Ordu, Tunceli, Muş, Sakarya, Şırnak, Tekirdağ, Trabzon and İstanbul are the eighty-one supported cities today (see
-[CONTRIBUTING.md](CONTRIBUTING.md) to add another).
+`src/core/` never changes when a new city is added; 63 cities are supported
+today (Izmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana and 57 more, listed
+with their data sources and measured OSM coverage in
+[the register](docs/turkiye-ilce-yas-verisi-taramasi.md); see
+[CONTRIBUTING.md](CONTRIBUTING.md) to add another). Cities that cover a single
+district have constant demographic components, so their maps show heat and
+green cover, not demographic vulnerability.
 
 Quick start (produces a single-file interactive HTML map):
 
@@ -40,11 +42,10 @@ repository.
 Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
 Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
-Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
-Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hakkâri, Hatay, Muğla, Burdur, Kastamonu, Kars, Tokat, Ardahan, Batman, Bingöl, Niğde, Manisa, Bilecik, Bayburt, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Yozgat, Zonguldak, Rize, Van, Samsun, Osmaniye, Uşak, Sinop, Yalova, Ordu, Tunceli, Muş, Sakarya, Şırnak, Tekirdağ, Trabzon ve İstanbul ile birlikte şu an seksen bir
-şehir destekleniyor. Yeni bir şehir eklemek
-`src/core/` içindeki hiçbir dosyayı değiştirmeden
+mimariye sahiptir; şu an 63 şehir destekleniyor (İzmir, Eskişehir, Şanlıurfa,
+Antalya, Mersin, Adana ve 57 şehir daha; kaynakları ve gerçek OSM ile ölçülen
+kapsamları [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
+Yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 **Canlı harita:** GitHub Pages'te barındırılan, veri talep üzerine yüklenen
@@ -58,8 +59,6 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
 ![İzmir HVI interaktif haritası: yol ağı Isı Hassasiyet Endeksi'ne göre turuncudan bordoya renklendirilmiş, sağ üstte katman kontrolü, sol altta yıl seçici ve gösterge](assets/screenshots/harita-genel.png)
-
-81 il için kaynak doğrulama durumu: [ilçe yaş verisi taraması](docs/turkiye-ilce-yas-verisi-taramasi.md).
 
 ## İçindekiler
 
@@ -113,54 +112,19 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
 İki referans örnek farklı veri kaynağı senaryolarını gösterir:
   - `src/cities/izmir/adapter.py`: belediyenin kendi CKAN tabanlı açık veri
     portalı varsa (`acikveri.bizizmir.com`), mahalle seviyesinde nüfus/yaş.
-  - `src/cities/eskisehir/adapter.py`: böyle bir portal YOKSA, ADNKS
-    nüfus ve yaş oranlarını ilçe seviyesinde doğrulanmış statik CSV'lerde
+  - `src/cities/eskisehir/adapter.py`: böyle bir portal YOKSA, TÜİK'in
+    herkese açık ilçe seviyesindeki ADNKS yayınlarını statik CSV olarak
     kullanan şablon - kendi CKAN'ı olmayan başka bir Türkiye şehri için
     neredeyse değişiklik yapmadan uyarlanabilir. Ortak mantık
     `src/core/ilce_table_adapter.py`'de; Şanlıurfa, Antalya, Mersin ve Adana
-    bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi.
-    Gaziantep, Bursa ve bu README'de listelenen diğer şehirlerde TÜİK ADNKS
-    yaş grubu sayımları İŞKUR il faaliyet raporlarında ilçe kırılımıyla
-    yayımlandığından doğrudan kullanılabildi. Örnekler:
-    [Gaziantep 2023](https://media.iskur.gov.tr/94394/gaziantep.pdf),
-    [Bursa 2023](https://media.iskur.gov.tr/94382/bursa.pdf),
-    [Ankara 2021](https://media.iskur.gov.tr/71959/ankara.pdf),
-    [Aydın 2022](https://media.iskur.gov.tr/71962/aydin.pdf),
-    [Diyarbakır 2023](https://media.iskur.gov.tr/94770/diyarbakir.pdf),
-    [Konya 2023](https://media.iskur.gov.tr/94797/konya.pdf) ve
-    [Sivas 2022](https://media.iskur.gov.tr/94350/sivas.pdf). Her şehir klasöründeki
-    adapter ve config dosyası kullanılan veri yılını ve kaynağı kaydeder.
-    Bu veri bulunmayan şehirlerde il yaş oranlarını ilçelere
-    kopyalamayın; doğrulanmış ilçe verisi bulunana kadar şehri eklemeyin.
-
-  Yeni eklenen şehirlerde kullanılan ADNKS veri yılı ve İŞKUR raporu:
-
-  | Şehir | Veri yılı | İŞKUR faaliyet raporu |
-  | --- | ---: | --- |
-  | Ankara | 2021 | [PDF](https://media.iskur.gov.tr/71959/ankara.pdf) |
-  | Aydın | 2022 | [PDF](https://media.iskur.gov.tr/71962/aydin.pdf) |
-  | Balıkesir | 2022 | [PDF](https://media.iskur.gov.tr/94373/balikesir.pdf) |
-  | Diyarbakır | 2023 | [PDF](https://media.iskur.gov.tr/94770/diyarbakir.pdf) |
-  | Elazığ | 2023 | [PDF](https://media.iskur.gov.tr/94773/elazig.pdf) |
-  | Erzurum | 2022 | [PDF](https://media.iskur.gov.tr/94392/erzurum.pdf) |
-  | Kayseri | 2022 | [PDF](https://media.iskur.gov.tr/94791/kayseri.pdf) |
-  | Kocaeli | 2023 | [PDF](https://media.iskur.gov.tr/94796/kocaeli.pdf) |
-  | Konya | 2023 | [PDF](https://media.iskur.gov.tr/94797/konya.pdf) |
-  | Nevşehir | 2023 | [PDF](https://media.iskur.gov.tr/94341/nevsehir.pdf) |
-  | Siirt | 2023 | [PDF](https://media.iskur.gov.tr/100474/siirt.pdf) |
-  | Sivas | 2022 | [PDF](https://media.iskur.gov.tr/94350/sivas.pdf) |
-  | Karabük | 2022 | [PDF](https://media.iskur.gov.tr/94787/karabuk.pdf) |
-  | Gümüşhane | 2022 | [PDF](https://media.iskur.gov.tr/94779/gumushane.pdf) |
-  | Kütahya | 2022 | [PDF](https://media.iskur.gov.tr/94798/kutahya.pdf) |
-  | Kırklareli | 2023 | [PDF](https://media.iskur.gov.tr/94794/kirklareli.pdf) |
-  | Bartın | 2021 | [PDF](https://media.iskur.gov.tr/71965/bartin.pdf) |
-  | Ağrı | 2021 | [PDF](https://media.iskur.gov.tr/57059/agri.pdf) |
-  | Amasya | 2021 | [PDF](https://media.iskur.gov.tr/57061/amasya.pdf) |
-  | Afyonkarahisar | 2022 | [PDF](https://media.iskur.gov.tr/72033/afyonkarahisar.pdf) |
-  | Artvin | 2021 | [PDF](https://media.iskur.gov.tr/71961/artvin.pdf) |
-  | Bitlis | 2022 | [PDF](https://media.iskur.gov.tr/71970/bitlis.pdf) |
-  | Adıyaman | 2022 | [PDF](https://media.iskur.gov.tr/94746/adiyaman.pdf) |
-  | Aksaray | 2022 | [PDF](https://media.iskur.gov.tr/94366/aksaray.pdf) |
+    bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi. Diğer
+    şehirler de aynı şablonla, ilçe yaş sayımları İŞKUR il faaliyet
+    raporlarından ya da il düzeyi ADNKS oranlarından alınarak eklendi; her
+    şehrin veri yılı ve kaynağı kayıt sayfasında.
+    `tools/fit_city_bbox.py` bbox'ı yoğun mahalle kümesinden çizer ve gerçek
+    OSM ile HVI kapsamını ölçer (eşik %60, bkz. `validate_city.py
+    --osm-coverage`). Merkez ilçe OSM'de "<İl> Merkez", CSV'de "Merkez"
+    (ya da tersi) yazılmış olabilir; `core/ilce_table_adapter.py` bunu eşler.
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
@@ -639,17 +603,20 @@ turkiye-heat-risk/
   daha değişken olabilir. Ayrıca 2022 tarihli, tek seferlik bir araştırma;
   gelecekte güncellenmiş bir SEGE raporu yayımlanırsa
   `sege_2022_ilce.csv` güncellenmelidir.
-- **TÜİK-şablonlu şehirlerde yaş verisinin çözünürlüğü**: Eskişehir,
-  Şanlıurfa, Antalya, Mersin ve Adana kayıtlarında ilçe yaş kırılımı
-  bulunamadığından il geneli 0-14 ve 65+ oranları ilçelere uygulanmıştır;
-  bu oranlar gerçek ilçe farklılıklarını göstermez. Gaziantep, Bursa, Ankara,
-  Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya,
-  Nevşehir, Siirt ve Sivas için ilçe yaş grubu sayımları kaynaklardan
-  doğrulanabildi ve CSV'lerde ilgili yıla ve ilçeye özgü oranlar kullanılır
-  (kaynak yılı her adapter'ın docstring'inde belirtilmiştir). Nüfus yoğunluğu tüm bu şehirlerde mahalle
-  değil ilçe bazında sabittir (ilçe alanı OSM idari sınırından hesaplandığı
-  için kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
-  mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
+- **Tek ilçeli şehirler**: 63 şehrin 47'si tek ilçe kapsar; bu şehirlerde
+  nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE bileşenleri tüm mahallelerde
+  aynı değeri alır ve HVI'ı ayırt etmez. Harita yalnızca LST, NDVI ve
+  altyapı bileşenlerini yansıtır. Ayrıca Ağrı, Iğdır, Kırklareli ve
+  Karaman'da ilçe sayımı il düzeyinden inandırıcı olmayacak kadar
+  saptığı için il düzeyi 0-14/65+ oranları kullanılır.
+- **TÜİK-şablonlu ana şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
+  bir kademe daha kaba çözünürlük**: İzmir'in mahalle seviyesinde CKAN
+  nüfus verisinin aksine bu adapter'lar yaşlı/çocuk oranı için ilçe bazlı
+  bir TÜİK yayını bulamadığından İL'in genel yaş dağılımını (0-14 ve 65+)
+  tüm ilçelere aynı şekilde uyguluyor; nüfus yoğunluğu da mahalle değil
+  ilçe bazında sabit (ilçe alanı OSM idari sınırından hesaplandığı için
+  kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
+  ilçe-içi/mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
   (bkz. `core/ilce_table_adapter.py` ve her şehrin `adapter.py`
   docstring'i).
 
