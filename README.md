@@ -42,7 +42,7 @@ Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
 mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
 Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
-Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hakkâri, Hatay, Muğla, Burdur, Kastamonu, Kars, Tokat, Ardahan, Batman, Bingöl, Niğde, Manisa, Bilecik, Bayburt, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Yozgat, Zonguldak, Rize, Van, Samsun, Osmaniye, Uşak, Sinop ve Yalova ile birlikte şu an yetmiş üç
+Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar, Artvin, Bitlis, Adıyaman, Aksaray, Çankırı, Erzincan, Iğdır, Isparta, Karaman, Kırıkkale, Giresun, Hakkâri, Hatay, Muğla, Burdur, Kastamonu, Kars, Tokat, Ardahan, Batman, Bingöl, Niğde, Manisa, Bilecik, Bayburt, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Yozgat, Zonguldak, Rize, Van, Samsun, Osmaniye, Uşak, Sinop, Yalova ve Ordu ile birlikte şu an yetmiş dört
 şehir destekleniyor. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
