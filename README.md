@@ -20,7 +20,7 @@ categorization shared across years. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; Izmir, Eskişehir,
 Şanlıurfa, Antalya, Mersin, Adana, Gaziantep, Bursa, Ankara, Aydın,
 Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya, Nevşehir,
-Siirt and Sivas are the twenty supported cities today (see
+Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli and Bartın are the twenty-five supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -42,7 +42,7 @@ Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
 mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
 Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
-Kayseri, Kocaeli, Konya, Nevşehir, Siirt ve Sivas ile birlikte şu an yirmi
+Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli ve Bartın ile birlikte şu an yirmi beş
 şehir destekleniyor. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
@@ -58,6 +58,8 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
 ![İzmir HVI interaktif haritası: yol ağı Isı Hassasiyet Endeksi'ne göre turuncudan bordoya renklendirilmiş, sağ üstte katman kontrolü, sol altta yıl seçici ve gösterge](assets/screenshots/harita-genel.png)
+
+81 il için kaynak doğrulama durumu: [ilçe yaş verisi taraması](docs/turkiye-ilce-yas-verisi-taramasi.md).
 
 ## İçindekiler
 
@@ -147,6 +149,11 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
   | Nevşehir | 2023 | [PDF](https://media.iskur.gov.tr/94341/nevsehir.pdf) |
   | Siirt | 2023 | [PDF](https://media.iskur.gov.tr/100474/siirt.pdf) |
   | Sivas | 2022 | [PDF](https://media.iskur.gov.tr/94350/sivas.pdf) |
+  | Karabük | 2022 | [PDF](https://media.iskur.gov.tr/94787/karabuk.pdf) |
+  | Gümüşhane | 2022 | [PDF](https://media.iskur.gov.tr/94779/gumushane.pdf) |
+  | Kütahya | 2022 | [PDF](https://media.iskur.gov.tr/94798/kutahya.pdf) |
+  | Kırklareli | 2023 | [PDF](https://media.iskur.gov.tr/94794/kirklareli.pdf) |
+  | Bartın | 2021 | [PDF](https://media.iskur.gov.tr/71965/bartin.pdf) |
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
