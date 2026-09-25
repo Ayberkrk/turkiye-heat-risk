@@ -20,7 +20,7 @@ categorization shared across years. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; Izmir, Eskişehir,
 Şanlıurfa, Antalya, Mersin, Adana, Gaziantep, Bursa, Ankara, Aydın,
 Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya, Nevşehir,
-Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli and Bartın are the twenty-five supported cities today (see
+Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın and Ağrı are the twenty-six supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -42,7 +42,7 @@ Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
 mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
 Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
-Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli ve Bartın ile birlikte şu an yirmi beş
+Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın ve Ağrı ile birlikte şu an yirmi altı
 şehir destekleniyor. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
@@ -154,6 +154,7 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
   | Kütahya | 2022 | [PDF](https://media.iskur.gov.tr/94798/kutahya.pdf) |
   | Kırklareli | 2023 | [PDF](https://media.iskur.gov.tr/94794/kirklareli.pdf) |
   | Bartın | 2021 | [PDF](https://media.iskur.gov.tr/71965/bartin.pdf) |
+  | Ağrı | 2021 | [PDF](https://media.iskur.gov.tr/57059/agri.pdf) |
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi

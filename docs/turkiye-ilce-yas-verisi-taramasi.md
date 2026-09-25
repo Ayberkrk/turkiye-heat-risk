@@ -12,6 +12,7 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Adana | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94370/adana.pdf) |
 | Ankara | 2021 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/71959/ankara.pdf) |
 | Antalya | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94375/antalya.pdf) |
+| Ağrı | 2021 | Eklendi | [İŞKUR raporu](https://media.iskur.gov.tr/57059/agri.pdf) |
 | Aydın | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/71962/aydin.pdf) |
 | Balıkesir | 2022 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94373/balikesir.pdf) |
 | Bursa | 2023 | Mevcut şehir verisi | [İŞKUR raporu](https://media.iskur.gov.tr/94382/bursa.pdf) |
@@ -43,13 +44,15 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 | --- | --- | --- |
 | Bayburt | İŞKUR tablosunda merkez ilçe yaş grupları toplamı nüfus toplamından 50 farklı görünüyor. | Toplamlar düzeltilip doğrulanana kadar eklenmedi. |
 | Rize | Aynı raporda yaş tablosu ile ayrı nüfus göstergesi arasında tutarsızlık bulundu. | Aynı referans yılı ve tanım teyit edilene kadar eklenmedi. |
-| Samsun | İlçe yaş tablosu ve merkez ilçe SEGE kayıtları kaynaklarda bulunuyor; bu geçişte merkez ilçe hücrelerinin tamamı ve toplam kontrolü bitirilmedi. | Aday; henüz eklenmedi. |
+| Samsun | İlçe yaş tablosu bulundu, ancak merkez ilçe hücreleri ve toplam kontrolü tamamlanmadı. | Aday; henüz eklenmedi. |
+| Hakkâri | İlçe yaş sayımları var; rapor çalışma çağındaki bandı “15–65” olarak etiketliyor. Şablondaki “15–64” tanımıyla uyumu doğrulanmalı. | Yaş bandı açıklığa kavuşana kadar eklenmedi. |
+| Van | İlçe yaş sayımları bulunan rapor 2020 verisini kullanıyor. Daha güncel ve eşleşen yaş tablosu bu turda doğrulanmadı. | Eski veri; eklenmedi. |
 
 ## Kalan iller
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-Adıyaman, Afyonkarahisar, Ağrı, Aksaray, Amasya, Ardahan, Artvin, Batman, Bilecik, Bingöl, Bitlis, Bolu, Burdur, Çanakkale, Çankırı, Çorum, Denizli, Düzce, Edirne, Erzincan, Giresun, Hakkâri, Hatay, Iğdır, Isparta, İstanbul, Kahramanmaraş, Karaman, Kars, Kastamonu, Kilis, Kırıkkale, Kırşehir, Malatya, Manisa, Mardin, Muğla, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Van, Yalova, Yozgat, Zonguldak.
+Adıyaman, Afyonkarahisar, Aksaray, Amasya, Ardahan, Artvin, Batman, Bilecik, Bingöl, Bitlis, Bolu, Burdur, Çanakkale, Çankırı, Çorum, Denizli, Düzce, Edirne, Erzincan, Giresun, Hatay, Iğdır, Isparta, İstanbul, Kahramanmaraş, Karaman, Kars, Kastamonu, Kilis, Kırıkkale, Kırşehir, Malatya, Manisa, Mardin, Muğla, Muş, Niğde, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Tokat, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 
