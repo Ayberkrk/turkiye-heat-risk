@@ -18,8 +18,9 @@ elderly/child population share, distance to hospital/pharmacy, distance to
 green space, built-up density), and pixel-level Jenks natural-breaks
 categorization shared across years. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; Izmir, Eskişehir,
-Şanlıurfa, Antalya, Mersin, Adana, Gaziantep and Bursa are the eight
-supported cities today (see
+Şanlıurfa, Antalya, Mersin, Adana, Gaziantep, Bursa, Ankara, Aydın,
+Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya, Nevşehir,
+Siirt and Sivas are the twenty supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -40,7 +41,9 @@ Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz
 Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
 mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
-Gaziantep ve Bursa şu an desteklenen sekiz şehir. Yeni bir şehir eklemek
+Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
+Kayseri, Kocaeli, Konya, Nevşehir, Siirt ve Sivas ile birlikte şu an yirmi
+şehir destekleniyor. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
@@ -114,11 +117,36 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
     neredeyse değişiklik yapmadan uyarlanabilir. Ortak mantık
     `src/core/ilce_table_adapter.py`'de; Şanlıurfa, Antalya, Mersin ve Adana
     bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi.
-    Gaziantep ve Bursa'da da TÜİK ADNKS yaş grubu sayımları İŞKUR il
-    faaliyet raporlarında ilçe kırılımıyla yayımlandığından doğrudan
-    kullanılabildi ([Gaziantep 2023](https://media.iskur.gov.tr/94394/gaziantep.pdf),
-    [Bursa 2023](https://media.iskur.gov.tr/94382/bursa.pdf)). Bu veri bulunmayan şehirlerde il yaş oranlarını ilçelere
+    Gaziantep, Bursa ve bu README'de listelenen diğer şehirlerde TÜİK ADNKS
+    yaş grubu sayımları İŞKUR il faaliyet raporlarında ilçe kırılımıyla
+    yayımlandığından doğrudan kullanılabildi. Örnekler:
+    [Gaziantep 2023](https://media.iskur.gov.tr/94394/gaziantep.pdf),
+    [Bursa 2023](https://media.iskur.gov.tr/94382/bursa.pdf),
+    [Ankara 2021](https://media.iskur.gov.tr/71959/ankara.pdf),
+    [Aydın 2022](https://media.iskur.gov.tr/71962/aydin.pdf),
+    [Diyarbakır 2023](https://media.iskur.gov.tr/94770/diyarbakir.pdf),
+    [Konya 2023](https://media.iskur.gov.tr/94797/konya.pdf) ve
+    [Sivas 2022](https://media.iskur.gov.tr/94350/sivas.pdf). Her şehir klasöründeki
+    adapter ve config dosyası kullanılan veri yılını ve kaynağı kaydeder.
+    Bu veri bulunmayan şehirlerde il yaş oranlarını ilçelere
     kopyalamayın; doğrulanmış ilçe verisi bulunana kadar şehri eklemeyin.
+
+  Yeni eklenen şehirlerde kullanılan ADNKS veri yılı ve İŞKUR raporu:
+
+  | Şehir | Veri yılı | İŞKUR faaliyet raporu |
+  | --- | ---: | --- |
+  | Ankara | 2021 | [PDF](https://media.iskur.gov.tr/71959/ankara.pdf) |
+  | Aydın | 2022 | [PDF](https://media.iskur.gov.tr/71962/aydin.pdf) |
+  | Balıkesir | 2022 | [PDF](https://media.iskur.gov.tr/94373/balikesir.pdf) |
+  | Diyarbakır | 2023 | [PDF](https://media.iskur.gov.tr/94770/diyarbakir.pdf) |
+  | Elazığ | 2023 | [PDF](https://media.iskur.gov.tr/94773/elazig.pdf) |
+  | Erzurum | 2022 | [PDF](https://media.iskur.gov.tr/94392/erzurum.pdf) |
+  | Kayseri | 2022 | [PDF](https://media.iskur.gov.tr/94791/kayseri.pdf) |
+  | Kocaeli | 2023 | [PDF](https://media.iskur.gov.tr/94796/kocaeli.pdf) |
+  | Konya | 2023 | [PDF](https://media.iskur.gov.tr/94797/konya.pdf) |
+  | Nevşehir | 2023 | [PDF](https://media.iskur.gov.tr/94341/nevsehir.pdf) |
+  | Siirt | 2023 | [PDF](https://media.iskur.gov.tr/100474/siirt.pdf) |
+  | Sivas | 2022 | [PDF](https://media.iskur.gov.tr/94350/sivas.pdf) |
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
@@ -600,9 +628,11 @@ turkiye-heat-risk/
 - **TÜİK-şablonlu şehirlerde yaş verisinin çözünürlüğü**: Eskişehir,
   Şanlıurfa, Antalya, Mersin ve Adana kayıtlarında ilçe yaş kırılımı
   bulunamadığından il geneli 0-14 ve 65+ oranları ilçelere uygulanmıştır;
-  bu oranlar gerçek ilçe farklılıklarını göstermez. Gaziantep ve Bursa için
-  2023 yaş grubu sayımları ilçe düzeyinde doğrulanabildi ve CSV'lerde bu
-  ilçeye özgü oranlar kullanılır. Nüfus yoğunluğu tüm bu şehirlerde mahalle
+  bu oranlar gerçek ilçe farklılıklarını göstermez. Gaziantep, Bursa, Ankara,
+  Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya,
+  Nevşehir, Siirt ve Sivas için ilçe yaş grubu sayımları kaynaklardan
+  doğrulanabildi ve CSV'lerde ilgili yıla ve ilçeye özgü oranlar kullanılır
+  (kaynak yılı her adapter'ın docstring'inde belirtilmiştir). Nüfus yoğunluğu tüm bu şehirlerde mahalle
   değil ilçe bazında sabittir (ilçe alanı OSM idari sınırından hesaplandığı
   için kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
   mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür

@@ -95,8 +95,11 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
   normalizasyonu, konumsal (isme göre değil) mahalle-ilçe eşlemesi ve
   resmi bir raporu (SEGE-2022) küçük bir referans CSV olarak repoya gömme.
 - `src/cities/eskisehir/adapter.py`: belediyeye özel bir portal
-  OLMADIĞINDA kullanılabilecek şablon - TÜİK'in herkese açık, ilçe
-  seviyesindeki ADNKS nüfus/yaş yayınlarını statik CSV olarak kullanır.
+  OLMADIĞINDA kullanılabilecek şablon - TÜİK ADNKS verilerini ve İŞKUR il faaliyet raporlarındaki ilçe yaş
+  sayımlarını statik CSV olarak kullanır. İŞKUR
+  il faaliyet raporları da yaş grubu sayımlarını ilçe bazında yayımlıyorsa
+  bu sayımları tercih et; raporun yayın yılı ile veri yılını ayırt edip ikisini
+  adapter docstring ve config atfında açıkça belirt.
   Bu şablon, kendi CKAN portalı olmayan HERHANGİ bir Türkiye şehri için
   neredeyse değişiklik yapmadan uyarlanabilir - ortak mantık
   `src/core/ilce_table_adapter.py`'de, o şehrin adapter'ı sadece kendi
