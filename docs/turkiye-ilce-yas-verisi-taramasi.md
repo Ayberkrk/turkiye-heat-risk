@@ -59,10 +59,14 @@ Bu sayfa, 81 ilin tam veri tabanı değildir. “Henüz doğrulanmadı” kaydı
 | Burdur | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94764/burdur.pdf) |
 | Kastamonu | 2022 | Eklendi; Merkez ilçesi | [İŞKUR raporu](https://media.iskur.gov.tr/94790/kastamonu.pdf) |
 | Manisa | 2025 | Eklendi; Yunusemre ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Bilecik | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Bolu | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Çanakkale | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
+| Çorum | 2025 | Eklendi; Merkez ilçesi | [İlçe yaş grubu sorgusu (TÜİK ADNKS verisi)](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) |
 
 SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırmayla Bakanlığın [SEGE-2022 ilçe raporuna](https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf) göre kaydedilir.
 
-81 ilin tamamı için 2007–2025 ilçe yaş grubu serisi sunan [DrDataStats sorgusu](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) verinin kaynağını TÜİK olarak belirtir. Sorgu aday taraması ve karşılaştırma için kullanılır; şehir eklemesinde seçilen ilçenin 0–14, 15–64 ve 65+ değerleri aynı yılın ilçe toplamıyla karşılaştırılır. Manisa/Yunusemre için 2025 değerleri sırasıyla 56.329, 190.289, 23.737 ve toplam 270.355'tir; yaş grupları toplamı nüfusla eşleşir. SEGE satırı Bakanlığın raporunda kontrol edilmiştir: 68. sıra, il içinde 1. sıra, 1,581 skor, 2. kademe.
+81 ilin tamamı için 2007–2025 ilçe yaş grubu serisi sunan [DrDataStats sorgusu](https://www.drdatastats.com/yillara-gore-turkiyede-cinsiyet-ve-yas-gruplari-bazinda-ilce-ve-il-nufuslari/) verinin kaynağını TÜİK olarak belirtir. Sorgu aday taraması ve karşılaştırma için kullanılır; şehir eklemesinde seçilen ilçenin 0–14, 15–64 ve 65+ değerleri aynı yılın ilçe toplamıyla karşılaştırılır. Manisa/Yunusemre için 2025 değerleri sırasıyla 56.329, 190.289, 23.737 ve toplam 270.355'tir; Bilecik Merkez için 14.430, 59.960, 8.473 ve 82.863; Bolu Merkez için 38.018, 159.060, 25.511 ve 222.589; Çanakkale Merkez için 31.420, 149.887, 27.306 ve 208.613; Çorum Merkez için 55.428, 205.544, 38.593 ve 299.565'tir. Her ilçede yaş grupları toplamı nüfusla eşleşir. İlçe SEGE kayıtları Bakanlığın [raporunda](https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf) kontrol edilmiştir.
 
 ## Kaynakta sorun görülen adaylar
 
@@ -78,7 +82,7 @@ SEGE-2022 ilçe sıralama/skorları, ilgili şehir CSV'lerinde aynı adlandırma
 
 Aşağıdaki iller için bu tarama turunda şehir eklemeye yetecek, ilçe bazında yaş grubu sayımlarını ve tutarlı toplamları doğrulayan kaynak kaydı oluşturulmadı. Bu, verinin mevcut olmadığı anlamına gelmez; her biri sonraki kaynak taramasında incelenebilir.
 
-Bilecik, Bolu, Çanakkale, Çorum, Denizli, Düzce, Edirne, İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
+Denizli, Düzce, Edirne, İstanbul, Kahramanmaraş, Kilis, Kırşehir, Malatya, Mardin, Muş, Ordu, Osmaniye, Sakarya, Sinop, Şırnak, Tekirdağ, Trabzon, Tunceli, Uşak, Yalova, Yozgat, Zonguldak.
 
 ## Doğrulama ölçütü
 

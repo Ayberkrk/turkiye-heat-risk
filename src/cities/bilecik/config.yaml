@@ -1,0 +1,35 @@
+city:
+  name: "Bilecik"
+  # 2025 district age counts are verified for the Merkez urban core.
+  bbox: [29.85, 40.05, 30.15, 40.25]
+  crs: "EPSG:32635"
+  attribution: "Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı."
+
+landsat:
+  max_cloud_cover: 30
+  max_scenes_per_tile: 3
+
+osm:
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/marmara-latest.osm.pbf"
+  admin_level_ilce: 6
+  admin_level_mahalle: 8
+  highway_types:
+    - motorway
+    - trunk
+    - primary
+    - secondary
+    - tertiary
+    - residential
+    - living_street
+    - unclassified
+    - motorway_link
+    - trunk_link
+    - primary_link
+    - secondary_link
+    - tertiary_link
+
+roads:
+  buffer_meters: 10
+
+population:
+  adapter: "cities.bilecik.adapter"
