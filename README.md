@@ -20,7 +20,7 @@ categorization shared across years. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; Izmir, Eskişehir,
 Şanlıurfa, Antalya, Mersin, Adana, Gaziantep, Bursa, Ankara, Aydın,
 Balıkesir, Diyarbakır, Elazığ, Erzurum, Kayseri, Kocaeli, Konya, Nevşehir,
-Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı and Amasya are the twenty-seven supported cities today (see
+Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar and Artvin are the twenty-nine supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -42,7 +42,7 @@ Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
 mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
 Gaziantep, Bursa, Ankara, Aydın, Balıkesir, Diyarbakır, Elazığ, Erzurum,
-Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı ve Amasya ile birlikte şu an yirmi yedi
+Kayseri, Kocaeli, Konya, Nevşehir, Siirt, Sivas, Karabük, Gümüşhane, Kütahya, Kırklareli, Bartın, Ağrı, Amasya, Afyonkarahisar ve Artvin ile birlikte şu an yirmi dokuz
 şehir destekleniyor. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
@@ -156,6 +156,8 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
   | Bartın | 2021 | [PDF](https://media.iskur.gov.tr/71965/bartin.pdf) |
   | Ağrı | 2021 | [PDF](https://media.iskur.gov.tr/57059/agri.pdf) |
   | Amasya | 2021 | [PDF](https://media.iskur.gov.tr/57061/amasya.pdf) |
+  | Afyonkarahisar | 2022 | [PDF](https://media.iskur.gov.tr/72033/afyonkarahisar.pdf) |
+  | Artvin | 2021 | [PDF](https://media.iskur.gov.tr/71961/artvin.pdf) |
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
