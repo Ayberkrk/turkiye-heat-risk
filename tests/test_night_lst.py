@@ -1,5 +1,6 @@
 import geopandas as gpd
 import numpy as np
+from pathlib import Path
 import pytest
 import rasterio
 from rasterio.transform import from_origin
