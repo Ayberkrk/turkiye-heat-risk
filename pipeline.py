@@ -67,8 +67,8 @@ def run(city_id: str, years: list[str], main_year: str, open_browser: bool,
         # bir bileşeni değil, mahalle ölçeğinde ayrı bir katman (bkz.
         # core/night_lst.py modül docstring'i).
         pbf_path = resolve_pbf_path(config.city_id)
-        night_lst_tif = fetch_night_lst(config, main_year)
-        compute_neighborhood_night_lst(config, pbf_path, night_lst_tif, main_year)
+        night_lst_tif = fetch_night_lst(config, main_year, force=force)
+        compute_neighborhood_night_lst(config, pbf_path, night_lst_tif, main_year, force=force)
 
     output_html = build_hvi_map(config, years, main_year, night_lst_requested=night_lst)
 
@@ -86,7 +86,7 @@ def main() -> None:
     parser.add_argument("--main-year", default="2026", help="Düz klasör yapısını kullanacak referans yıl")
     parser.add_argument("--open", action="store_true", help="Harita üretildikten sonra tarayıcıda aç")
     parser.add_argument("--force", action="store_true",
-                         help="Sahne/mozaik/yol risk skoru/HVI önbelleğini yok say, yeniden hesapla")
+                         help="Sahne/mozaik/yol risk skoru/HVI/gece LST önbelleğini yok say, yeniden hesapla")
     parser.add_argument("--night-lst", action="store_true",
                          help="Mahalle ölçeğinde MODIS gece ısı adası katmanını da üret (isteğe bağlı, ek indirme)")
     args = parser.parse_args()
