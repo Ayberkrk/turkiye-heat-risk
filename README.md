@@ -18,7 +18,8 @@ elderly/child population share, distance to hospital/pharmacy, distance to
 green space, built-up density), and pixel-level Jenks natural-breaks
 categorization shared across years. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; Izmir, Eskişehir,
-Şanlıurfa, Antalya, Mersin and Adana are the six supported cities today (see
+Şanlıurfa, Antalya, Mersin, Adana, Gaziantep and Bursa are the eight
+supported cities today (see
 [CONTRIBUTING.md](CONTRIBUTING.md) to add another).
 
 Quick start (produces a single-file interactive HTML map):
@@ -38,8 +39,9 @@ repository.
 Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
 Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin ve Adana şu an desteklenen
-altı şehir, yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
+mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana,
+Gaziantep ve Bursa şu an desteklenen sekiz şehir. Yeni bir şehir eklemek
+`src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 **Canlı harita:** GitHub Pages'te barındırılan, veri talep üzerine yüklenen
@@ -106,12 +108,17 @@ veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
 İki referans örnek farklı veri kaynağı senaryolarını gösterir:
   - `src/cities/izmir/adapter.py`: belediyenin kendi CKAN tabanlı açık veri
     portalı varsa (`acikveri.bizizmir.com`), mahalle seviyesinde nüfus/yaş.
-  - `src/cities/eskisehir/adapter.py`: böyle bir portal YOKSA, TÜİK'in
-    herkese açık ilçe seviyesindeki ADNKS yayınlarını statik CSV olarak
+  - `src/cities/eskisehir/adapter.py`: böyle bir portal YOKSA, ADNKS
+    nüfus ve yaş oranlarını ilçe seviyesinde doğrulanmış statik CSV'lerde
     kullanan şablon - kendi CKAN'ı olmayan başka bir Türkiye şehri için
     neredeyse değişiklik yapmadan uyarlanabilir. Ortak mantık
     `src/core/ilce_table_adapter.py`'de; Şanlıurfa, Antalya, Mersin ve Adana
     bu şablonla, sadece iki CSV + ince bir `adapter.py` ile eklendi.
+    Gaziantep ve Bursa'da da TÜİK ADNKS yaş grubu sayımları İŞKUR il
+    faaliyet raporlarında ilçe kırılımıyla yayımlandığından doğrudan
+    kullanılabildi ([Gaziantep 2023](https://media.iskur.gov.tr/94394/gaziantep.pdf),
+    [Bursa 2023](https://media.iskur.gov.tr/94382/bursa.pdf)). Bu veri bulunmayan şehirlerde il yaş oranlarını ilçelere
+    kopyalamayın; doğrulanmış ilçe verisi bulunana kadar şehri eklemeyin.
 
 Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
 arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
@@ -590,14 +597,15 @@ turkiye-heat-risk/
   daha değişken olabilir. Ayrıca 2022 tarihli, tek seferlik bir araştırma;
   gelecekte güncellenmiş bir SEGE raporu yayımlanırsa
   `sege_2022_ilce.csv` güncellenmelidir.
-- **TÜİK-şablonlu şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
-  bir kademe daha kaba çözünürlük**: İzmir'in mahalle seviyesinde CKAN
-  nüfus verisinin aksine bu adapter'lar yaşlı/çocuk oranı için ilçe bazlı
-  bir TÜİK yayını bulamadığından İL'in genel yaş dağılımını (0-14 ve 65+)
-  tüm ilçelere aynı şekilde uyguluyor; nüfus yoğunluğu da mahalle değil
-  ilçe bazında sabit (ilçe alanı OSM idari sınırından hesaplandığı için
-  kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
-  ilçe-içi/mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
+- **TÜİK-şablonlu şehirlerde yaş verisinin çözünürlüğü**: Eskişehir,
+  Şanlıurfa, Antalya, Mersin ve Adana kayıtlarında ilçe yaş kırılımı
+  bulunamadığından il geneli 0-14 ve 65+ oranları ilçelere uygulanmıştır;
+  bu oranlar gerçek ilçe farklılıklarını göstermez. Gaziantep ve Bursa için
+  2023 yaş grubu sayımları ilçe düzeyinde doğrulanabildi ve CSV'lerde bu
+  ilçeye özgü oranlar kullanılır. Nüfus yoğunluğu tüm bu şehirlerde mahalle
+  değil ilçe bazında sabittir (ilçe alanı OSM idari sınırından hesaplandığı
+  için kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
+  mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
   (bkz. `core/ilce_table_adapter.py` ve her şehrin `adapter.py`
   docstring'i).
 
