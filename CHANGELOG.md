@@ -3,6 +3,17 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## Unreleased
+
+- OSM kapsamını yeniden ölçüp ilçe yaş sayımları doğrulanmış Afyonkarahisar,
+  Aksaray, Aydın, Düzce, Giresun, Nevşehir ve Siirt şehirlerini ekle (toplam
+  70). Aydın kaydının veri yılı 2022 raporunun yayın yılı değil 2021 ADNKS
+  yılı olarak düzeltildi.
+- 18 eski adaydan yedisi kentsel çekirdek bbox'larıyla %60 kapsam eşiğini
+  geçti; 11 aday halen kapsam veya OSM merkez ilçe eşlemesi koşulunu geçemedi.
+- Yeni şehirler için katkı kılavuzu ilçe düzeyinde yaş sayımı şartını
+  açıkça belirtiyor; il oranlarıyla yedekleme yeni kayıtlar için kabul edilmiyor.
+
 ## v1.8.0 - 2026-09-25
 
 - 57 yeni şehir eklendi (toplam 63): her biri iki CSV (`ilce_nufus.csv`,

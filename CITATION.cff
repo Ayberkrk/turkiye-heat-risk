@@ -13,7 +13,7 @@ abstract: >-
   birleştirerek sokak ölçekli, açıklanabilir bir Isı Hassasiyet Endeksi
   (HVI) üreten, tekrar üretilebilir kentsel ısı riski analiz hattı.
   Şehirden bağımsız bir mimariye sahiptir; İzmir, Eskişehir, Şanlıurfa,
-  Antalya, Mersin, Adana ve 57 şehir daha (toplam 63) şu an desteklenir.
+  Antalya, Mersin, Adana ve 64 şehir daha (toplam 70) şu an desteklenir.
 authors:
   - family-names: Korkmaz
     given-names: Ayberk

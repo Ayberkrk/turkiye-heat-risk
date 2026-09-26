@@ -97,11 +97,12 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
 - `src/cities/eskisehir/adapter.py`: belediyeye özel bir portal
   OLMADIĞINDA kullanılabilecek şablon - TÜİK ADNKS ilçe yaş sayımlarını
   (İŞKUR il faaliyet raporları ya da TÜİK tabloları) statik CSV olarak
-  kullanır. İlçe düzeyinde doğrulanabilir sayım varsa onu tercih et; yoksa
-  ya da şüpheliyse il düzeyi 0-14/15-64/65+ oranlarını kullanmak kabul
-  edilebilir bir yedektir (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana
-  böyle), ama bunu adapter docstring'inde açıkça yaz. Veri yılını ve
-  kaynağı adapter ve config atfında belirt.
+  kullanır. Yeni şehir eklerken aynı yıl için ilçe düzeyinde 0-14, 15-64
+  ve 65+ sayımlarını doğrula; il düzeyi yaş oranlarını ilçe verisi yerine
+  kullanma. Gerekli ilçe sayımları bulunamazsa şehri ekleme. Depoda bu
+  kuraldan önce eklenmiş, il düzeyi oran kullanan kayıtlar vardır; yeni
+  katkılarda bu eski istisnaları çoğaltma. Veri yılını ve kaynağı adapter
+  ve config atfında belirt.
   Bu şablon, kendi CKAN portalı olmayan HERHANGİ bir Türkiye şehri için
   neredeyse değişiklik yapmadan uyarlanabilir - ortak mantık
   `src/core/ilce_table_adapter.py`'de, o şehrin adapter'ı sadece kendi
@@ -115,11 +116,12 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
 **TÜİK-şablonlu bir şehir eklerken dikkat (yapılan hatalardan):**
 - `ilce_nufus.csv` için ilçe nüfuslarının toplamının resmi il toplamına
   eşit çıktığını kontrol et (toplamı tutmayan kaynak yanlıştır).
-- `YASLI_ORAN`/`COCUK_ORAN` **0-1 arası kesir** olmalı ve çocuk oranı
-  **0-14** yaş tanımıyla verilmeli. Haberlerdeki "çocuk nüfus oranı"
-  genellikle TÜİK'in 0-17 tanımıdır (Şanlıurfa'da %43,3 vs gerçek 0-14
-  %36,8) - kullanma; il için 0-14 / 15-64 / 65+ sayılarını al ve üç
-  grubun toplamının il toplamına eşitliğini doğrula.
+- `ilce_nufus.csv` içindeki `YASLI_ORAN`/`COCUK_ORAN` **0-1 arası kesir**
+  olmalı ve çocuk oranı **0-14** yaş tanımıyla hesaplanmalı. Haberlerdeki
+  "çocuk nüfus oranı" genellikle TÜİK'in 0-17 tanımıdır (Şanlıurfa'da
+  %43,3 vs gerçek 0-14 %36,8) - kullanma. Her hedef ilçe için aynı yılın
+  0-14 / 15-64 / 65+ sayımlarını ve toplam nüfusunu kaynak tablodan al;
+  üç yaş grubunun toplamının ilçe toplamına eşitliğini doğrula.
 - SEGE-2022 skorlarını ikincil kaynaklardan değil resmi rapordan al
   (baka.gov.tr'deki PDF; Ek-1 ve il tabloları). Metin `pypdf` ile
   çıkarılabilir; ondalık ayraç virgüldür (`3,173` = 3.173).
