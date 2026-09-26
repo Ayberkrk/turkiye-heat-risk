@@ -81,11 +81,10 @@ BUILDING_DENSITY_BUFFER_M = 150
 # (gerekçesi `compute_heat_vulnerability_index` içinde).
 COMPONENT_FLOOR = 0.05
 
-# Çıktının formül sürümü - bileşen sayısı, birleştirme yöntemi (geometrik
-# ortalama), COMPONENT_FLOOR veya BUILDING_DENSITY_BUFFER_M değiştiğinde
-# artırılmalı; aksi halde eski `roads_with_hvi.geojson` güncel formülle
-# üretilmiş gibi kullanılmaya devam eder (bkz. core/cache.py).
-HVI_FORMULA_VERSION = 1
+# Çıktı sürümü - bileşen sayısı/formülü, yapılaşma tamponu veya
+# `roads_with_hvi.geojson` sütun şeması değiştiğinde artırılır; eski önbellek
+# güncel çıktı gibi kullanılmamalıdır (bkz. core/cache.py).
+HVI_FORMULA_VERSION = 2
 
 
 def normalize_0_1(series: pd.Series) -> pd.Series:
@@ -198,6 +197,9 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
                                  *optional_cols, "geometry"]]
     joined = gpd.sjoin(road_pts, mahalle_cols, how="left", predicate="within")
     roads["mahalle_adi"] = joined["mahalle_adi"].values
+    # İlçe adı, mahalle yaş oranları ilçe düzeyinde aşağı ölçeklendiği için
+    # sonradan yapılacak halk sağlığı yakınsaklık kontrollerinde de gerekir.
+    roads["ilce_adi"] = joined["ilce_adi"].values
     roads["nufus_yogunlugu"] = joined["nufus_yogunlugu"].values
     roads["yasli_oran"] = joined["yasli_oran"].values
     roads["cocuk_oran"] = joined["cocuk_oran"].values

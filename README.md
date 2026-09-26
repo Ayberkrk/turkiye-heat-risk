@@ -65,6 +65,7 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 - [Ne yapıyor?](#ne-yapıyor)
 - [Başka bir şehre/bölgeye uyarlama](#başka-bir-şehrebölgeye-uyarlama)
 - [Metodoloji](#metodoloji)
+- [Çok yıllı duyarlılık ve müdahale analizi](#çok-yıllı-duyarlılık-ve-müdahale-analizi)
 - [2020 → 2026: Bulgular](#2020--2026-bulgular)
 - [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
 - [Proje yapısı](#proje-yapısı)
@@ -91,6 +92,10 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
    yıl seçici ve her yola tıklandığında skoru oluşturan tüm bileşenleri
    gösteren bir tooltip içeren, tarayıcıda tek dosya olarak açılabilen bir
    Folium/Leaflet haritası üretir.
+6. **Çok yıllı analiz paketi (isteğe bağlı)** - üç veya daha fazla yılı
+   ERA5-Land hava anomalisiyle karşılaştırır; HVI ağırlıklarını ve yol
+   tamponlarını değiştirerek sıralama kararlılığını ölçer; ağaçlandırma ve
+   gölgeleme what-if senaryolarını ayrı bir haritada gösterir.
 
 ## Başka bir şehre/bölgeye uyarlama
 
@@ -326,6 +331,72 @@ aksine) bu katman yol segmenti değil **mahalle** ölçeğinde sunulur ve
 HVI skoruna dahil edilmez - haritada ayrı, varsayılan olarak kapalı bir
 katmandır.
 
+## Çok yıllı duyarlılık ve müdahale analizi
+
+Ana hattın haritası iki ya da daha fazla yılı karşılaştırabilir. Daha uzun
+dönem, hava düzeltmesi ve karar senaryoları için en az üç yılın ana pipeline
+çıktıları hazır olduktan sonra ikinci komutu çalıştırın. Örnek:
+
+```bash
+python pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
+python analyze_pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
+```
+
+Analiz belirtilen yılların hazır raster ve yol/HVI çıktısını okur; uydu
+indirme ve ana hattı yeniden çalıştırmaz. Landsat 8/9 arşivinin 2013'ten
+başlayan yılları kullanılabilir. Hava kaynağı
+[Open-Meteo tarihsel hava API'sindeki ERA5-Land yeniden analizidir](https://open-meteo.com/en/docs/historical-weather-api).
+ERA5-Land 1950'den beri tutarlı tarihsel sıcaklık serisi sunar. Çalışma
+alanında 12 örnek konum kullanılır.
+
+Hava düzeltmesi, seçili Landsat sahne günlerinin 2 m hava sıcaklığı
+ortalamasını aynı takvim günlerinin ±7 gün penceresindeki 1991–2020
+normalinden çıkarır. Bu anomali, yolun Landsat LST'sinden `β × anomali`
+olarak düşülür. `β` varsayımsal eşleştirme katsayısıdır; `β=0`, `0.5` ve
+`1` sonuçları raporlanır. ERA5-Land hava sıcaklığı ile Landsat yüzey
+sıcaklığı farklı ölçümlerdir; düzeltilmiş değer bir hassasiyet tahminidir,
+istasyon ölçümüyle doğrulanmış LST değildir. Yıllık doğrusal eğim
+betimleyici bir özettir, nedensel iklim etkisi tahmini değildir.
+
+HVI duyarlılık tablosu mevcut bileşenleri üç açık ağırlık profiliyle
+hesaplar: eşit, ısı öncelikli ve eşitlik öncelikli. Mekânsal duyarlılık
+analizi varsayılan olarak 10, 30 ve 50 m yol tamponlarında LST/NDVI
+örneklerini yeniden alır. Her seçenek için son yılın ilk %10 riskli yol
+kümesinin varsayılan profile göre örtüşmesi ve Spearman sıra korelasyonu
+raporlanır. Böylece farklı puan aralıklarından kaynaklanan farklar yerine
+öncelik listesinde hangi yolların kaldığı ölçülür.
+
+Halk sağlığıyla yakınsaklık kontrolü, ilçe bazında yol uzunluğuna göre
+ağırlıklandırılmış LST ile açık veri kaynaklı 65+ yaş oranını karşılaştırır.
+İlçe sayısı ve Pearson/Spearman ilişkileri
+`heat_health_convergence.csv` içindedir. Yaş oranı HVI bileşeni olduğundan
+bu, bağımsız bir doğruluk testi değil; ham ısı haritası ile sağlık açısından
+hassas yaş grubu dağılımının örtüşme kontrolüdür. Mahalle düzeyinde yaş
+verisi olmadığı için sonuç ilçe ölçeğini aşan bir iddiada bulunmaz.
+
+Senaryolar son yılın eşit ağırlıklı HVI sıralamasındaki varsayılan ilk %20
+yol segmentine uygulanır. Başlangıç varsayımları ağaç senaryosunda NDVI
+`+0.15`, gölgeleme senaryosunda LST `−2°C` ve birleşik senaryoda ikisidir.
+`--target-share`, `--ndvi-delta` ve `--cooling-c` ile değiştirilebilir.
+Çıktı ortalama HVI değişimine ek olarak hedeflenen yolların 65+ oranını,
+nüfus yoğunluğunu ve üst 65+ beşte birlik dilimdeki payını verir. Bu
+what-if hesabı ölçülmüş ağaç/gölge etkisi, maliyet ya da sağlık sonucu
+değildir.
+
+Analiz ürünleri `data/processed/<şehir>/impact_analysis/` altına yazılır:
+`annual_weather_adjusted.csv`, `robustness.csv`,
+`heat_health_convergence.csv`, `intervention_scenarios.csv`,
+`impact_scenarios.geojson`, `analysis_summary.json` ve
+`analysis_map.html`. GeoJSON büyük olduğundan harita dosya URL'si ile
+değil, bu klasörde bir yerel HTTP sunucusu açılarak görüntülenir:
+
+```bash
+cd data/processed/izmir/impact_analysis
+python -m http.server 8000
+```
+
+Ardından `http://localhost:8000/analysis_map.html` adresini açın.
+
 ## 2020 → 2026: Bulgular
 
 *(6 yıllık pencere; her iki yıl da temmuz-ağustos Landsat sahnelerinden.
@@ -443,6 +514,12 @@ olarak yeniden hesaplanır (bkz. `src/core/cache.py`); veri kaynağı aynı
 kalıp sadece parametre denemek isteniyorsa `--force` ile elle de
 zorlanabilir.
 
+Çok yıllı analiz paketi için yukarıdaki örnekteki yılları ana pipeline'a
+verin, ardından `analyze_pipeline.py --help` ile hava katsayısı, tampon ve
+müdahale varsayımlarını ayarlayın. ERA5-Land ilk çalıştırmada internet
+bağlantısı ister; günlük seri şehir bazında önbelleğe alınır. Analiz işleri
+sıralı yürür ve ayrı ayrı büyük rasterleri eşzamanlı işleme almaz.
+
 ## Testler
 
 Saf/mantık ağırlıklı fonksiyonlar (normalizasyon, yüzdelik dilim
@@ -523,6 +600,7 @@ python -m json.tool docs/izmir/manifest.json
 ```
 turkiye-heat-risk/
 ├── pipeline.py               # Tek üst seviye giriş noktası: python pipeline.py --city izmir
+├── analyze_pipeline.py       # Çok yıllı hava/duyarlılık/what-if analiz paketi
 ├── validate_city.py           # Yeni bir şehir config.yaml'ını hızlıca doğrular
 ├── build_docs_index.py        # docs/ altındaki şehirler için karşılaştırma sayfası üretir
 ├── src/
@@ -531,6 +609,7 @@ turkiye-heat-risk/
 │   │   ├── satellite.py       #   Landsat indirme
 │   │   ├── raster.py          #   LST/NDVI hesaplama + bellek-güvenli mozaikleme
 │   │   ├── roads.py           #   OSM yol ağı + yıllık sıcaklık/NDVI eşleme
+│   │   ├── impact_analysis.py #   hava düzeltmesi, HVI duyarlılığı ve müdahale senaryoları
 │   │   ├── osm_amenities.py   #   sağlık/yeşil alan/bina katmanları (OSM'den)
 │   │   ├── hvi.py             #   çok bileşenli HVI hesaplama
 │   │   ├── map_builder.py     #   interaktif Folium haritası (çevrimdışı + barındırma sürümü)
@@ -588,7 +667,16 @@ turkiye-heat-risk/
 - **10 metrelik yol tamponu**: sıcaklık ve NDVI örneklemesinde kullanılan
   bu dar tampon, çok dar sokaklarda komşu bir yolun etkisini
   karıştırabilir; çok geniş bulvarlarda ise koridorun tamamını
-  kapsamayabilir.
+  kapsamayabilir. Duyarlılık paketi 30 ve 50 m alternatiflerini de ölçer;
+  hangi tamponun saha gerçeğine uyduğunu kendi başına belirlemez.
+- **Hava düzeltmesinin ölçeği**: ERA5-Land'in yaklaşık 11 km hava
+  sıcaklığı, 30 m Landsat yüzey sıcaklığını ölçmez. Düzeltme katsayısı
+  (`β`) varsayımdır ve ayrı ayrı karşılaştırılmalıdır; analiz yerel hava
+  istasyonlarının yerine geçmez.
+- **Senaryo varsayımları**: NDVI artışı ve LST düşüşü kullanıcı girdisidir.
+  Ağaç türü, taç gelişme süresi, gölge geometrisi, su ihtiyacı, uygulama
+  maliyeti veya maruziyet davranışı modellenmez. Haritadaki fark varsayımlı
+  HVI aritmetiğidir, gerçekleşmesi beklenen sağlık etkisi değildir.
 - **150 metrelik yapılaşma tamponu**: bina yoğunluğu için seçilen bu
   yarıçap makul bir kentsel doku ölçeğidir ama tek bir seçimdir; komşu
   yolların tamponları örtüştüğü için yakın yollar benzer yoğunluk değeri
