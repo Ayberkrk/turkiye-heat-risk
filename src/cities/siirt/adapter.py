@@ -1,7 +1,7 @@
-"""Siirt district-level ADNKS age shares and SEGE-2022 reference data.
+"""Siirt Merkez ilçesi ADNKS yaş oranları ve SEGE-2022 verileri.
 
-Age-group counts: 2023 TÜİK ADNKS, as reproduced in the İŞKUR activity report
-(https://media.iskur.gov.tr/100474/siirt.pdf). Socioeconomic ranks/scores: T.C. Sanayi ve Teknoloji Bakanlığı,
+Yaş grubu sayımları: 2023 TÜİK ADNKS, İŞKUR faaliyet raporunda
+(https://media.iskur.gov.tr/100474/siirt.pdf). SEGE: Sanayi ve Teknoloji Bakanlığı
 SEGE-2022 (https://www.kalkinmakutuphanesi.gov.tr/assets/upload/dosyalar/2022-ilce-sege.pdf).
 """
 
@@ -20,7 +20,7 @@ SEGE_CSV_PATH = _CITY_DIR / "sege_2022_ilce.csv"
 
 
 def fetch_population_data(config: CityConfig) -> dict[str, Path]:
-    """Data are versioned in the repository; no download is required."""
+    """Veri depoda sürümlü tutulur, indirme gerekmez."""
     return {}
 
 

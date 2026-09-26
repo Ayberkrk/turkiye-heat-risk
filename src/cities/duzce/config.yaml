@@ -1,6 +1,6 @@
 city:
   name: "Düzce"
-  # 2025 district age counts are verified for the Merkez urban core.
+  # Merkez ilçe yaş sayımları (ADNKS 2025) kentsel çekirdek için doğrulandı.
   # Merkez kentsel çekirdek bbox; gerçek OSM kapsam ölçümü kayıt sayfasında.
   bbox: [31.145, 40.825, 31.175, 40.855]
   crs: "EPSG:32636"
