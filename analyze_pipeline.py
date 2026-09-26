@@ -1,7 +1,7 @@
-"""Create a multi-year weather-adjusted and intervention analysis package.
+"""Çok yıllı, hava düzeltmeli ve müdahale senaryolu bir analiz paketi üretir.
 
-The regular pipeline must already have rasters and HVI road data for each
-requested year. For example:
+Normal pipeline, istenen her yıl için raster ve HVI yol verisini önceden
+üretmiş olmalıdır. Örnek:
 
     python pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
     python analyze_pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026

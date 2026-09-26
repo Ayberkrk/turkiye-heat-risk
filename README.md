@@ -350,7 +350,7 @@ ERA5-Land 1950'den beri tutarlı tarihsel sıcaklık serisi sunar. Çalışma
 alanında 12 örnek konum kullanılır.
 
 Hava düzeltmesi, seçili Landsat sahne günlerinin 2 m hava sıcaklığı
-ortalamasını aynı takvim günlerinin ±7 gün penceresindeki 1991–2020
+ortalamasını aynı takvim günlerinin ±7 gün penceresindeki 1991-2020
 normalinden çıkarır. Bu anomali, yolun Landsat LST'sinden `β × anomali`
 olarak düşülür. `β` varsayımsal eşleştirme katsayısıdır; `β=0`, `0.5` ve
 `1` sonuçları raporlanır. ERA5-Land hava sıcaklığı ile Landsat yüzey
@@ -376,7 +376,7 @@ verisi olmadığı için sonuç ilçe ölçeğini aşan bir iddiada bulunmaz.
 
 Senaryolar son yılın eşit ağırlıklı HVI sıralamasındaki varsayılan ilk %20
 yol segmentine uygulanır. Başlangıç varsayımları ağaç senaryosunda NDVI
-`+0.15`, gölgeleme senaryosunda LST `−2°C` ve birleşik senaryoda ikisidir.
+`+0.15`, gölgeleme senaryosunda LST `-2°C` ve birleşik senaryoda ikisidir.
 `--target-share`, `--ndvi-delta` ve `--cooling-c` ile değiştirilebilir.
 Çıktı ortalama HVI değişimine ek olarak hedeflenen yolların 65+ oranını,
 nüfus yoğunluğunu ve üst 65+ beşte birlik dilimdeki payını verir. Bu

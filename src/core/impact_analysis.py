@@ -73,8 +73,9 @@ def _weather_grid(config: CityConfig) -> list[tuple[float, float]]:
 def _load_weather(config: CityConfig, years: list[str]) -> tuple[list[dict[str, Any]], list[tuple[float, float]]]:
     grid = _weather_grid(config)
     first_year, last_year = min(map(int, years)), max(map(int, years))
-    # Landsat dates fall in July/August; a one-week margin makes the
-    # same-calendar-date 1991–2020 normal possible at the season boundaries.
+    # Landsat sahneleri temmuz/ağustosa düşer; bir haftalık pay, sezon
+    # sınırındaki tarihler için de aynı takvim gününün 1991-2020 normalini
+    # hesaplanabilir kılar.
     start_date = "1991-06-24"
     end_date = f"{last_year}-09-07"
     cache_dir = city_data_raw(config.city_id)
@@ -161,8 +162,8 @@ def _nearest_grid_for_roads(
     centroids = roads.to_crs(projected_crs).geometry.centroid.to_crs("EPSG:4326")
     xy = np.column_stack((centroids.x.to_numpy(), centroids.y.to_numpy()))
     grid_xy = np.asarray([(lon, lat) for lat, lon in grid])
-    # Equirectangular distance is adequate for nearest-neighbour assignment
-    # over one city's short extent, and avoids an extra dependency.
+    # Tek bir şehrin kısa kapsamında en yakın komşu ataması için
+    # equirectangular mesafe yeterli ve ek bağımlılık gerektirmiyor.
     scale = math.cos(math.radians(float(np.nanmean(xy[:, 1]))))
     road_x = xy[:, 0] * scale
     point_x = grid_xy[:, 0] * scale
@@ -170,6 +171,13 @@ def _nearest_grid_for_roads(
         xy[:, 1, None] - grid_xy[None, :, 1]
     ) ** 2
     return np.argmin(distances, axis=1)
+
+
+def _spearman(first: pd.Series, second: pd.Series) -> float:
+    """Spearman sıra korelasyonu. `Series.corr(method="spearman")` scipy ister,
+    scipy ise requirements.txt'te yok; sıralar üzerinden Pearson aynı sonucu
+    (eşitlikte ortalama sıra) ek bağımlılık olmadan verir."""
+    return first.rank().corr(second.rank())
 
 
 def _normalize(values: pd.Series, low: float | None = None, high: float | None = None) -> pd.Series:
@@ -238,7 +246,7 @@ def _summarize_robustness(
     top_n = max(1, int(math.ceil(valid.sum() * 0.10)))
     reference_top = set(reference.loc[valid].nlargest(top_n).index)
     scenario_top = set(comparison.loc[valid].nlargest(top_n).index)
-    rank_corr = reference.loc[valid].corr(comparison.loc[valid], method="spearman")
+    rank_corr = _spearman(reference.loc[valid], comparison.loc[valid])
     return {
         "weight_profile": profile,
         "buffer_m": buffer_m,
@@ -316,7 +324,7 @@ def _health_convergence(
             "district_count": int(len(valid)),
             "pearson_r": round(float(valid["elderly_share"].corr(valid[temp_col])), 4)
             if len(valid) >= 3 else None,
-            "spearman_rho": round(float(valid["elderly_share"].corr(valid[temp_col], method="spearman")), 4)
+            "spearman_rho": round(float(_spearman(valid["elderly_share"], valid[temp_col])), 4)
             if len(valid) >= 3 else None,
             "indicator": "İlçe 65+ yaş nüfus oranı",
             "interpretation": "Yakınsaklık kontrolü; 65+ oranı HVI içinde de bulunduğundan bağımsız doğruluk ölçümü değildir.",
@@ -342,7 +350,7 @@ html,body,#map{height:100%;margin:0;font:14px Arial,sans-serif}.panel{position:a
 <label>Yıl<select id="year">__YEAR_OPTIONS__</select></label>
 <label>Harita katmanı<select id="view"><option value="base">Mevcut HVI</option><option value="weather">Hava-düzeltilmiş HVI (β=__BETA__)</option><option value="trees">Ağaçlandırma senaryosu</option><option value="shade">Gölgeleme senaryosu</option><option value="combined">Birleşik senaryo</option></select></label>
 <div id="legend" class="legend"></div>
-<div class="note">Hava düzeltmesi ERA5-Land hava sıcaklığı anomalisini LST'den β=__BETA__ varsayımıyla çıkarır. Senaryolar son yıl (__REFERENCE_YEAR__) için en riskli yol segmentlerinin %__TARGET_SHARE__ bölümüne uygulanır: gölgeleme −__COOLING__°C, ağaç örtüsü NDVI +__NDVI__. Bunlar ölçülmüş etki tahmini değildir.</div>
+<div class="note">Hava düzeltmesi ERA5-Land hava sıcaklığı anomalisini LST'den β=__BETA__ varsayımıyla çıkarır. Senaryolar son yıl (__REFERENCE_YEAR__) için en riskli yol segmentlerinin %__TARGET_SHARE__ bölümüne uygulanır: gölgeleme -__COOLING__°C, ağaç örtüsü NDVI +__NDVI__. Bunlar ölçülmüş etki tahmini değildir.</div>
 <div class="note">Yol seçerek mahalle/ilçe, 65+ oranı, nüfus yoğunluğu ve skor farkını görün. Bu dosya yanındaki impact_scenarios.geojson ile birlikte yerel bir web sunucusunda açılmalıdır.</div></section>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
 const years=__YEARS__, referenceYear=__REFERENCE_YEAR_JSON__;
@@ -357,9 +365,9 @@ function draw(){if(layer)map.removeLayer(layer);const vals=features.map(f=>metri
  if(!vals.length){document.getElementById('legend').textContent='Müdahale senaryoları yalnızca son analiz yılı için gösterilir.';return;}
  const breaks=[.2,.4,.6,.8].map(q=>vals[Math.min(vals.length-1,Math.floor(q*(vals.length-1)))]).concat([Infinity]);
  layer=L.geoJSON(features,{style:f=>({color:color(metric(f),breaks),weight:2,opacity:.82}),onEachFeature:(f,l)=>{const p=f.properties,y=document.getElementById('year').value,v=metric(f),base=p['hvi_base_'+y];
- l.bindPopup(`<b>${p.name||'Yol segmenti'}</b><br>${p.mahalle_adi||''} · ${p.ilce_adi||''}<br>65+ oranı: ${p.yasli_oran==null?'veri yok':(100*p.yasli_oran).toFixed(1)+'%'}<br>Nüfus yoğunluğu: ${p.nufus_yogunlugu==null?'veri yok':Number(p.nufus_yogunlugu).toFixed(0)+' kişi/km²'}<br>Gösterilen HVI: ${v==null?'uygulanamaz':Number(v).toFixed(1)}<br>Temel HVI: ${base==null?'veri yok':Number(base).toFixed(1)}<br>Fark: ${v==null||base==null?'—':(Number(v)-Number(base)).toFixed(1)}`)}}).addTo(map);
+ l.bindPopup(`<b>${p.name||'Yol segmenti'}</b><br>${p.mahalle_adi||''} · ${p.ilce_adi||''}<br>65+ oranı: ${p.yasli_oran==null?'veri yok':(100*p.yasli_oran).toFixed(1)+'%'}<br>Nüfus yoğunluğu: ${p.nufus_yogunlugu==null?'veri yok':Number(p.nufus_yogunlugu).toFixed(0)+' kişi/km²'}<br>Gösterilen HVI: ${v==null?'uygulanamaz':Number(v).toFixed(1)}<br>Temel HVI: ${base==null?'veri yok':Number(base).toFixed(1)}<br>Fark: ${v==null||base==null?'-':(Number(v)-Number(base)).toFixed(1)}`)}}).addTo(map);
  document.getElementById('legend').innerHTML=`Skorun şehir içindeki sıralaması:<br>${['Düşük','Orta-düşük','Orta-yüksek','Yüksek','En yüksek'].map((n,i)=>`<span style="color:${['#3182bd','#74add1','#fed976','#fd8d3c','#a50026'][i]}">■</span> ${n}`).join('<br>')}`;}
-Promise.all([fetch('./impact_scenarios.geojson').then(r=>{if(!r.ok)throw Error('GeoJSON yüklenemedi');return r.json()}),fetch('./analysis_summary.json').then(r=>r.json())]).then(([data,summary])=>{features=data.features;const center=summary.map_center;if(center)map.setView(center,12);draw()}).catch(e=>{document.getElementById('legend').textContent=e.message+' — analiz klasörünü HTTP üzerinden açın.'});
+Promise.all([fetch('./impact_scenarios.geojson').then(r=>{if(!r.ok)throw Error('GeoJSON yüklenemedi');return r.json()}),fetch('./analysis_summary.json').then(r=>r.json())]).then(([data,summary])=>{features=data.features;const center=summary.map_center;if(center)map.setView(center,12);draw()}).catch(e=>{document.getElementById('legend').textContent=e.message+' - analiz klasörünü HTTP üzerinden açın.'});
 document.getElementById('year').addEventListener('change',draw);document.getElementById('view').addEventListener('change',draw);
 </script></body></html>"""
     html = (template.replace("__CITY__", city_name)
@@ -440,7 +448,7 @@ def _make_impact_geodata(
                 if name != "base" and "nufus_yogunlugu" in output else None,
                 "mean_hvi_delta_target": round(float(delta[mask].mean()), 3) if name != "base" else 0.0,
                 "mean_hvi_delta_all_roads": round(float(delta.mean()), 3) if name != "base" else 0.0,
-                "assumption": "NDVI + delta" if name == "trees" else "LST − °C" if name == "shade" else "NDVI + delta and LST − °C" if name == "combined" else "Observed inputs",
+                "assumption": "NDVI artışı" if name == "trees" else "LST düşüşü" if name == "shade" else "NDVI artışı ve LST düşüşü" if name == "combined" else "Observed inputs",
             })
     return output, pd.DataFrame(rows)
 
@@ -456,7 +464,7 @@ def run_impact_analysis(
     weather_beta: float = 1.0,
     refresh_weather: bool = False,
 ) -> Path:
-    """Analyze a completed multi-year city pipeline and write its companion report."""
+    """Tamamlanmış çok yıllı bir şehir pipeline'ını analiz edip yanındaki raporu yazar."""
     years = [str(year) for year in years]
     if len(set(years)) < 3:
         raise ValueError("Çok yıllı trend için en az üç farklı yıl gerekli.")
@@ -485,8 +493,8 @@ def run_impact_analysis(
 
     output_dir = proc_dir / "impact_analysis"
     output_dir.mkdir(parents=True, exist_ok=True)
-    # The downloaded source and intermediate values are retained for a fully
-    # reproducible run and reused across reruns.
+    # İndirilen ERA5-Land yanıtı önbellekte tutulur; yeniden çalıştırmalar
+    # aynı veriyle tekrar üretilebilir olsun diye tekrar indirilmez.
     if refresh_weather:
         for cached in city_data_raw(config.city_id).glob("era5land_daily_*.json"):
             cached.unlink()
@@ -542,8 +550,8 @@ def run_impact_analysis(
     robustness = pd.DataFrame(robustness_rows)
     robustness.to_csv(output_dir / "robustness.csv", index=False)
 
-    # Map scores use a single 0–100 component scale across all years. HVI is
-    # recomputed with the same equal-weight geometric mean as the base product.
+    # Harita skorları tüm yıllar için tek ortak bileşen ölçeği kullanır. HVI,
+    # ana ürünle aynı eşit ağırlıklı geometrik ortalamayla yeniden hesaplanır.
     all_base_lst = pd.concat(list(lst_buffers[default_buffer].values()), ignore_index=True)
     all_base_ndvi = pd.concat(list(ndvi_buffers[default_buffer].values()), ignore_index=True)
     bounds = {
@@ -578,11 +586,11 @@ def run_impact_analysis(
         "map_center": center,
         "weather_source": "Open-Meteo Historical Weather API, ERA5-Land, daily 2 m mean air temperature",
         "weather_source_url": WEATHER_API,
-        "weather_climatology_period": f"{CLIMATE_BASELINE[0]}–{CLIMATE_BASELINE[1]}",
+        "weather_climatology_period": f"{CLIMATE_BASELINE[0]}-{CLIMATE_BASELINE[1]}",
         "weather_beta": weather_beta,
         "raw_lst_linear_trend_c_per_year": round(trend_raw, 5) if np.isfinite(trend_raw) else None,
         "weather_adjusted_lst_linear_trend_c_per_year": round(trend_adjusted, 5) if np.isfinite(trend_adjusted) else None,
-        "weather_method_caveat": "ERA5-Land hava sıcaklığı anomalisi, seçilen Landsat sahne günlerinin 1991–2020 aynı-takvim-penceresi normalinden çıkarılır. β varsayımdır; β=0/0.5/1 duyarlılığı annual_weather_adjusted.csv içinde verilir. 2 m hava sıcaklığı ile uydu yüzey sıcaklığı aynı ölçüm değildir; düzeltilmiş değer ikinci bir tahmin olarak yorumlanmalıdır.",
+        "weather_method_caveat": "ERA5-Land hava sıcaklığı anomalisi, seçilen Landsat sahne günlerinin 1991-2020 aynı-takvim-penceresi normalinden çıkarılır. β varsayımdır; β=0/0.5/1 duyarlılığı annual_weather_adjusted.csv içinde verilir. 2 m hava sıcaklığı ile uydu yüzey sıcaklığı aynı ölçüm değildir; düzeltilmiş değer ikinci bir tahmin olarak yorumlanmalıdır.",
         "buffers_m": buffers,
         "weight_profiles": {
             profile: {
