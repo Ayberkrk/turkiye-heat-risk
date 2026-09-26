@@ -1,0 +1,1 @@
+"""Afyonkarahisar city data adapter."""
