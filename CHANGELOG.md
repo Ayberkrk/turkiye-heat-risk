@@ -3,8 +3,19 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
-## Unreleased
+## v1.9.0 - 2026-09-26
 
+- **Çok yıllı analiz paketi**: `analyze_pipeline.py` ve `core/impact_analysis.py`.
+  Üç veya daha fazla yıl için ERA5-Land hava anomalisiyle düzeltilmiş LST/HVI
+  zaman serisi, tampon (10/30/50 m) ve ağırlık profili duyarlılığı (Spearman
+  ve en üst ondalık örtüşmesi), ilçe 65+ oranıyla yakınsaklık kontrolü ve
+  varsayımları görünür ağaçlandırma/gölgeleme senaryoları üretir. Hava
+  düzeltmesindeki β katsayısı varsayımdır, senaryolar ölçülmüş etki değildir
+  (bkz. README). Ana HVI haritasını değiştirmez; `roads_with_hvi.geojson`
+  çıktısına `ilce_adi` eklendiği için `HVI_FORMULA_VERSION` 2'ye çıktı ve eski
+  önbellekler otomatik yenilenir.
+- Analiz modülü için testler eklendi; sıra korelasyonu scipy gerektirmeden
+  hesaplanıyor (scipy bağımlılık listesinde yoktu, temiz kurulumda çöküyordu).
 - OSM kapsamını yeniden ölçüp ilçe yaş sayımları doğrulanmış Afyonkarahisar,
   Aksaray, Aydın, Düzce, Giresun, Nevşehir ve Siirt şehirlerini ekle (toplam
   70). Aydın kaydının veri yılı 2022 raporunun yayın yılı değil 2021 ADNKS
