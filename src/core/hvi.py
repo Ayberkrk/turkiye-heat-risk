@@ -21,20 +21,37 @@ Bileşenler:
                              tersi (yeni - resmi SEGE-2022 raporundan, bkz.
                              cities/izmir/adapter.py)
 
-Birleştirme: N adet 0-1 normalize bileşenin **geometrik ortalaması** × 100.
-Eski üç bileşenli çarpımsal formül (Tehlike × Maruziyet × Hassasiyet) ile
-geometrik ortalama aynı sayıyı vermez ama yolları aynı sırayla dizer (biri
-diğerinin küpüdür); geometrik ortalama bu sıralamayı keyfi N'e genelleştirir
-ve "bir bileşen sıfıra yakınsa toplam risk de düşük çıkar" özelliğini korur
-- ağırlıklı aritmetik ortalama bu özelliği sağlamaz.
+Birleştirme iki aşamalıdır (bkz. `COMPONENT_GROUPS`):
+  1. Bileşenler üç grupta toplanır: Tehlike (LST), Maruziyet (nüfus ve
+     yapılaşma yoğunluğu), Kırılganlık (yaşlı, çocuk, sosyoekonomik, sağlık
+     ve yeşil alan erişimi, ağaç örtüsü). Grup içi skor üyelerin aritmetik
+     ortalamasıdır - aynı grubun üyeleri birbirini telafi edebilir.
+  2. Grup skorları, tüm yılların ortak dağılımına göre yeniden 0-1'e
+     ölçeklenir. Ortalama almak yayılımı daraltır (altı bileşenli grupta
+     bileşenler birbirini götürür: yaşlı ve çocuk oranı ters ilişkilidir);
+     bu adım olmadan dar bantta kalan grup, geometrik ortalamada sıralamayı
+     hiç etkilemiyordu (İzmir'de kırılganlık grubunun skorla sıra
+     korelasyonu 0,00 idi).
+  3. Üç grup skorunun **geometrik ortalaması** × 100 nihai skordur - gruplar
+     birbirini telafi edemez: sıcak olmayan ya da kimsenin yaşamadığı bir
+     yolda risk düşük kalır.
 
-Geometrik ortalamanın yan etkisi ve nasıl ele alındığı: `normalize_0_1`
-min-max olduğu için her bileşende en az bir satır tam 0 alır ve `eps`
-yaklaşımıyla o satırın skoru sert biçimde aşağı çekilir. Bu, "bir bileşen
-sıfırsa risk düşüktür" tasarım tercihinin doğal sonucudur; ama bir bileşen
-*hatalı* biçimde sıfır üretiyorsa sonucu topluca bozar. Bu yüzden her
-bileşenin gerçekten anlamlı bir yayılım ürettiği doğrulanmalıdır - bkz.
-`_building_density_per_km2` içindeki sıfır-oranı uyarısı.
+Önceki sürüm dokuz bileşenin düz geometrik ortalamasıydı. Orada bileşen
+sayısı gizli bir ağırlıktı: yedi kırılganlık bileşenine karşı tek bir
+sıcaklık bileşeni, "ısı" endeksinde sıcaklığın payını 1/9'a indiriyordu ve
+birbiriyle ilişkili bileşenler (NDVI ile LST, bina ile nüfus yoğunluğu) aynı
+sinyali iki kez sayıyordu. Gruplu yapıda her grubun payı, kaç bileşen
+içerdiğinden bağımsız olarak 1/3'tür.
+
+Ölçekleme: bileşenler min-max yerine %2-%98 yüzdelik aralığına göre 0-1'e
+çekilir (`robust_normalize_0_1`). Min-max'ta tek bir uç yol (ör. hastaneye
+40 km uzaktaki bir kırsal segment) geri kalan tüm yolları ölçeğin dar bir
+bandına sıkıştırıyordu.
+
+Ayırt etmeyen bileşenler: bir bileşen şehrin tüm yollarında aynı değeri
+alıyorsa (tek ilçeli şehirlerde ilçe düzeyindeki dört demografik bileşen)
+grup ortalamasına alınmaz; aksi halde sabit bir 0, grubun geri kalan
+üyelerinin etkisini seyreltirdi.
 
 Yıllar arası karşılaştırılabilirlik: `hvi_percentage` ve Jenks kategori
 sınırları TÜM yılların ortak dağılımından hesaplanır. Her yıl kendi içinde
@@ -77,14 +94,31 @@ BUCKET_LABELS_5_DENSITY = ["çok seyrek", "seyrek", "orta", "yoğun", "çok yoğ
 # doku için makul bir yürüme mesafesi ölçeğidir.
 BUILDING_DENSITY_BUFFER_M = 150
 
-# Geometrik ortalama alınmadan önce her bileşenin ölçekleneceği alt sınır
-# (gerekçesi `compute_heat_vulnerability_index` içinde).
+# Geometrik ortalama alınmadan önce her grup skorunun ölçekleneceği alt sınır
+# (gerekçesi `combine_groups` içinde).
 COMPONENT_FLOOR = 0.05
 
 # Çıktı sürümü - bileşen sayısı/formülü, yapılaşma tamponu veya
 # `roads_with_hvi.geojson` sütun şeması değiştiğinde artırılır; eski önbellek
 # güncel çıktı gibi kullanılmamalıdır (bkz. core/cache.py).
-HVI_FORMULA_VERSION = 2
+HVI_FORMULA_VERSION = 4
+
+
+# Sağlam (aykırı değere dayanıklı) ölçeklemede kullanılan alt/üst yüzdelikler.
+# Bu aralığın dışındaki değerler 0 ya da 1'e kırpılır.
+ROBUST_QUANTILES = (0.02, 0.98)
+
+# Bileşenlerin ait olduğu gruplar. Grup içi aritmetik, gruplar arası
+# geometrik ortalama alınır (gerekçesi modül docstring'inde). Yıl bazlı
+# bileşenler burada yıl eki olmadan anılır.
+COMPONENT_GROUPS = {
+    "hazard": ["hazard_norm"],
+    "exposure": ["exposure_norm", "sensitivity_yapilasma_norm"],
+    "vulnerability": [
+        "sensitivity_yasli_norm", "sensitivity_cocuk_norm", "sensitivity_sosyoekonomik_norm",
+        "sensitivity_saglik_norm", "sensitivity_yesil_norm", "sensitivity_agac_norm",
+    ],
+}
 
 
 def normalize_0_1(series: pd.Series) -> pd.Series:
@@ -92,6 +126,113 @@ def normalize_0_1(series: pd.Series) -> pd.Series:
     if max_v == min_v:
         return series * 0
     return (series - min_v) / (max_v - min_v)
+
+
+def robust_bounds(series: pd.Series, quantiles: tuple[float, float] = ROBUST_QUANTILES) -> tuple[float, float]:
+    """Ölçeklemede kullanılacak (alt, üst) sınırı yüzdeliklerden döndürür.
+
+    İki yüzdelik çakışırsa (ör. yolların %97'si aynı ilçede olduğu için ilçe
+    düzeyindeki bir oran neredeyse sabitse) min-max'a geri düşülür; aksi
+    halde gerçekte değişen bir bileşen tümüyle 0'a çökerdi.
+    """
+    clean = pd.to_numeric(series, errors="coerce").dropna()
+    if clean.empty:
+        return float("nan"), float("nan")
+    low, high = float(clean.quantile(quantiles[0])), float(clean.quantile(quantiles[1]))
+    if low == high:
+        low, high = float(clean.min()), float(clean.max())
+    return low, high
+
+
+def scale_between(series: pd.Series, low: float, high: float) -> pd.Series:
+    """Seriyi [low, high] aralığına göre 0-1'e çeker, dışarıda kalanı kırpar."""
+    if not (np.isfinite(low) and np.isfinite(high)) or high == low:
+        return series * 0
+    return ((series - low) / (high - low)).clip(0, 1)
+
+
+def robust_normalize_0_1(series: pd.Series) -> pd.Series:
+    return scale_between(series, *robust_bounds(series))
+
+
+def informative_components(values: pd.DataFrame, columns: list[str]) -> list[str]:
+    """`columns` içinden en az iki farklı değer alan (ayırt eden) sütunları döndürür."""
+    return [column for column in columns if values[column].nunique(dropna=True) > 1]
+
+
+def group_scores(values: pd.DataFrame, weights: dict[str, float] | None = None) -> pd.DataFrame:
+    """Bileşenleri `COMPONENT_GROUPS`'a göre grup skorlarına indirger.
+
+    `values` sütunları yıl eki taşımayan bileşen adlarıdır; yalnızca mevcut
+    sütunlar kullanılır, hiç üyesi olmayan grup çıktıda yer almaz. Bir
+    satırda herhangi bir üye NaN ise o grubun skoru da NaN olur.
+    """
+    weights = weights or {}
+    result = {}
+    for group, members in COMPONENT_GROUPS.items():
+        present = [column for column in members if column in values.columns]
+        if not present:
+            continue
+        member_weights = np.asarray([weights.get(column, 1.0) for column in present], dtype=float)
+        result[group] = values[present].to_numpy(dtype=float) @ (member_weights / member_weights.sum())
+    return pd.DataFrame(result, index=values.index)
+
+
+def combine_groups(groups: pd.DataFrame, group_weights: dict[str, float] | None = None) -> pd.Series:
+    """Grup skorlarının (0-1) ağırlıklı geometrik ortalaması × 100.
+
+    Skorlar önce [COMPONENT_FLOOR, 1] aralığına ölçeklenir: 0, "hiç risk yok"
+    değil "veri kümesindeki en düşük değer" demektir ve tek başına tüm skoru
+    sıfırlamamalıdır. Taban, "bir grup düşükse toplam risk de düşer"
+    davranışını korur ama etkisini sürekli ve sınırlı tutar.
+    """
+    group_weights = group_weights or {}
+    w = np.asarray([group_weights.get(group, 1.0) for group in groups.columns], dtype=float)
+    floored = COMPONENT_FLOOR + (1 - COMPONENT_FLOOR) * groups.to_numpy(dtype=float)
+    return pd.Series(np.exp(np.log(floored) @ (w / w.sum())) * 100, index=groups.index)
+
+
+def pooled_group_bounds(tables: list[pd.DataFrame],
+                        weights: dict[str, float] | None = None) -> dict[str, tuple[float, float]]:
+    """Grup skorlarının yeniden ölçekleneceği sınırları, verilen tüm tablolardan
+    (tipik olarak her yıl için bir tablo) ORTAK olarak hesaplar.
+
+    Sınırlar yıl başına ayrı hesaplansaydı aynı grup skoru iki yılda farklı
+    değere ölçeklenir ve yıllar karşılaştırılamazdı.
+    """
+    groups = pd.concat([group_scores(table, weights) for table in tables], ignore_index=True)
+    return {group: robust_bounds(groups[group]) for group in groups.columns}
+
+
+def rescale_groups(groups: pd.DataFrame, bounds: dict[str, tuple[float, float]]) -> pd.DataFrame:
+    """Grup skorlarını `bounds`'a göre 0-1'e çeker (gerekçesi modül docstring'inde)."""
+    return pd.DataFrame(
+        {group: scale_between(groups[group], *bounds[group]) for group in groups.columns}, index=groups.index,
+    )
+
+
+def hvi_from_components(values: pd.DataFrame, weights: dict[str, float] | None = None,
+                        bounds: dict[str, tuple[float, float]] | None = None) -> pd.Series:
+    """Bileşen tablosundan nihai skoru üretir (grup içi aritmetik, gruplar arası geometrik).
+
+    `weights` verilmezse her bileşen grubunda, her grup da endekste eşit
+    paya sahiptir. Verilirse (duyarlılık analizi, bkz. core/impact_analysis.py)
+    bileşen ağırlıkları grup içinde uygulanır, grubun ağırlığı da üyelerinin
+    ağırlık ortalamasıdır.
+
+    `bounds` grup skorlarının yeniden ölçekleme sınırlarıdır (bkz.
+    pooled_group_bounds); birden fazla tablo (yıl, senaryo) karşılaştırılacaksa
+    hepsine AYNI sınırlar verilmelidir. Verilmezse yalnızca bu tablodan hesaplanır.
+    """
+    weights = weights or {}
+    groups = group_scores(values, weights)
+    groups = rescale_groups(groups, bounds or pooled_group_bounds([values], weights))
+    group_weights = {
+        group: float(np.mean([weights.get(column, 1.0) for column in COMPONENT_GROUPS[group]
+                              if column in values.columns]))
+        for group in groups.columns
+    }
+    return combine_groups(groups, group_weights)
 
 
 def bucket_5(series: pd.Series, labels: list[str]) -> pd.Series:
@@ -235,12 +376,12 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
     roads = roads.drop(columns=["centroid"])
 
     # --- Statik (yıldan bağımsız) bileşenlerin normalize değerleri ---
-    roads["exposure_norm"] = normalize_0_1(roads["nufus_yogunlugu"])
-    roads["sensitivity_yasli_norm"] = normalize_0_1(roads["yasli_oran"])
-    roads["sensitivity_cocuk_norm"] = normalize_0_1(roads["cocuk_oran"])
-    roads["sensitivity_saglik_norm"] = normalize_0_1(roads["dist_saglik_m"])
-    roads["sensitivity_yesil_norm"] = normalize_0_1(roads["dist_yesil_m"])
-    roads["sensitivity_yapilasma_norm"] = normalize_0_1(roads["bina_yogunlugu"])
+    roads["exposure_norm"] = robust_normalize_0_1(roads["nufus_yogunlugu"])
+    roads["sensitivity_yasli_norm"] = robust_normalize_0_1(roads["yasli_oran"])
+    roads["sensitivity_cocuk_norm"] = robust_normalize_0_1(roads["cocuk_oran"])
+    roads["sensitivity_saglik_norm"] = robust_normalize_0_1(roads["dist_saglik_m"])
+    roads["sensitivity_yesil_norm"] = robust_normalize_0_1(roads["dist_yesil_m"])
+    roads["sensitivity_yapilasma_norm"] = robust_normalize_0_1(roads["bina_yogunlugu"])
 
     static_components = [
         "exposure_norm", "sensitivity_yasli_norm", "sensitivity_cocuk_norm",
@@ -251,43 +392,53 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
         # Skor yüksek = ilçe daha gelişmiş = risk katkısı DÜŞÜK olmalı;
         # bu yüzden riske normalize edilirken skorun TERSİ kullanılır
         # (ağaç örtüsündeki NDVI tersleme deseniyle aynı mantık).
-        roads["sensitivity_sosyoekonomik_norm"] = 1 - normalize_0_1(roads["sosyoekonomik_skor"])
+        roads["sensitivity_sosyoekonomik_norm"] = 1 - robust_normalize_0_1(roads["sosyoekonomik_skor"])
         static_components.append("sensitivity_sosyoekonomik_norm")
 
+    # Tüm yollarda aynı değeri alan bileşen (tek ilçeli şehirde ilçe düzeyi
+    # demografi) yolları ayırt etmez; grup ortalamasına sabit bir 0 olarak
+    # girip diğer üyeleri seyreltmesin diye dışarıda bırakılır. Sütunun
+    # kendisi yine de çıktıya yazılır.
+    active_static = informative_components(roads, static_components)
+    dropped = sorted(set(static_components) - set(active_static))
+    if dropped:
+        print(f"  Ayırt etmediği için endekse alınmayan bileşenler: {', '.join(dropped)}")
+
     # --- Yıl bazlı bileşenler: ORTAK ölçekle normalize edilir ---
-    # Sıcaklık ve NDVI her yıl kendi min-max aralığına sıkıştırılsaydı, aynı
+    # Sıcaklık ve NDVI her yıl kendi aralığına sıkıştırılsaydı, aynı
     # sıcaklık iki yılda farklı bir risk katkısı üretir ve yıl karşılaştırması
     # anlamını yitirirdi. `core/roads.py` LST risk skorunda aynı gerekçeyle
     # ortak ölçek kullanıyor; burada o zincir korunuyor.
-    risk_all = pd.concat([roads[f"risk_score_{y}"] for y in years])
-    ndvi_all = pd.concat([roads[f"ndvi_mean_{y}"] for y in years])
-    risk_min, risk_max = risk_all.min(), risk_all.max()
-    ndvi_min, ndvi_max = ndvi_all.min(), ndvi_all.max()
+    risk_low, risk_high = robust_bounds(pd.concat([roads[f"risk_score_{y}"] for y in years]))
+    ndvi_low, ndvi_high = robust_bounds(pd.concat([roads[f"ndvi_mean_{y}"] for y in years]))
 
     def _scale(series: pd.Series, lo: float, hi: float) -> pd.Series:
         return series * 0 if hi == lo else (series - lo) / (hi - lo)
 
+    values_by_year = {}
     for year in years:
         # Ağaç örtüsü NDVI'nin TERSİ ile riske katkı sağlar: az ağaç = yüksek risk.
-        roads[f"hazard_norm_{year}"] = _scale(roads[f"risk_score_{year}"], risk_min, risk_max)
-        roads[f"sensitivity_agac_norm_{year}"] = 1 - _scale(roads[f"ndvi_mean_{year}"], ndvi_min, ndvi_max)
+        roads[f"hazard_norm_{year}"] = scale_between(roads[f"risk_score_{year}"], risk_low, risk_high)
+        roads[f"sensitivity_agac_norm_{year}"] = 1 - scale_between(roads[f"ndvi_mean_{year}"], ndvi_low, ndvi_high)
 
-        year_components = [f"hazard_norm_{year}", f"sensitivity_agac_norm_{year}", *static_components]
-        has_all_data = roads[year_components].notna().all(axis=1)
+        values = roads[active_static].copy()
+        values["hazard_norm"] = roads[f"hazard_norm_{year}"]
+        values["sensitivity_agac_norm"] = roads[f"sensitivity_agac_norm_{year}"]
 
-        # Bileşenler geometrik ortalamadan önce [0,1] yerine
-        # [COMPONENT_FLOOR, 1] aralığına ölçeklenir. Gerekçe: min-max
-        # normalizasyonda 0, "hiç risk yok" değil "veri kümesindeki en düşük
-        # değer" demektir; log(0)'ı önlemek için eklenen çok küçük bir
-        # epsilon ise bu 0'ı fiilen bir cezaya çevirir (1e-6 ile bir bileşenin
-        # 0.0 mı 0.001 mi olduğu skoru iki katından fazla değiştiriyordu).
-        # Taban değeri, "bir bileşen düşükse toplam risk de düşer" davranışını
-        # korur ama etkisini sürekli ve sınırlı tutar.
-        comp_matrix = roads.loc[has_all_data, year_components].to_numpy()
-        comp_matrix = COMPONENT_FLOOR + (1 - COMPONENT_FLOOR) * comp_matrix
-        geo_mean = np.exp(np.log(comp_matrix).mean(axis=1))
-        roads.loc[has_all_data, f"hvi_score_{year}"] = geo_mean * 100
-        roads.loc[~has_all_data, f"hvi_score_{year}"] = np.nan
+        # Herhangi bir bileşeni eksik olan yolun skoru NaN'dır. Denetim,
+        # endekse alınmayan sabit bileşenleri de kapsar: demografisi eşlenmemiş
+        # bir yol, o bileşen ayırt etmiyor diye skor almamalı.
+        complete = roads[static_components].notna().all(axis=1) & values.notna().all(axis=1)
+        values_by_year[year] = values.where(complete)
+
+    # Grup skorları da yazılır: "bu yol neden yüksek?" sorusu önce grup (sıcak
+    # mı, kalabalık mı, kırılgan mı), sonra bileşen düzeyinde yanıtlanabilir.
+    group_bounds = pooled_group_bounds(list(values_by_year.values()))
+    for year in years:
+        groups = rescale_groups(group_scores(values_by_year[year]), group_bounds)
+        for group in groups.columns:
+            roads[f"group_{group}_{year}"] = groups[group].round(4)
+        roads[f"hvi_score_{year}"] = combine_groups(groups)
 
     # --- Yüzde ve kategori: TÜM yılların ortak dağılımından ---
     # Her yıl kendi içinde 0-100'e ölçeklenseydi, tanım gereği her yılın en

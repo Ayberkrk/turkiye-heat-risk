@@ -74,8 +74,8 @@ def test_nearest_grid_assigns_each_road_to_closest_cell():
     assert ia._nearest_grid_for_roads(roads, grid, CRS).tolist() == [0, 1]
 
 
-def test_scores_for_buffer_equal_profile_is_floored_geometric_mean():
-    roads = pd.DataFrame({"exposure_norm": [0.5, 0.5]})
+def test_scores_for_buffer_equal_profile_matches_grouped_main_index():
+    roads = pd.DataFrame({"exposure_norm": [0.2, 0.6]})
     lst = {"2020": pd.Series([10.0, 30.0])}
     ndvi = {"2020": pd.Series([0.2, 0.2])}
     score = ia._scores_for_buffer(roads, ["2020"], lst, ndvi, "equal")["2020"]
@@ -84,12 +84,25 @@ def test_scores_for_buffer_equal_profile_is_floored_geometric_mean():
     def f(x):
         return floor + (1 - floor) * x
 
-    # LST 10 -> 0, LST 30 -> 1; NDVI sabit (min == max) -> yeşil bileşeni 1 - 0 = 1
-    expected_low = np.exp(np.mean(np.log([f(0.0), f(1.0), f(0.5)]))) * 100
-    expected_high = np.exp(np.mean(np.log([f(1.0), f(1.0), f(0.5)]))) * 100
+    # LST 10 -> 0, LST 30 -> 1. Üç grup (tehlike, maruziyet, kırılganlık) tek
+    # üyeli ve eşit paylı; grup skorları ortak dağılıma göre yeniden
+    # ölçeklenir: maruziyet 0.2/0.6 -> 0/1, sabit kalan kırılganlık -> 0.
+    expected_low = np.exp(np.mean(np.log([f(0.0), f(0.0), f(0.0)]))) * 100
+    expected_high = np.exp(np.mean(np.log([f(1.0), f(1.0), f(0.0)]))) * 100
     assert np.isclose(score.iloc[0], expected_low)
     assert np.isclose(score.iloc[1], expected_high)
-    assert score.iloc[1] > score.iloc[0]
+
+
+def test_scores_for_buffer_ignores_constant_static_component():
+    # Tek ilçeli şehirde ilçe düzeyi bileşenler sabittir; ana endeks gibi
+    # analiz de bunları ortalamaya almamalı, yoksa iki skor birbirinden sapar.
+    lst = {"2020": pd.Series([10.0, 30.0])}
+    ndvi = {"2020": pd.Series([0.2, 0.4])}
+    base = pd.DataFrame({"sensitivity_saglik_norm": [0.1, 0.9]})
+    with_constant = base.assign(sensitivity_yasli_norm=[0.0, 0.0])
+    first = ia._scores_for_buffer(base, ["2020"], lst, ndvi, "equal")["2020"]
+    second = ia._scores_for_buffer(with_constant, ["2020"], lst, ndvi, "equal")["2020"]
+    assert np.allclose(first, second)
 
 
 def test_scores_for_buffer_leaves_roads_with_missing_component_nan():

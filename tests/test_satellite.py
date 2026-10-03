@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 import numpy as np
+import pytest
 import rasterio
 from rasterio.transform import from_origin
 
@@ -95,3 +96,143 @@ def test_select_best_scenes_per_tile_treats_missing_cloud_cover_as_worst():
 
 def test_select_best_scenes_per_tile_empty_input_returns_empty_dict():
     assert select_best_scenes_per_tile([], max_per_tile=1) == {}
+
+
+# --- fetch_landsat_scenes: arama penceresi config'ten gelmeli ---------------
+
+def test_fetch_landsat_scenes_searches_configured_season(monkeypatch, tmp_path):
+    from core import satellite
+    from core.city_config import CityConfig
+
+    config = CityConfig(
+        city_id="test", name="Test", bbox=[27.0, 38.0, 27.5, 38.5], crs="EPSG:32635", max_cloud_cover=30,
+        osm_pbf_url="", drive_highway_types=["residential"], admin_level_ilce="6",
+        admin_level_mahalle="8", population_adapter_path="unused",
+        season_start="06-01", season_end="09-15",
+    )
+    captured = {}
+
+    class _Search:
+        def items(self):
+            return []
+
+    class _Catalog:
+        def search(self, **kwargs):
+            captured.update(kwargs)
+            return _Search()
+
+    monkeypatch.setattr("core.satellite.pystac_client.Client.open", lambda *args, **kwargs: _Catalog())
+    monkeypatch.setattr("core.satellite.year_paths", lambda city_id, year, main_year: (tmp_path, tmp_path))
+
+    # Aday sahne olmadığı için hata beklenir; önemli olan sorgunun penceresi.
+    with pytest.raises(RuntimeError):
+        satellite.fetch_landsat_scenes(config, "2024", "2024")
+    assert captured["datetime"] == "2024-06-01/2024-09-15"
+
+
+# --- download_band: süresi dolmuş imzayla indirmeye çalışmamalı --------------
+
+def test_download_band_resigns_url_instead_of_reusing_search_time_token(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from core import satellite
+
+    # Arama anında imzalanmış (ve bu arada süresi dolmuş olabilecek) adres.
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF?se=eski&sig=eski")})
+    signed, requested = [], []
+
+    def fake_sign(url):
+        signed.append(url)
+        return url + "?sig=taze"
+
+    class _Response:
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            return [b"veri"]
+
+    def fake_get(url, **kwargs):
+        requested.append(url)
+        return _Response()
+
+    monkeypatch.setattr("core.satellite.planetary_computer.sign", fake_sign)
+    monkeypatch.setattr("core.satellite.requests.get", fake_get)
+
+    satellite.download_band(item, "red", tmp_path / "b4.tif")
+
+    assert signed == ["https://blob.example/B4.TIF"]
+    assert requested == ["https://blob.example/B4.TIF?sig=taze"]
+    assert (tmp_path / "b4.tif").read_bytes() == b"veri"
+
+
+def _download_fakes(monkeypatch, responses):
+    """`requests.get`'i sırayla `responses`'taki davranışları üreten bir sahteyle değiştirir."""
+    import requests
+
+    from core import satellite
+
+    calls = []
+
+    class _Response:
+        def __init__(self, chunks):
+            self._chunks = chunks
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            for chunk in self._chunks:
+                if isinstance(chunk, Exception):
+                    raise chunk
+                yield chunk
+
+    def fake_get(url, **kwargs):
+        calls.append(url)
+        return _Response(responses[len(calls) - 1])
+
+    monkeypatch.setattr("core.satellite.planetary_computer.sign", lambda url: url)
+    monkeypatch.setattr("core.satellite.requests.get", fake_get)
+    monkeypatch.setattr("core.satellite.time.sleep", lambda seconds: None)
+    return satellite, requests, calls
+
+
+def test_download_band_retries_after_read_timeout_and_leaves_no_partial_file(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    import requests
+
+    # İlk deneme veri akarken kopuyor (Eskişehir indirmesinde yaşandı),
+    # ikincisi tamamlanıyor. Sonuç yalnızca ikinci denemenin verisi olmalı.
+    satellite, _, calls = _download_fakes(monkeypatch, [
+        [b"yarim", requests.ConnectionError("Read timed out.")],
+        [b"tam", b"veri"],
+    ])
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF")})
+    target = tmp_path / "b4.tif"
+
+    satellite.download_band(item, "red", target)
+
+    assert len(calls) == 2
+    assert target.read_bytes() == b"tamveri"
+    assert not (tmp_path / "b4.tif.part").exists()
+
+
+def test_download_band_gives_up_after_all_attempts_without_writing_target(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    import requests
+
+    from core import satellite as sat
+
+    failing = [[requests.ConnectionError("Read timed out.")]] * sat.DOWNLOAD_ATTEMPTS
+    satellite, _, calls = _download_fakes(monkeypatch, failing)
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF")})
+    target = tmp_path / "b4.tif"
+
+    with pytest.raises(requests.ConnectionError):
+        satellite.download_band(item, "red", target)
+
+    assert len(calls) == sat.DOWNLOAD_ATTEMPTS
+    # Yarım dosya hedefe yazılmamalı: var olan dosya "indirildi" sayılırdı.
+    assert not target.exists() and not (tmp_path / "b4.tif.part").exists()

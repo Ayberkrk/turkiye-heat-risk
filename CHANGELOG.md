@@ -3,6 +3,61 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## v2.0.0 - 2026-10-03
+
+HVI formülü değişti; skorlar, kategoriler ve sıralamalar v1.x ile
+karşılaştırılamaz. `HVI_FORMULA_VERSION` 4'e çıktı, eski önbellekler
+otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
+`manifest.json` içindeki `hvi_formula_version` alanından okunabilir.
+
+- **Gruplu HVI**: dokuz bileşenin düz geometrik ortalaması yerine bileşenler
+  Tehlike, Maruziyet ve Kırılganlık gruplarında (grup içi aritmetik ortalama)
+  toplanıp gruplar geometrik ortalamayla birleştiriliyor. Düz yapıda tek
+  sıcaklık bileşeni endeksin 1/9'uydu ve ilişkili bileşenler aynı sinyali
+  iki kez sayıyordu; artık her grubun payı 1/3. Grup skorları
+  `group_<grup>_<yıl>` sütunlarıyla çıktıya yazılıyor.
+- **Grup skorları yeniden ölçekleniyor**: ortalaması dar bir bantta kalan
+  grup (İzmir'de kırılganlık) sıralamayı hiç etkilemiyordu (sıra
+  korelasyonu 0,00). Grup skorları birleştirilmeden önce yılların ortak
+  dağılımına göre 0-1'e çekiliyor; etki 0,23'e çıktı.
+- **İzmir yeniden üretildi** (24 sahne, medyan kompozit). 2020-2026 ortalama
+  yüzey sıcaklığı farkı +0,47 °C; v1.x'teki +3,29 °C tek sahne kaynaklıydı.
+- **Aykırı değere dayanıklı ölçekleme**: bileşenler min-max yerine %2-%98
+  yüzdelik aralığına göre ölçekleniyor.
+- **Ayırt etmeyen bileşenler endekse alınmıyor**: tek ilçeli şehirlerde
+  sabit kalan ilçe düzeyi bileşenler grup ortalamasını seyreltmiyor.
+  Demografisi eşlenmemiş yollar eskisi gibi skorsuz kalır.
+- Çok yıllı analiz modülü (`core/impact_analysis.py`) artık ana endeksle
+  aynı birleştirme fonksiyonunu kullanıyor; ağırlık profilleri bileşen
+  ağırlığını grup içinde, ortalamasını grup ağırlığı olarak uygular.
+- **Ayarlanabilir sezon**: Landsat sahne arama penceresi kodda sabit
+  (1 Temmuz - 31 Ağustos) olmak yerine `landsat.season_start` /
+  `season_end` ile şehir bazında ayarlanabiliyor; varsayılan değişmedi.
+- **Hata düzeltmesi (çoklu sahne kompoziti)**: aynı karonun farklı tarihli
+  sahneleri aynı ızgarada gelmez; başlangıç noktası yüzlerce metre kayar,
+  boyut birkaç piksel değişir. Kompozit bunları olduğu gibi üst üste
+  koyuyordu: boyutlar farklıysa çöküyor, tesadüfen eşitse kayık pikselleri
+  sessizce aynı piksel sayıyordu (İzmir 2020'de 900 m). Sahneler artık
+  kompozitten önce ortak bir ızgaraya oturtuluyor. `MOSAIC_VERSION` 2.
+- Mozaik artık tam Landsat sahnesini değil yalnızca şehir bbox'ını (1 km
+  payla) okuyor; bellek ve disk kullanımı bir büyüklük mertebesi düşüyor.
+- **Hata düzeltmesi**: Landsat bantları arama anında bir kez imzalanıyordu;
+  Planetary Computer imzası yaklaşık 45 dakika geçerli olduğu için uzun süren
+  indirmelerde kalan dosyalar 403 ile düşüyordu. Her bant artık indirilmeden
+  hemen önce yeniden imzalanıyor.
+- İndirme geçici ağ hatalarında (okuma zaman aşımı, bağlantı kopması) dört
+  kereye kadar yeniden deniyor ve veriyi önce `.part` dosyasına yazıyor;
+  onlarca bantlık bir indirmede tek bir kopma artık pipeline'ı düşürmüyor.
+- Şehirler sayfası (`docs/index.html`) her haritanın hangi formül sürümüyle
+  üretildiğini manifest'ten okuyup eski kalanları işaretliyor; şehirler
+  artık skora göre sıralanmıyor (yüzdeler şehirler arasında karşılaştırılamaz).
+- **Eskişehir henüz yeniden üretilmedi**: `docs/eskisehir` v1.x formülü ve
+  tek sahne yöntemiyle duruyor, sayfada "eski formül" olarak işaretli.
+- README: termal bandın 100 m gerçek çözünürlüğü, yüzey ve hava sıcaklığı
+  farkı, endeksin sağlık verisiyle doğrulanmadığı ve şehirler arası
+  karşılaştırma sınırı açıkça yazıldı.
+- `compute_heat_vulnerability_index` için ilk uçtan uca (sentetik) testler.
+
 ## v1.9.0 - 2026-09-26
 
 - **Çok yıllı analiz paketi**: `analyze_pipeline.py` ve `core/impact_analysis.py`.

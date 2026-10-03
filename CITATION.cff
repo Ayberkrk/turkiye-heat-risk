@@ -18,7 +18,7 @@ authors:
   - family-names: Korkmaz
     given-names: Ayberk
 repository-code: "https://github.com/Ayberkrk/turkiye-heat-risk"
-url: "https://github.com/Ayberkrk/turkiye-heat-risk"
+url: "https://ayberkrk.github.io/turkiye-heat-risk/"
 license: MIT
 keywords:
   - urban-heat-island
@@ -29,5 +29,5 @@ keywords:
   - turkey
   - python
   - folium
-version: "1.9.0"
-date-released: "2026-09-26"
+version: "2.0.0"
+date-released: "2026-10-03"

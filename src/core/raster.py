@@ -15,7 +15,8 @@ from pathlib import Path
 import numpy as np
 import rasterio
 from rasterio.transform import Affine
-from rasterio.warp import Resampling, calculate_default_transform, reproject
+from rasterio.vrt import WarpedVRT
+from rasterio.warp import Resampling, calculate_default_transform, reproject, transform_bounds
 from rasterio.windows import from_bounds as window_from_bounds
 
 from core.cache import is_cache_valid, write_cache_meta
@@ -27,7 +28,14 @@ from core.paths import year_paths
 # önbelleğe geçişin kendisi, sürüm dosyası (`.meta.json`) taşımayan eski
 # (karo başına tek sahne varsayan) mozaikleri otomatik geçersiz sayar - bir
 # sonraki `pipeline.py` çalıştırmasında yeniden indirilip hesaplanırlar.
-MOSAIC_VERSION = 1
+# 2: aynı karonun sahneleri kompozitlenmeden önce ortak ızgaraya hizalanıyor
+# ve yalnızca şehir bbox'ı okunuyor (bkz. tile_grid).
+MOSAIC_VERSION = 2
+
+# Karo ızgarası şehir bbox'ından bu kadar geniş tutulur: bbox kenarındaki
+# yolların tamponu (en fazla 50 m, bkz. core/impact_analysis.py) ve yeniden
+# izdüşürmedeki kenar etkisi için pay.
+TILE_GRID_MARGIN_M = 1000.0
 
 # Landsat Collection 2 Level-2 QA_PIXEL bit bayrakları (USGS LSDS-1328).
 # Her bit tek başına o sınıfın varlığını işaret eder; "confidence" bitleri
@@ -65,31 +73,90 @@ def qa_invalid_mask(qa_values: np.ndarray) -> np.ndarray:
     return invalid
 
 
-def load_qa_mask(qa_path: Path) -> np.ndarray:
+def tile_grid(band_paths: list[Path], bbox: list[float], margin_m: float = TILE_GRID_MARGIN_M) -> dict | None:
+    """Bir karonun tüm sahnelerinin okunacağı ortak ızgarayı döndürür.
+
+    Aynı path/row'un farklı tarihli sahneleri aynı ızgarada GELMEZ: USGS her
+    sahneyi kendi çerçevesine göre keser, başlangıç noktası sahneden sahneye
+    yüzlerce metre kayar ve boyut birkaç piksel değişir. Sahneleri oldukları
+    gibi üst üste koymak ya şekil uyuşmazlığıyla çöker ya da (boyutlar
+    tesadüfen eşitse) yüzlerce metre kayık pikselleri sessizce aynı piksel
+    sayıp medyanını alır.
+
+    Izgara ilk sahnenin CRS'i ve piksel kafesindedir; sahnelerin birleşik
+    kapsamının şehir bbox'ıyla (artı `margin_m`) kesişimini kaplar. Tam
+    sahne (yaklaşık 7800x7700 piksel) yerine yalnızca şehri okumak belleği
+    de bir büyüklük mertebesi düşürür. Karo bbox'la kesişmiyorsa None döner.
+    """
+    with rasterio.open(band_paths[0]) as src:
+        crs, res_x, res_y = src.crs, src.res[0], src.res[1]
+        origin_x, origin_y = src.transform.c, src.transform.f
+
+    left = bottom = float("inf")
+    right = top = float("-inf")
+    for path in band_paths:
+        with rasterio.open(path) as src:
+            bounds = src.bounds if src.crs == crs else transform_bounds(src.crs, crs, *src.bounds)
+        left, bottom = min(left, bounds[0]), min(bottom, bounds[1])
+        right, top = max(right, bounds[2]), max(top, bounds[3])
+
+    west, south, east, north = transform_bounds("EPSG:4326", crs, *bbox)
+    left, bottom = max(left, west - margin_m), max(bottom, south - margin_m)
+    right, top = min(right, east + margin_m), min(top, north + margin_m)
+    if left >= right or bottom >= top:
+        return None
+
+    # Kenarlar ilk sahnenin piksel kafesine oturtulur; aynı kafesteki
+    # sahneler için okuma birebir kopyadır, yeniden örnekleme yapılmaz.
+    left = origin_x + np.floor((left - origin_x) / res_x) * res_x
+    top = origin_y - np.floor((origin_y - top) / res_y) * res_y
+    width = int(np.ceil((right - left) / res_x))
+    height = int(np.ceil((top - bottom) / res_y))
+    return {"crs": crs, "transform": Affine(res_x, 0.0, left, 0.0, -res_y, top), "width": width, "height": height}
+
+
+def _read_band(path: Path, grid: dict | None) -> tuple[np.ndarray, float | None, dict]:
+    """Bandı okur; `grid` verilirse o ızgaraya oturtarak (bkz. tile_grid).
+
+    En yakın komşu kullanılır: aynı piksel kafesindeki sahnelerde değerler
+    aynen taşınır ve kategorik QA_PIXEL bit bayrakları bozulmaz. Sahnenin
+    kapsamadığı pikseller bandın nodata değeriyle dolar.
+    """
+    with rasterio.open(path) as src:
+        nodata = src.nodata
+        profile = src.profile.copy()
+        if grid is None:
+            return src.read(1), nodata, profile
+        with WarpedVRT(src, resampling=Resampling.nearest, **grid) as vrt:
+            data = vrt.read(1)
+    profile.update(grid)
+    return data, nodata, profile
+
+
+def load_qa_mask(qa_path: Path, grid: dict | None = None) -> np.ndarray:
     """QA_PIXEL bandını okuyup geçersiz piksel maskesini döndürür.
 
-    Maske, mozaikleme/yeniden izdüşürmeden önce sahnenin kendi piksel
-    ızgarasında uygulanır (bkz. build_lst_ndvi_mosaic) - kategorik QA
-    verisini bilinear yeniden örneklemeye gerek kalmaz.
+    Maske, mozaikleme/yeniden izdüşürmeden önce uygulanır (bkz.
+    build_lst_ndvi_mosaic) - kategorik QA verisini bilinear yeniden
+    örneklemeye gerek kalmaz.
     """
-    with rasterio.open(qa_path) as src:
-        qa_values = src.read(1)
+    qa_values, _, _ = _read_band(qa_path, grid)
     return qa_invalid_mask(qa_values)
 
 
-def compute_lst(thermal_path: Path, qa_mask: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
+def compute_lst(thermal_path: Path, qa_mask: np.ndarray | None = None,
+                grid: dict | None = None) -> tuple[np.ndarray, dict]:
     """Landsat Level-2 termal banttan yüzey sıcaklığını (°C) hesaplar.
 
     Level-2 ürünlerde USGS bandı zaten sıcaklığa kalibre etmiş olduğu için
     tek yapılan iş ölçek dönüşümü: piksel × 0.00341802 + 149.0 → Kelvin.
 
     `qa_mask` verilirse (bkz. load_qa_mask) True olan pikseller - bulut,
-    cirrus, bulut gölgesi, kar veya dolgu - NaN yapılır.
+    cirrus, bulut gölgesi, kar veya dolgu - NaN yapılır. `grid` verilirse
+    bant o ızgarada okunur (bkz. tile_grid).
     """
-    with rasterio.open(thermal_path) as src:
-        thermal_raw = src.read(1).astype(np.float32)
-        nodata = src.nodata
-        profile = src.profile.copy()
+    thermal_raw, nodata, profile = _read_band(thermal_path, grid)
+    thermal_raw = thermal_raw.astype(np.float32)
 
     if nodata is not None:
         thermal_raw = np.where(thermal_raw == nodata, np.nan, thermal_raw)
@@ -100,17 +167,15 @@ def compute_lst(thermal_path: Path, qa_mask: np.ndarray | None = None) -> tuple[
     return lst_kelvin - 273.15, profile
 
 
-def compute_ndvi(red_path: Path, nir_path: Path, qa_mask: np.ndarray | None = None) -> np.ndarray:
+def compute_ndvi(red_path: Path, nir_path: Path, qa_mask: np.ndarray | None = None,
+                 grid: dict | None = None) -> np.ndarray:
     """Kırmızı ve NIR banttan NDVI hesaplar.
 
     `qa_mask` verilirse (bkz. load_qa_mask) True olan pikseller NaN yapılır.
     """
-    with rasterio.open(red_path) as src:
-        red = src.read(1).astype(np.float32)
-        red_nodata = src.nodata
-    with rasterio.open(nir_path) as src:
-        nir = src.read(1).astype(np.float32)
-        nir_nodata = src.nodata
+    red, red_nodata, _ = _read_band(red_path, grid)
+    nir, nir_nodata, _ = _read_band(nir_path, grid)
+    red, nir = red.astype(np.float32), nir.astype(np.float32)
 
     if red_nodata is not None:
         red = np.where(red == red_nodata, np.nan, red)
@@ -137,6 +202,9 @@ def composite_scene_arrays(arrays: list[np.ndarray]) -> np.ndarray:
     "Metodolojik uyarı"). QA maskesinden geçmiş `NaN`'ler `nanmedian`
     tarafından otomatik dışlanır; bir pikselde TÜM sahneler NaN ise sonuç
     da NaN kalır (`save_geotiff` bunu zaten nodata'ya çevirir).
+
+    Diziler aynı ızgarada olmalıdır (bkz. tile_grid); şekilleri eşit iki
+    dizinin aynı yeri gösterdiği burada denetlenemez.
 
     Tek elemanlı bir liste için `arrays[0]` ile birebir aynıdır -
     `max_scenes_per_tile=1` (eski varsayılan) davranışı değişmez.
@@ -280,13 +348,20 @@ def build_lst_ndvi_mosaic(config: CityConfig, year: str, main_year: str, force: 
 
     lst_temp_paths, ndvi_temp_paths = [], []
     for tile_id, tile_scenes in sorted(scenes_by_tile.items()):
+        grid = tile_grid([data_raw / s["folder"] / "band10_thermal.tif" for s in tile_scenes], config.bbox)
+        if grid is None:
+            # STAC araması sahnenin ayak izine göre eşleşir; ayak izi bbox'a
+            # değse bile veri kapsamı şehirle kesişmeyebilir.
+            print(f"[{year}] karo {tile_id}: şehir bbox'ıyla kesişmiyor, atlanıyor")
+            continue
+
         lst_arrays, ndvi_arrays, profile = [], [], None
         for s in tile_scenes:
             scene_dir = data_raw / s["folder"]
-            qa_mask = load_qa_mask(scene_dir / "band_qa_pixel.tif")
-            lst, profile = compute_lst(scene_dir / "band10_thermal.tif", qa_mask=qa_mask)
+            qa_mask = load_qa_mask(scene_dir / "band_qa_pixel.tif", grid=grid)
+            lst, profile = compute_lst(scene_dir / "band10_thermal.tif", qa_mask=qa_mask, grid=grid)
             ndvi = compute_ndvi(
-                scene_dir / "band4_red.tif", scene_dir / "band5_nir.tif", qa_mask=qa_mask
+                scene_dir / "band4_red.tif", scene_dir / "band5_nir.tif", qa_mask=qa_mask, grid=grid
             )
             lst_arrays.append(lst)
             ndvi_arrays.append(ndvi)
@@ -323,6 +398,9 @@ def build_lst_ndvi_mosaic(config: CityConfig, year: str, main_year: str, force: 
 
         del profile
         gc.collect()
+
+    if not lst_temp_paths:
+        raise RuntimeError(f"[{year}] {config.name}: indirilen hiçbir Landsat karosu bbox={config.bbox} ile kesişmiyor")
 
     out_profile = build_output_profile(lst_temp_paths)
     print(f"[{year}] mozaikleniyor: {out_profile['width']}x{out_profile['height']} piksel")

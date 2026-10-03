@@ -17,26 +17,31 @@
   .istatistik b { font-size: 28px; color: #fd8d3c; }
   .istatistik span { font-size: 12px; color: #aaa; }
   .kart p { font-size: 13px; color: #ccc; margin: 4px 0; }
+  .kart p.eski { color: #fdae6b; font-size: 12px; margin: -6px 0 10px; }
 </style>
 </head>
 <body>
 <h1>Kentsel Isı Hassasiyeti Endeksi (HVI)</h1>
-<p class="aciklama">Sıcaklık, ağaç örtüsü, nüfus yoğunluğu, yaşlı/çocuk
-oranı, sağlık/yeşil alan erişimi ve yapılaşma yoğunluğunu birleştiren
-çok bileşenli bir risk skoru. Bir şehre tıklayarak yol bazlı interaktif
-haritayı açabilirsiniz.</p>
+<p class="aciklama">Yüzey sıcaklığını (tehlike), nüfus ve yapılaşma
+yoğunluğunu (maruziyet), yaş, sosyoekonomik durum, sağlık ve yeşil alan
+erişimini (kırılganlık) birleştiren bir önceliklendirme endeksi. Bir şehre
+tıklayarak yol bazlı interaktif haritayı açabilirsiniz.</p>
+<p class="aciklama">Skorlar her şehrin kendi içinde ölçeklenir: yüzdeler bir
+şehrin içindeki yolları sıralar, şehirleri birbiriyle karşılaştırmaz.</p>
 <div class="kartlar">
 
     <a class="kart" href="./izmir/index.html">
         <h2>İzmir</h2>
-        <div class="istatistik"><b>45.9</b><span>ortalama HVI yüzdesi</span></div>
-        <p>43,141 yol segmenti · 2020, 2026</p>
-        <p>En riskli mahalle: <b>Çolak İbrahim Bey Mahallesi</b></p>
+        
+        <div class="istatistik"><b>43.5</b><span>ortalama HVI yüzdesi</span></div>
+        <p>43,183 yol segmenti · 2020, 2026</p>
+        <p>En riskli mahalle: <b>Umut Mahallesi</b></p>
     </a>
     
 
     <a class="kart" href="./eskisehir/index.html">
         <h2>Eskişehir</h2>
+        <p class="eski">Eski formülle üretildi, yenilenecek</p>
         <div class="istatistik"><b>39.4</b><span>ortalama HVI yüzdesi</span></div>
         <p>7,287 yol segmenti · 2020, 2026</p>
         <p>En riskli mahalle: <b>Gökçekısık Mahallesi</b></p>

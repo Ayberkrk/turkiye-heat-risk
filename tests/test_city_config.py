@@ -115,3 +115,33 @@ def test_non_mapping_landsat_section_is_reported():
     cfg = {**VALID_CONFIG, "landsat": "geçersiz"}
     errors = validate_config_dict(cfg)
     assert any("'landsat' bölümü bir sözlük olmalı" == e for e in errors)
+
+
+# --- landsat.season_start / season_end --------------------------------------
+# Sahne arama penceresi şehre göre ayarlanabilir. Hatalı bir değer STAC
+# sorgusunda anlaşılmaz bir hataya ya da sessizce boş sonuca yol açacağı için
+# config yüklenirken yakalanmalı.
+
+@pytest.mark.parametrize("bad_season", ["7-1", "13-01", "02-30", "02-29", "2020-07-01", 701, ""])
+def test_invalid_season_start_is_rejected(bad_season):
+    cfg = {**VALID_CONFIG, "landsat": {"season_start": bad_season}}
+    errors = validate_config_dict(cfg)
+    assert any("season_start" in e for e in errors)
+
+
+def test_season_start_after_end_is_rejected():
+    cfg = {**VALID_CONFIG, "landsat": {"season_start": "09-01", "season_end": "06-15"}}
+    errors = validate_config_dict(cfg)
+    assert any("sonra olamaz" in e for e in errors)
+
+
+def test_season_start_alone_is_checked_against_default_end():
+    # Yalnızca başlangıç verilip varsayılan bitişten (08-31) sonraya konursa
+    # aralık ters döner; bitiş yazılmadı diye denetim atlanmamalı.
+    cfg = {**VALID_CONFIG, "landsat": {"season_start": "09-15"}}
+    assert any("sonra olamaz" in e for e in validate_config_dict(cfg))
+
+
+def test_valid_season_is_accepted():
+    cfg = {**VALID_CONFIG, "landsat": {"season_start": "06-01", "season_end": "09-15"}}
+    assert validate_config_dict(cfg) == []

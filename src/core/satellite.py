@@ -7,6 +7,7 @@ hiçbir şey hardcode edilmez.
 from __future__ import annotations
 
 import json
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -37,6 +38,8 @@ BANDS_TO_DOWNLOAD = {
     "qa_pixel": "band_qa_pixel.tif",
 }
 DOWNLOAD_TIMEOUT_SECONDS = 300
+DOWNLOAD_ATTEMPTS = 4
+DOWNLOAD_RETRY_WAIT_SECONDS = 5
 
 
 def is_valid_geotiff(path: Path) -> bool:
@@ -80,16 +83,40 @@ def select_best_scenes_per_tile(items, max_per_tile: int = 1) -> dict[tuple[int,
 
 
 def download_band(item, asset_name: str, save_path: Path) -> None:
-    url = item.assets[asset_name].href
-    response = requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT_SECONDS)
-    response.raise_for_status()
-    with open(save_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
+    """Bir bandı indirir; geçici ağ hatalarında baştan dener.
+
+    Onlarca bantlık bir indirmede tek bir okuma zaman aşımı tüm pipeline'ı
+    düşürmemeli. Veri önce `.part` dosyasına yazılır ve ancak tamamlanınca
+    yerine taşınır; yarım kalmış bir dosya geçerli bant sanılmaz.
+    """
+    partial_path = save_path.with_name(save_path.name + ".part")
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        # Adres her denemeden hemen önce yeniden imzalanır. Arama sırasında
+        # alınan imza yaklaşık 45 dakika geçerlidir; yavaş bağlantıda ya da çok
+        # karolu şehirlerde indirme bundan uzun sürer ve kalan dosyalar 403
+        # döndürür. Kütüphane zaten imzalı bir adresi yeniden imzalamadığı
+        # için eski imza önce atılır.
+        url = planetary_computer.sign(item.assets[asset_name].href.split("?")[0])
+        try:
+            response = requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            with open(partial_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        except requests.RequestException as error:
+            partial_path.unlink(missing_ok=True)
+            if attempt == DOWNLOAD_ATTEMPTS:
+                raise
+            print(f"  indirme hatası ({type(error).__name__}), yeniden deneniyor ({attempt}/{DOWNLOAD_ATTEMPTS - 1})")
+            time.sleep(DOWNLOAD_RETRY_WAIT_SECONDS * attempt)
+            continue
+        partial_path.replace(save_path)
+        return
 
 
 def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: bool = False) -> Path:
-    """Verilen yılın yaz aylarına ait en temiz Landsat sahnelerini indirir.
+    """Verilen yılın sıcak sezonuna (`config.season_start`-`season_end`) ait en
+    temiz Landsat sahnelerini indirir.
 
     Çalışma alanı birden fazla uydu karosuna (path/row) düştüğü için her
     karo için ayrı ayrı en az bulutlu `config.max_scenes_per_tile` sahne
@@ -108,7 +135,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
     search = catalog.search(
         collections=["landsat-c2-l2"],
         bbox=config.bbox,
-        datetime=f"{year}-07-01/{year}-08-31",
+        datetime=f"{year}-{config.season_start}/{year}-{config.season_end}",
         query={
             "eo:cloud_cover": {"lt": config.max_cloud_cover},
             # Landsat 7'nin SLC-off veri boşlukları ve farklı bant
@@ -151,7 +178,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
                 "folder": item.id,
             })
 
-    metadata = {"bbox": config.bbox, "bands": list(BANDS_TO_DOWNLOAD.values()),
+    metadata = {"bbox": config.bbox, "season": [config.season_start, config.season_end], "bands": list(BANDS_TO_DOWNLOAD.values()),
                 "catalog": CATALOG_URL, "scenes": scenes_meta}
     with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
