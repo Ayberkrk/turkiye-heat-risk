@@ -6,7 +6,7 @@ değişiklikleri sürüm sürüm listeler.
 ## v2.0.0 - yayınlanmadı
 
 HVI formülü değişti; skorlar, kategoriler ve sıralamalar v1.x ile
-karşılaştırılamaz. `HVI_FORMULA_VERSION` 3'e çıktı, eski önbellekler
+karşılaştırılamaz. `HVI_FORMULA_VERSION` 4'e çıktı, eski önbellekler
 otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
 `manifest.json` içindeki `hvi_formula_version` alanından okunabilir.
 
@@ -16,6 +16,12 @@ otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
   sıcaklık bileşeni endeksin 1/9'uydu ve ilişkili bileşenler aynı sinyali
   iki kez sayıyordu; artık her grubun payı 1/3. Grup skorları
   `group_<grup>_<yıl>` sütunlarıyla çıktıya yazılıyor.
+- **Grup skorları yeniden ölçekleniyor**: ortalaması dar bir bantta kalan
+  grup (İzmir'de kırılganlık) sıralamayı hiç etkilemiyordu (sıra
+  korelasyonu 0,00). Grup skorları birleştirilmeden önce yılların ortak
+  dağılımına göre 0-1'e çekiliyor; etki 0,23'e çıktı.
+- **İzmir yeniden üretildi** (24 sahne, medyan kompozit). 2020-2026 ortalama
+  yüzey sıcaklığı farkı +0,47 °C; v1.x'teki +3,29 °C tek sahne kaynaklıydı.
 - **Aykırı değere dayanıklı ölçekleme**: bileşenler min-max yerine %2-%98
   yüzdelik aralığına göre ölçekleniyor.
 - **Ayırt etmeyen bileşenler endekse alınmıyor**: tek ilçeli şehirlerde

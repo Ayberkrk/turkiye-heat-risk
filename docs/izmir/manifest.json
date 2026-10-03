@@ -1,0 +1,182 @@
+{
+  "city_id": "izmir",
+  "city_name": "İzmir",
+  "generated_at": "2026-10-03T09:23:33+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      26.54,
+      38.22,
+      27.38,
+      38.58
+    ],
+    "crs": "EPSG:32635",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/aegean-latest.osm.pbf"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_180033_20200701_02_T1",
+        "date": "2020-07-01",
+        "tile": "180_033",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20200717_02_T1",
+        "date": "2020-07-17",
+        "tile": "180_033",
+        "cloud_cover": 0.03
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20200818_02_T1",
+        "date": "2020-08-18",
+        "tile": "180_033",
+        "cloud_cover": 1.25
+      },
+      {
+        "scene_id": "LC08_L2SP_180034_20200717_02_T1",
+        "date": "2020-07-17",
+        "tile": "180_034",
+        "cloud_cover": 0.06
+      },
+      {
+        "scene_id": "LC08_L2SP_180034_20200818_02_T1",
+        "date": "2020-08-18",
+        "tile": "180_034",
+        "cloud_cover": 0.07
+      },
+      {
+        "scene_id": "LC08_L2SP_180034_20200802_02_T1",
+        "date": "2020-08-02",
+        "tile": "180_034",
+        "cloud_cover": 0.09
+      },
+      {
+        "scene_id": "LC08_L2SP_181033_20200825_02_T1",
+        "date": "2020-08-25",
+        "tile": "181_033",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC08_L2SP_181033_20200724_02_T1",
+        "date": "2020-07-24",
+        "tile": "181_033",
+        "cloud_cover": 0.07
+      },
+      {
+        "scene_id": "LC08_L2SP_181033_20200708_02_T1",
+        "date": "2020-07-08",
+        "tile": "181_033",
+        "cloud_cover": 18.38
+      },
+      {
+        "scene_id": "LC08_L2SP_181034_20200825_02_T1",
+        "date": "2020-08-25",
+        "tile": "181_034",
+        "cloud_cover": 0.08
+      },
+      {
+        "scene_id": "LC08_L2SP_181034_20200724_02_T1",
+        "date": "2020-07-24",
+        "tile": "181_034",
+        "cloud_cover": 0.29
+      },
+      {
+        "scene_id": "LC08_L2SP_181034_20200708_02_T1",
+        "date": "2020-07-08",
+        "tile": "181_034",
+        "cloud_cover": 2.14
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_180033_20260827_02_T1",
+        "date": "2026-08-27",
+        "tile": "180_033",
+        "cloud_cover": 0.02
+      },
+      {
+        "scene_id": "LC09_L2SP_180033_20260710_02_T1",
+        "date": "2026-07-10",
+        "tile": "180_033",
+        "cloud_cover": 1.12
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20260718_02_T1",
+        "date": "2026-07-18",
+        "tile": "180_033",
+        "cloud_cover": 1.2
+      },
+      {
+        "scene_id": "LC09_L2SP_180034_20260827_02_T1",
+        "date": "2026-08-27",
+        "tile": "180_034",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC09_L2SP_180034_20260726_02_T1",
+        "date": "2026-07-26",
+        "tile": "180_034",
+        "cloud_cover": 0.05
+      },
+      {
+        "scene_id": "LC08_L2SP_180034_20260718_02_T1",
+        "date": "2026-07-18",
+        "tile": "180_034",
+        "cloud_cover": 0.2
+      },
+      {
+        "scene_id": "LC08_L2SP_181033_20260826_02_T1",
+        "date": "2026-08-26",
+        "tile": "181_033",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC09_L2SP_181033_20260818_02_T1",
+        "date": "2026-08-18",
+        "tile": "181_033",
+        "cloud_cover": 0.09
+      },
+      {
+        "scene_id": "LC09_L2SP_181033_20260802_02_T1",
+        "date": "2026-08-02",
+        "tile": "181_033",
+        "cloud_cover": 0.11
+      },
+      {
+        "scene_id": "LC08_L2SP_181034_20260826_02_T1",
+        "date": "2026-08-26",
+        "tile": "181_034",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC09_L2SP_181034_20260818_02_T1",
+        "date": "2026-08-18",
+        "tile": "181_034",
+        "cloud_cover": 0.03
+      },
+      {
+        "scene_id": "LC08_L2SP_181034_20260810_02_T1",
+        "date": "2026-08-10",
+        "tile": "181_034",
+        "cloud_cover": 0.14
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 4,
+    "risk_timeseries_version": 1,
+    "mosaic_version": 2,
+    "scene_fetch_version": 1
+  },
+  "night_lst_requested": true
+}

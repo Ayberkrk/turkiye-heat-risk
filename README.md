@@ -272,6 +272,15 @@ Gruplar ise birbirini telafi edemez: sıcak olmayan ya da kimsenin
 yaşamadığı bir yolda kırılganlık ne kadar yüksek olursa olsun risk düşük
 kalmalıdır, bu yüzden gruplar arasında geometrik ortalama kullanılır.
 
+**Grup skorları birleştirilmeden önce yeniden ölçeklenir.** Ortalama almak
+yayılımı daraltır: altı bileşenli kırılganlık grubunda bileşenler birbirini
+götürür (yaşlı ve çocuk oranı ters ilişkilidir) ve grup skoru dar bir bantta
+kalır. Dar bantta kalan bir grup, ağırlığı 1/3 olsa bile sıralamayı
+etkilemez; İzmir'de bu adım olmadan kırılganlığın HVI ile sıra korelasyonu
+0,00 çıkıyordu. Bu yüzden üç grup skoru da tüm yılların ortak dağılımına
+göre 0-1'e çekilir, sonra birleştirilir. Bu adım etkileri eşitlemez (bkz.
+"Bulgular"daki ölçüm) ama hiçbir grubun dekoratif kalmasını önler.
+
 **Ölçekleme aykırı değere dayanıklı:** her bileşen min-max yerine %2-%98
 yüzdelik aralığına göre 0-1'e çekilir, dışarıda kalan değerler 0 ya da 1'e
 kırpılır. Min-max'ta tek bir uç yol (ör. en yakın hastaneye 40 km uzaktaki
@@ -447,75 +456,85 @@ Ardından `http://localhost:8000/analysis_map.html` adresini açın.
 
 ## 2020 → 2026: Bulgular
 
-*(6 yıllık pencere; her iki yıl da temmuz-ağustos Landsat sahnelerinden.
-Aşağıdaki sayılar haritanın da beslendiği aynı veri setinden -
-`data/processed/izmir/roads_timeseries.geojson` ve
-`data/processed/izmir/roads_with_hvi.geojson`.)*
+*(İzmir, 6 yıllık pencere. Her yıl için 4 uydu karosunda karo başına 3,
+toplam 12 temmuz-ağustos Landsat sahnesinin piksel bazlı medyanı. Sayılar
+haritanın da beslendiği aynı veri setinden: `data/processed/izmir/
+roads_timeseries.geojson` ve `roads_with_hvi.geojson`. Hangi sahnelerin
+kullanıldığı `docs/izmir/manifest.json` içinde.)*
 
 **Sıcaklık - genel eğilim:**
-- 43.999 yol segmentinin ortalama sıcaklık değişimi: **+3.29 °C**
-- En çok ısınan yol: **+14.0 °C** · en çok soğuyan yol: **-6.2 °C**
-- Yolların **%98'i (43.045 / 43.999)** ısınma yönünde değişti; sadece
-  43 yol soğudu, 911 yol pratik olarak değişmedi.
-- Yolların **%63'ü** "belirgin ısındı" (+3°C ve üzeri) kategorisinde.
+- 44.041 yol segmentinin ortalama yüzey sıcaklığı 2020'de 42,6 °C, 2026'da
+  43,1 °C: ortalama değişim **+0,47 °C**.
+- En çok ısınan yol: **+13,5 °C** · en çok soğuyan yol: **-7,6 °C**
+- Yolların **%49'u** ısındı (+0,5 °C'den fazla), **%23'ü** soğudu, **%27'si**
+  pratik olarak değişmedi. Yalnızca %1,6'sı +3 °C ve üzeri ısındı.
 
-**HVI - risk dağılımı (dokuz bileşenli metodoloji, 5 kategori, iki yılın
-ortak Jenks sınırlarıyla):**
+> **Önceki sürümlerdeki "+3,29 °C" rakamı hakkında:** v1.x README'si ortalama
+> +3,29 °C ısınma ve "yolların %98'i ısındı" diyordu. O sayılar karo başına
+> **tek** sahneden üretilmişti ve iki yılın seçilen günleri arasındaki hava
+> farkını yansıtıyordu. Aynı karonun üç sahnesinin medyanı alındığında fark
+> +0,47 °C'ye iniyor. Ders: tek bir uydu geçişinden yıllar arası ısınma
+> sonucu çıkarılmaz.
+
+**HVI - risk dağılımı (gruplu metodoloji, 5 kategori, iki yılın ortak
+Jenks sınırlarıyla; demografisi eşlenen 43.183 yol):**
 
 | Kategori | 2020 | 2026 | Değişim |
 |---|---|---|---|
-| Düşük | 8.370 | 6.570 | -1.800 |
-| Orta | 13.350 | 12.535 | -815 |
-| Yüksek | 10.596 | 11.199 | +603 |
-| Kritik | 7.531 | 8.626 | +1.095 |
-| Aşırı Kritik | 3.294 | 4.211 | +917 |
+| Düşük | 7.462 | 5.659 | -1.803 |
+| Orta | 11.902 | 12.091 | +189 |
+| Yüksek | 9.569 | 10.739 | +1.170 |
+| Kritik | 9.694 | 9.799 | +105 |
+| Aşırı Kritik | 4.556 | 4.895 | +339 |
 
 Kategori sınırları iki yılın ortak dağılımından bir kez hesaplandığı için
-"Kritik" her iki yılda aynı eşiği ifade eder; yani yukarıdaki değişim
-sütunu gerçek bir kayma gösteriyor. Düşük risk grubundan çıkan yollar üst
-kategorilere geçmiş durumda: 2026'da Kritik ve Aşırı Kritik segment sayısı
-2020'ye göre **%18 artmış**.
+"Kritik" her iki yılda aynı eşiği ifade eder. Kayma esas olarak alt uçta:
+Düşük kategorisinden çıkan yollar Orta ve Yüksek'e geçmiş; Kritik ve Aşırı
+Kritik toplamı **%3 artmış** (14.250'den 14.694'e). Demografi ve OSM
+bileşenleri iki yılda aynı olduğu için bu değişimin tamamı sıcaklık ve
+bitki örtüsünden gelir.
 
-> Not: bu sayılar deponun daha eski sürümlerindekilerden farklı. HVI
-> metodolojisi iki kez değişti: önce üç bileşenden dokuz bileşene geçildi,
-> sonra yapılaşma yoğunluğu bileşenindeki bir hesap hatası düzeltildi ve
-> yıllar ortak ölçeğe alındı. Eski sayılar bu düzeltmelerden önceki
-> hallerdir.
+> Not: bu sayılar v1.x'tekilerle karşılaştırılamaz. v2.0.0'da endeks gruplu
+> yapıya geçti, ölçekleme değişti ve sıcaklık girdisi tek sahne yerine
+> medyan kompozitten geliyor.
 
 **En yüksek ortalama HVI'ye sahip 5 mahalle (2026, en az 20 yol segmenti
-olan mahalleler arasından):**
+olan 418 mahalle arasından):**
 
-1. Umut Mahallesi - %91,1
-2. İhsan Alyanak Mahallesi - %90,0
-3. Bozyaka Mahallesi - %88,2
-4. Abdi İpekçi Mahallesi - %87,2
-5. Sarıyer Mahallesi - %86,9
+1. Umut Mahallesi (Karabağlar) - %90,4
+2. Sarıyer Mahallesi (Karabağlar) - %89,7
+3. Uğur Mumcu Mahallesi (Karabağlar) - %89,4
+4. İhsan Alyanak Mahallesi (Karabağlar) - %88,5
+5. Bozyaka Mahallesi (Karabağlar) - %86,4
 
-Listenin tamamı Karabağlar ve Konak'ın yüksek yoğunluklu, düşük gelirli,
-ağaç örtüsü zayıf mahallelerinden oluşuyor - modelin sıcaklık, yapılaşma,
-ağaç örtüsü ve sosyoekonomik boyutu birlikte değerlendirdiğinde beklenen
-sonuç.
+İlçe ortalamasında Karabağlar (%70,5) açık ara önde; ardından Buca (%56,2),
+Bayraklı (%55,3) ve Karşıyaka (%53,7) geliyor. Listenin başı v1.x ile büyük
+ölçüde aynı mahalleler: sonuç, formül değişikliğine karşı kararlı.
 
-**Ne yapılabilir?** Bu bulgular şunu öneriyor:
-- Kritik/Aşırı Kritik kategorisindeki 12.837 yol segmenti (toplamın
-  ~%29'u) ağaçlandırma, gölgelendirme, geçirgen/açık renk asfalt gibi
-  somut müdahaleler için önceliklendirilebilir.
-- Bir yolun HVI'si artık haritadaki tooltip'ten "neden" sorusuyla birlikte
+**Grupların endekse gerçek etkisi (2026, grup skoru ile HVI arasındaki sıra
+korelasyonu):** maruziyet 0,82 · tehlike 0,39 · kırılganlık 0,23. Üç grubun
+ağırlığı eşit olsa da etkileri eşit değil: İzmir'de riskin mekânsal
+dağılımını en çok nüfus ve yapılaşma yoğunluğu belirliyor. Yani bu harita
+ağırlıklı olarak "sıcak VE kalabalık" yerleri öne çıkarır; kırılganlık
+bileşenleri ilçe düzeyinde olduğu için mahalle içi ayrımı zayıftır.
+
+**Ne yapılabilir?**
+- Kritik/Aşırı Kritik kategorisindeki 14.694 yol segmenti (skorlu yolların
+  ~%34'ü) ağaçlandırma, gölgelendirme, açık renk yüzey gibi müdahaleler için
+  önceliklendirilebilir.
+- Bir yolun HVI'si haritadaki tooltip'ten "neden" sorusuyla birlikte
   okunabiliyor - ör. bir yol hem sıcak hem ağaçsız hem hastaneye uzaksa,
   bu üç ayrı müdahale türünü (gölgelendirme, sağlık erişimi planlaması,
   acil durum hazırlığı) aynı anda işaret eder.
 - İzlemenin sürdürülmesi öneriliyor - `--years` parametresiyle gelecek
   yıllar kolayca eklenebilir.
 
-**Metodolojik uyarı:** 2020 ve 2026 için seçilen yaz Landsat sahneleri
-arasında yol segmentleri boyunca ortalama +3.29°C LST farkı gözlenmiştir
-(tek-sahne-per-karo metodolojisiyle üretilen önceki bir sürümden). Bu
-değer uzun dönem iklim trendi olarak yorumlanmamalıdır; sahne tarihi,
-meteorolojik koşullar, toprak nemi ve dönemsel sıcaklık farkları sonucu
-etkileyebilir. Artık her karo için birden fazla yaz sahnesinden piksel
-bazlı medyan kompozit alınıyor (bkz. yukarıdaki "Çoklu sahne kompoziti"),
-bu da tek-günlük anomalilerin etkisini azaltır; yukarıdaki rakam, bu
-metodolojiyle yeniden üretildiğinde güncellenecektir.
+**Metodolojik uyarı:** +0,47 °C, iki yılın yaz medyan kompozitleri
+arasındaki yüzey sıcaklığı farkıdır ve uzun dönem iklim trendi olarak
+yorumlanmamalıdır. İki nokta bir trend belirlemez; medyan kompozit
+tek-günlük anomalileri azaltır ama o yazın genel hava koşullarını
+(sıcak/serin yaz, toprak nemi) gidermez. Hava koşullarından arındırılmış
+çok yıllı bir tahmin için `analyze_pipeline.py` kullanılabilir.
 
 ## Kurulum ve çalıştırma
 

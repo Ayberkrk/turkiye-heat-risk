@@ -6,14 +6,14 @@
     "2026"
   ],
   "default_year": "2026",
-  "road_count": 43141,
-  "avg_hvi_percentage": 45.9,
+  "road_count": 43183,
+  "avg_hvi_percentage": 43.5,
   "category_counts": {
-    "Orta": 12535,
-    "Yüksek": 11199,
-    "Kritik": 8626,
-    "Düşük": 6570,
-    "Aşırı Kritik": 4211
+    "Orta": 12091,
+    "Yüksek": 10739,
+    "Kritik": 9799,
+    "Düşük": 5659,
+    "Aşırı Kritik": 4895
   },
-  "top_risk_mahalle": "Çolak İbrahim Bey Mahallesi"
+  "top_risk_mahalle": "Umut Mahallesi"
 }
