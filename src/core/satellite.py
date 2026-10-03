@@ -89,7 +89,8 @@ def download_band(item, asset_name: str, save_path: Path) -> None:
 
 
 def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: bool = False) -> Path:
-    """Verilen yılın yaz aylarına ait en temiz Landsat sahnelerini indirir.
+    """Verilen yılın sıcak sezonuna (`config.season_start`-`season_end`) ait en
+    temiz Landsat sahnelerini indirir.
 
     Çalışma alanı birden fazla uydu karosuna (path/row) düştüğü için her
     karo için ayrı ayrı en az bulutlu `config.max_scenes_per_tile` sahne
@@ -108,7 +109,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
     search = catalog.search(
         collections=["landsat-c2-l2"],
         bbox=config.bbox,
-        datetime=f"{year}-07-01/{year}-08-31",
+        datetime=f"{year}-{config.season_start}/{year}-{config.season_end}",
         query={
             "eo:cloud_cover": {"lt": config.max_cloud_cover},
             # Landsat 7'nin SLC-off veri boşlukları ve farklı bant
@@ -151,7 +152,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
                 "folder": item.id,
             })
 
-    metadata = {"bbox": config.bbox, "bands": list(BANDS_TO_DOWNLOAD.values()),
+    metadata = {"bbox": config.bbox, "season": [config.season_start, config.season_end], "bands": list(BANDS_TO_DOWNLOAD.values()),
                 "catalog": CATALOG_URL, "scenes": scenes_meta}
     with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)

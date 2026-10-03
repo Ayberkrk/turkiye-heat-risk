@@ -3,6 +3,35 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## v2.0.0 - yayınlanmadı
+
+HVI formülü değişti; skorlar, kategoriler ve sıralamalar v1.x ile
+karşılaştırılamaz. `HVI_FORMULA_VERSION` 3'e çıktı, eski önbellekler
+otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
+`manifest.json` içindeki `hvi_formula_version` alanından okunabilir.
+
+- **Gruplu HVI**: dokuz bileşenin düz geometrik ortalaması yerine bileşenler
+  Tehlike, Maruziyet ve Kırılganlık gruplarında (grup içi aritmetik ortalama)
+  toplanıp gruplar geometrik ortalamayla birleştiriliyor. Düz yapıda tek
+  sıcaklık bileşeni endeksin 1/9'uydu ve ilişkili bileşenler aynı sinyali
+  iki kez sayıyordu; artık her grubun payı 1/3. Grup skorları
+  `group_<grup>_<yıl>` sütunlarıyla çıktıya yazılıyor.
+- **Aykırı değere dayanıklı ölçekleme**: bileşenler min-max yerine %2-%98
+  yüzdelik aralığına göre ölçekleniyor.
+- **Ayırt etmeyen bileşenler endekse alınmıyor**: tek ilçeli şehirlerde
+  sabit kalan ilçe düzeyi bileşenler grup ortalamasını seyreltmiyor.
+  Demografisi eşlenmemiş yollar eskisi gibi skorsuz kalır.
+- Çok yıllı analiz modülü (`core/impact_analysis.py`) artık ana endeksle
+  aynı birleştirme fonksiyonunu kullanıyor; ağırlık profilleri bileşen
+  ağırlığını grup içinde, ortalamasını grup ağırlığı olarak uygular.
+- **Ayarlanabilir sezon**: Landsat sahne arama penceresi kodda sabit
+  (1 Temmuz - 31 Ağustos) olmak yerine `landsat.season_start` /
+  `season_end` ile şehir bazında ayarlanabiliyor; varsayılan değişmedi.
+- README: termal bandın 100 m gerçek çözünürlüğü, yüzey ve hava sıcaklığı
+  farkı, endeksin sağlık verisiyle doğrulanmadığı ve şehirler arası
+  karşılaştırma sınırı açıkça yazıldı.
+- `compute_heat_vulnerability_index` için ilk uçtan uca (sentetik) testler.
+
 ## v1.9.0 - 2026-09-26
 
 - **Çok yıllı analiz paketi**: `analyze_pipeline.py` ve `core/impact_analysis.py`.

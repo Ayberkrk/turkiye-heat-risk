@@ -32,6 +32,8 @@ city:
 
 landsat:
   max_cloud_cover: 30                 # % - gerekirse gevşet
+  season_start: "07-01"               # isteğe bağlı, "AA-GG" - sıcak sezonun başı
+  season_end: "08-31"                 # isteğe bağlı - tüm yıllar aynı pencereyi kullanır
 
 osm:
   pbf_url: "https://download.geofabrik.de/... veya https://download.openstreetmap.fr/..."

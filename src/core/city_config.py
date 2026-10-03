@@ -8,6 +8,7 @@ sağlar - pipeline'ın geri kalanı hiçbir yerde şehir adını hardcode etmez.
 from __future__ import annotations
 
 import importlib
+from datetime import date
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -51,11 +52,33 @@ class CityConfig:
     # - tek sahneye kıyasla tek-günlük anomalilerin (bulut, toprak nemi)
     # etkisini azaltır. 1, eski tek-sahne davranışıyla birebir aynıdır.
     max_scenes_per_tile: int = 3
+    # Landsat sahnelerinin arandığı yıl içi pencere ("AA-GG"). Sıcak sezon
+    # şehirden şehre değişir (Şanlıurfa ile Giresun aynı takvimi paylaşmaz);
+    # varsayılan, önceki sabit Temmuz-Ağustos davranışıdır.
+    season_start: str = "07-01"
+    season_end: str = "08-31"
     raw: dict[str, Any] = field(default_factory=dict)
 
     @property
     def config_dir(self) -> Path:
         return CITIES_DIR / self.city_id
+
+
+def _parse_month_day(value: Any) -> date | None:
+    """ "AA-GG" biçimindeki metni tarihe çevirir; geçersizse None döndürür.
+
+    Artık yıl olmayan bir yıl kullanılır: "02-29" her yıl geçerli olmadığı
+    için sezon sınırı olarak kabul edilmez.
+    """
+    if not isinstance(value, str):
+        return None
+    parts = value.split("-")
+    if len(parts) != 2 or not all(len(part) == 2 and part.isdigit() for part in parts):
+        return None
+    try:
+        return date(2001, int(parts[0]), int(parts[1]))
+    except ValueError:
+        return None
 
 
 def validate_config_dict(cfg: Any) -> list[str]:
@@ -138,6 +161,21 @@ def validate_config_dict(cfg: Any) -> list[str]:
                 elif max_scenes_per_tile < 1:
                     errors.append(f"'landsat.max_scenes_per_tile' en az 1 olmalı: {max_scenes_per_tile}")
 
+            # YAML'da tırnaksız yazılan 07-01 gibi bir değer metin yerine
+            # başka bir türe çözülebilir; bu yüzden tür de denetlenir.
+            season = {}
+            for key in ("season_start", "season_end"):
+                value = landsat.get(key)
+                if value is None:
+                    continue
+                season[key] = _parse_month_day(value)
+                if season[key] is None:
+                    errors.append(f"'landsat.{key}' tırnak içinde \"AA-GG\" biçiminde geçerli bir tarih olmalı: {value!r}")
+            start = season.get("season_start", _parse_month_day("07-01"))
+            end = season.get("season_end", _parse_month_day("08-31"))
+            if start is not None and end is not None and start > end:
+                errors.append("'landsat.season_start', 'landsat.season_end' tarihinden sonra olamaz")
+
     return errors
 
 
@@ -166,6 +204,8 @@ def load_city_config(city_id: str) -> CityConfig:
         crs=city["crs"],
         max_cloud_cover=landsat.get("max_cloud_cover", 30),
         max_scenes_per_tile=landsat.get("max_scenes_per_tile", 3),
+        season_start=landsat.get("season_start", "07-01"),
+        season_end=landsat.get("season_end", "08-31"),
         osm_pbf_url=osm["pbf_url"],
         drive_highway_types=osm["highway_types"],
         admin_level_ilce=str(osm["admin_level_ilce"]),

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 import numpy as np
+import pytest
 import rasterio
 from rasterio.transform import from_origin
 
@@ -95,3 +96,35 @@ def test_select_best_scenes_per_tile_treats_missing_cloud_cover_as_worst():
 
 def test_select_best_scenes_per_tile_empty_input_returns_empty_dict():
     assert select_best_scenes_per_tile([], max_per_tile=1) == {}
+
+
+# --- fetch_landsat_scenes: arama penceresi config'ten gelmeli ---------------
+
+def test_fetch_landsat_scenes_searches_configured_season(monkeypatch, tmp_path):
+    from core import satellite
+    from core.city_config import CityConfig
+
+    config = CityConfig(
+        city_id="test", name="Test", bbox=[27.0, 38.0, 27.5, 38.5], crs="EPSG:32635", max_cloud_cover=30,
+        osm_pbf_url="", drive_highway_types=["residential"], admin_level_ilce="6",
+        admin_level_mahalle="8", population_adapter_path="unused",
+        season_start="06-01", season_end="09-15",
+    )
+    captured = {}
+
+    class _Search:
+        def items(self):
+            return []
+
+    class _Catalog:
+        def search(self, **kwargs):
+            captured.update(kwargs)
+            return _Search()
+
+    monkeypatch.setattr("core.satellite.pystac_client.Client.open", lambda *args, **kwargs: _Catalog())
+    monkeypatch.setattr("core.satellite.year_paths", lambda city_id, year, main_year: (tmp_path, tmp_path))
+
+    # Aday sahne olmadığı için hata beklenir; önemli olan sorgunun penceresi.
+    with pytest.raises(RuntimeError):
+        satellite.fetch_landsat_scenes(config, "2024", "2024")
+    assert captured["datetime"] == "2024-06-01/2024-09-15"

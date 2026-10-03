@@ -23,7 +23,7 @@ import rasterstats
 import requests
 
 from core.city_config import CityConfig
-from core.hvi import COMPONENT_FLOOR
+from core.hvi import COMPONENT_FLOOR, hvi_from_components, informative_components
 from core.paths import city_data_proc, city_data_raw, year_paths
 
 WEATHER_API = "https://archive-api.open-meteo.com/v1/archive"
@@ -200,6 +200,18 @@ def _active_components(roads: gpd.GeoDataFrame) -> list[str]:
     ]
 
 
+def _combine(values: pd.DataFrame, components: list[str], profile: str) -> pd.Series:
+    """Ana endeksle aynı gruplu birleştirme (bkz. core/hvi.py); eksik bileşeni olan yol NaN kalır.
+
+    Statik bileşenlerden tüm yollarda sabit olanlar ana endekste olduğu gibi
+    dışarıda bırakılır ama eksiklik denetimine girer. Tehlike ve ağaç örtüsü
+    her zaman kullanılır.
+    """
+    used = components[:2] + informative_components(values, components[2:])
+    complete = values[components].notna().all(axis=1)
+    return hvi_from_components(values[used], WEIGHT_PROFILES[profile]).where(complete)
+
+
 def _weights(profile: str, components: list[str]) -> np.ndarray:
     custom = WEIGHT_PROFILES[profile]
     values = np.asarray([custom.get(column, 1.0) for column in components], dtype=float)
@@ -219,7 +231,6 @@ def _scores_for_buffer(
     lst_low, lst_high = lst_bounds or (float(all_lst.min()), float(all_lst.max()))
     ndvi_low, ndvi_high = float(all_ndvi.min()), float(all_ndvi.max())
     components = _active_components(roads)
-    weights = _weights(profile, components)
     result = {}
     for year in years:
         values = pd.DataFrame(index=roads.index)
@@ -227,10 +238,7 @@ def _scores_for_buffer(
         values["sensitivity_agac_norm"] = 1 - _normalize(ndvi_by_year[year], ndvi_low, ndvi_high)
         for column in components[2:]:
             values[column] = pd.to_numeric(roads[column], errors="coerce")
-        complete = values[components].notna().all(axis=1)
-        matrix = COMPONENT_FLOOR + (1 - COMPONENT_FLOOR) * values.loc[complete, components]
-        result[year] = pd.Series(np.nan, index=roads.index, dtype=float)
-        result[year].loc[complete] = np.exp(np.log(matrix).to_numpy() @ weights) * 100
+        result[year] = _combine(values, components, profile)
     return result
 
 
@@ -406,11 +414,7 @@ def _make_impact_geodata(
         values["sensitivity_agac_norm"] = 1 - _normalize(ndvi, *component_bounds["ndvi"])
         for column in components[2:]:
             values[column] = pd.to_numeric(roads[column], errors="coerce")
-        valid_rows = values[components].notna().all(axis=1)
-        result = pd.Series(np.nan, index=roads.index, dtype=float)
-        matrix = COMPONENT_FLOOR + (1 - COMPONENT_FLOOR) * values.loc[valid_rows, components]
-        result.loc[valid_rows] = np.exp(np.log(matrix).mean(axis=1).to_numpy()) * 100
-        return result
+        return _combine(values, components, "equal")
 
     ndvi_low, ndvi_high = component_bounds["ndvi"]
     tree_ndvi = latest_ndvi.copy()

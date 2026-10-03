@@ -12,11 +12,16 @@ Sürüm geçmişi için [CHANGELOG.md](CHANGELOG.md), atıf için
 An open-data, reproducible urban heat risk pipeline. It combines Landsat
 land surface temperature (LST), the OpenStreetMap road network, and
 demographic data into a street-level, explainable Heat Vulnerability Index
-(HVI): Landsat LST/NDVI, a road-to-temperature spatial join, a 9-component
-geometric-mean HVI (temperature, tree canopy, population density,
-elderly/child population share, distance to hospital/pharmacy, distance to
-green space, built-up density), and pixel-level Jenks natural-breaks
-categorization shared across years. The architecture is city-agnostic -
+(HVI): Landsat LST/NDVI, a road-to-temperature spatial join, and an index
+that groups nine components into Hazard (surface temperature), Exposure
+(population and built-up density) and Vulnerability (elderly/child share,
+socioeconomic development, distance to health care and green space, tree
+canopy). Components are averaged within a group and the three groups are
+combined by geometric mean, so each group carries one third of the index
+regardless of how many components it holds. Categories use Jenks natural
+breaks shared across years. Live maps:
+<https://ayberkrk.github.io/turkiye-heat-risk/>. The index is a
+prioritisation tool; it has not been validated against health outcomes. The architecture is city-agnostic -
 `src/core/` never changes when a new city is added; 70 cities are supported
 today (Izmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana and 64 more, listed
 with their data sources and measured OSM coverage in
@@ -48,9 +53,9 @@ kapsamları [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
 Yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
-**Canlı harita:** GitHub Pages'te barındırılan, veri talep üzerine yüklenen
-küçük sürüm için `docs/index.html` (Pages etkinleştirildiğinde bir URL'e
-dönüşür). Tamamen çevrimdışı, tek dosyalık sürüm (~60 MB, GitHub'ın 50 MB
+**Canlı harita:** <https://ayberkrk.github.io/turkiye-heat-risk/> (GitHub
+Pages'te barındırılan, veri talep üzerine yüklenen küçük sürüm; kaynağı
+`docs/`). Tamamen çevrimdışı, tek dosyalık sürüm (~60 MB, GitHub'ın 50 MB
 uyarı/100 MB ret sınırını aştığı için depoda tutulmuyor) aşağıdaki komutla
 birkaç dakikada yerelde üretilir:
 
@@ -152,9 +157,10 @@ geçerli olduğunu, adapter'ın import edilebildiğini ve veri kaynağı
 URL'lerinin erişilebilir olduğunu indirmeden önce kontrol eder.
 
 **4. HVI bileşenlerini değiştir**
-`src/core/hvi.py` içindeki bileşen listesi (hazard, exposure, sensitivity_*)
-ve bunların geometrik ortalamayla birleşimi genel bir yapıdadır - yeni bir
-bileşen eklemek için mevcut normalize-et-birleştir desenini izle.
+`src/core/hvi.py` içindeki `COMPONENT_GROUPS` hangi bileşenin hangi gruba
+(tehlike, maruziyet, kırılganlık) girdiğini tanımlar. Yeni bir bileşen
+eklemek için sütununu `robust_normalize_0_1` ile üret, ilgili gruba ekle ve
+`HVI_FORMULA_VERSION`'ı artır.
 
 ## Metodoloji
 
@@ -167,6 +173,19 @@ Kelvin cinsinden yüzey sıcaklığına kalibre eder. Tek gereken ölçek dönü
 LST(K) = piksel_değeri × 0.00341802 + 149.0
 LST(°C) = LST(K) - 273.15
 ```
+
+Sahneler varsayılan olarak 1 Temmuz - 31 Ağustos arasında aranır. Sıcak
+sezon şehirden şehre değiştiği için pencere `config.yaml`'ın `landsat`
+bölümünden ayarlanabilir (`season_start: "06-15"`, `season_end: "09-15"`).
+Yıllar arası karşılaştırmada aynı pencere kullanılmalıdır; pencereyi
+değiştirdikten sonra `--force` ile sahneleri yeniden seçtirin.
+
+**Termal bandın gerçek çözünürlüğü 100 m'dir.** Landsat 8/9 TIRS algılayıcısı
+yüzey sıcaklığını yaklaşık 100 m'de ölçer; USGS ürünü 30 m ızgaraya yeniden
+örnekler. Bu yüzden haritadaki sıcaklık yol segmenti başına raporlansa da
+birbirine 100 m'den yakın sokaklar büyük ölçüde aynı ölçümü paylaşır:
+harita mahalle içi sıcak bölgeleri ayırt eder, tek tek komşu sokakları
+değil. NDVI (30 m) bu sınırlamayı taşımaz.
 
 Bulutlar kızılötesiyi bozduğu için her sahne aranırken bulut oranı %30'un
 altında tutulur ve her uydu karosu (path/row) için mevcut en temiz
@@ -213,40 +232,67 @@ ortak min-max aralığına göre 0-100'e normalize edilerek "risk skoru"na
 
 ### Isı Hassasiyet Endeksi (HVI): çok bileşenli ve açıklanabilir
 
-HVI artık dokuz bileşenin **geometrik ortalamasının** 100 ile ölçeklenmiş
-hali:
+HVI, dokuz bileşeni üç grupta toplar ve grupları geometrik ortalamayla
+birleştirir:
 
 ```
-HVI = geometrik_ortalama(Tehlike, Maruziyet, 7× Hassasiyet bileşeni) × 100
+Grup skoru = grubun bileşenlerinin aritmetik ortalaması
+HVI        = geometrik_ortalama(Tehlike, Maruziyet, Kırılganlık) × 100
 ```
 
-| Bileşen | Ne ölçer | Kaynak |
-|---|---|---|
-| Tehlike | LST risk skoru (yıl bazlı) | Landsat termal bant |
-| Maruziyet | Nüfus yoğunluğu | İzmir B.Ş.B. açık veri |
-| Hassasiyet - yaşlı oranı | 65+ nüfus oranı (ilçe) | İzmir B.Ş.B. açık veri |
-| Hassasiyet - çocuk oranı | 0-14 nüfus oranı (ilçe) | İzmir B.Ş.B. açık veri (aynı CSV) |
-| Hassasiyet - ağaç örtüsü | Yol tamponundaki ortalama NDVI'nin tersi | Landsat NDVI (zaten hesaplanıyor) |
-| Hassasiyet - sağlık erişimi | En yakın hastane/klinik/eczaneye uzaklık | OSM (`amenity=hospital/clinic/pharmacy`) |
-| Hassasiyet - yeşil alan erişimi | En yakın park/orman/çayır poligonuna uzaklık | OSM (`leisure=park`, `landuse=forest` vb.) |
-| Hassasiyet - yapılaşma yoğunluğu | Yolun 150 m çevresindeki bina yoğunluğu | OSM bina (`building`) katmanı |
-| Hassasiyet - sosyoekonomik gelişmişlik | İlçe bazlı SEGE-2022 gelişmişlik skorunun tersi | T.C. Sanayi ve Teknoloji Bakanlığı, resmi SEGE-2022 raporu |
+| Grup | Bileşen | Ne ölçer | Kaynak |
+|---|---|---|---|
+| Tehlike | Yüzey sıcaklığı | LST risk skoru (yıl bazlı) | Landsat termal bant |
+| Maruziyet | Nüfus yoğunluğu | Kişi/km² | Şehir adapter'ı (belediye açık verisi ya da TÜİK) |
+| Maruziyet | Yapılaşma yoğunluğu | Yolun 150 m çevresindeki bina yoğunluğu | OSM bina (`building`) katmanı |
+| Kırılganlık | Yaşlı oranı | 65+ nüfus oranı (ilçe) | Şehir adapter'ı |
+| Kırılganlık | Çocuk oranı | 0-14 nüfus oranı (ilçe) | Şehir adapter'ı |
+| Kırılganlık | Sosyoekonomik gelişmişlik | İlçe bazlı SEGE-2022 skorunun tersi | T.C. Sanayi ve Teknoloji Bakanlığı, resmi SEGE-2022 raporu |
+| Kırılganlık | Sağlık erişimi | En yakın hastane/klinik/eczaneye uzaklık | OSM (`amenity=hospital/clinic/pharmacy`) |
+| Kırılganlık | Yeşil alan erişimi | En yakın park/orman/çayır poligonuna uzaklık | OSM (`leisure=park`, `landuse=forest` vb.) |
+| Kırılganlık | Ağaç örtüsü | Yol tamponundaki ortalama NDVI'nin tersi | Landsat NDVI |
 
-Her bileşen önce kendi min-max aralığında 0-1'e normalize edilir (aksi
-halde binlerce kişi/km² olan nüfus yoğunluğu, 0-1 arası bir kesir olan
-yaşlı oranını eziyor). Eski sürümdeki üç bileşenli çarpım (`Tehlike ×
-Maruziyet × Hassasiyet`) ile geometrik ortalama aynı sayıyı vermez, ama
-yolları aynı sırayla dizer (biri diğerinin küpüdür); geometrik ortalama
-bu sıralamayı keyfi sayıda bileşene genelleştirir ve "bir bileşen sıfıra
-yakınsa toplam risk de düşük çıkar" özelliğini korur - ağırlıklı
-aritmetik ortalama bunu sağlamaz.
+**Neden gruplu?** v1.x'te dokuz bileşenin düz geometrik ortalaması
+alınıyordu. Orada bileşen sayısı gizli bir ağırlıktı: yedi kırılganlık
+bileşenine karşı tek bir sıcaklık bileşeni, bir *ısı* endeksinde sıcaklığın
+payını 1/9'a indiriyordu. Ayrıca birbiriyle ilişkili bileşenler (NDVI ile
+LST, bina ile nüfus yoğunluğu) aynı sinyali iki kez sayıyordu. Gruplu yapıda
+her grubun payı, içindeki bileşen sayısından bağımsız olarak 1/3'tür. Bu,
+afet riski literatüründeki Tehlike × Maruziyet × Kırılganlık çerçevesiyle
+aynı sıralamayı verir (üç grubun geometrik ortalaması, çarpımlarının küp
+köküdür).
 
-Bu özelliğin bir yan etkisi var ve iki yerde ele alınıyor. Min-max
-normalizasyonda 0, "hiç risk yok" değil "veri kümesindeki en düşük değer"
-demektir; geometrik ortalama alınırken bu 0 tek başına tüm skoru
-sıfırlayacağı için bileşenler önce `[0,05, 1]` aralığına ölçeklenir.
-Böylece "bir bileşen düşükse toplam risk de düşer" davranışı korunur ama
-tek bir bileşen skoru tamamen ele geçiremez.
+**Grup içi ve gruplar arası fark:** aynı gruptaki bileşenler birbirini
+telafi edebilir (yaşlı oranı düşük ama sağlık erişimi kötü bir yol orta
+kırılganlıkta çıkar), bu yüzden grup içinde aritmetik ortalama kullanılır.
+Gruplar ise birbirini telafi edemez: sıcak olmayan ya da kimsenin
+yaşamadığı bir yolda kırılganlık ne kadar yüksek olursa olsun risk düşük
+kalmalıdır, bu yüzden gruplar arasında geometrik ortalama kullanılır.
+
+**Ölçekleme aykırı değere dayanıklı:** her bileşen min-max yerine %2-%98
+yüzdelik aralığına göre 0-1'e çekilir, dışarıda kalan değerler 0 ya da 1'e
+kırpılır. Min-max'ta tek bir uç yol (ör. en yakın hastaneye 40 km uzaktaki
+bir kırsal segment) geri kalan tüm yolları ölçeğin dar bir bandına
+sıkıştırıyordu.
+
+**Ayırt etmeyen bileşenler endekse alınmaz:** bir bileşen şehrin tüm
+yollarında aynı değeri alıyorsa (tek ilçeli şehirlerde ilçe düzeyindeki
+demografik bileşenler) grup ortalamasına girmez; aksi halde sabit bir 0,
+grubun diğer üyelerinin etkisini seyreltirdi. Pipeline bu durumda hangi
+bileşenleri dışarıda bıraktığını ekrana yazar.
+
+Geometrik ortalamanın bir yan etkisi var: 0, "hiç risk yok" değil "veri
+kümesindeki en düşük değer" demektir ve tek başına tüm skoru sıfırlar. Bu
+yüzden grup skorları birleştirilmeden önce `[0,05, 1]` aralığına
+ölçeklenir. Böylece "bir grup düşükse toplam risk de düşer" davranışı
+korunur ama tek bir grup skoru tamamen ele geçiremez.
+
+**Bu seçimler bir yargıdır, ölçüm değil.** Grup paylarının eşit olması ve
+bileşenlerin hangi gruba girdiği, sağlık sonuçlarıyla kalibre edilmiş
+değildir. `analyze_pipeline.py` farklı ağırlık profilleriyle sıralamanın ne
+kadar değiştiğini raporlar (bkz. "Çok yıllı duyarlılık ve müdahale
+analizi"); endeksin kendisi hastane başvurusu ya da ölüm verisiyle henüz
+doğrulanmamıştır (bkz. "Bilinen sınırlamalar").
 
 **İki yıl karşılaştırılabilir:** HVI yüzdesi ve Jenks kategori sınırları
 her yıl ayrı ayrı değil, tüm yılların **ortak** dağılımından hesaplanır.
@@ -261,8 +307,8 @@ skalayı ele geçiriyor ve yolların %91'i "hastaneye çok yakın" çıkıyordu;
 şimdi her etiket yolların yaklaşık beşte birine denk geliyor.
 
 **Açıklanabilirlik:** nihai HVI skorunun yanında her bileşenin kendi
-normalize değeri de GeoJSON'a yazılır (`hazard_norm_<yıl>`,
-`exposure_norm`, `sensitivity_*_norm` sütunları) ve haritadaki tooltip'te
+normalize değeri ve üç grup skoru da GeoJSON'a yazılır (`hazard_norm_<yıl>`,
+`exposure_norm`, `sensitivity_*_norm`, `group_*_<yıl>` sütunları) ve haritadaki tooltip'te
 "Sıcaklık: yüksek, Ağaç örtüsü: çok düşük, Hastaneye uzaklık: uzak..."
 şeklinde okunabilir etiketlere çevrilir - bir yolun HVI'sinin neden
 yüksek/düşük olduğu haritadan doğrudan görülebilir.
@@ -283,7 +329,7 @@ yayımlanmış resmi bir araştırma. Bu yüzden CKAN'dan indirilmek yerine
 `src/cities/izmir/sege_2022_ilce.csv` olarak küçük bir referans dosyası
 halinde repoya dahil edildi (bkz. `cities/izmir/adapter.py`). Bu bileşen
 **isteğe bağlıdır** - başka bir şehrin adapter'ı bu veriyi sağlamazsa HVI
-kalan sekiz bileşenle hesaplanmaya devam eder.
+kalan bileşenlerle hesaplanmaya devam eder.
 
 **Bu HVI, kapsamlı bir sağlık veya sosyoekonomik kırılganlık modeli değil;
 mevcut açık verilerle oluşturulmuş, çok bileşenli bir önceliklendirme
@@ -291,7 +337,7 @@ endeksidir.**
 
 ### Kategorilere ayırma: neden Jenks doğal kırılım?
 
-HVI skorları üç 0-1 kesirin çarpımı olduğu için dağılım sağa çarpık -
+HVI skorları üç grup skorunun geometrik ortalaması olduğu için dağılım çarpık -
 çoğu yol düşük skorda toplanır, az sayıda yol çok yüksek skora sıçrar.
 İlk denemede `pd.qcut` (her kategoriye eşit sayıda yol) kullanıldı ama bu,
 verideki gerçek yapıyı değil, zorla eşit dağıtılmış bir bölünmeyi
@@ -568,6 +614,8 @@ katmanı indirir - ilk sayfa yükü birkaç yüz KB). İkincisini yayınlamak i�
 3. `docs/` klasörünü commit'le, GitHub'da Settings → Pages → Branch: `main`,
    klasör: `/docs` seç.
 
+Bu deponun kendi sayfası: <https://ayberkrk.github.io/turkiye-heat-risk/>
+
 ## Tekrar üretilebilirlik: harita manifest'i
 
 Her iki harita çıktısının (`output/<sehir>_hvi_map.html` ve
@@ -663,6 +711,22 @@ turkiye-heat-risk/
   ayrı bir katman olarak eklenebilir (MODIS, 1 km çözünürlük) ama bu katman
   yol değil mahalle ölçeğindedir ve HVI skoruna dahil değildir - bkz.
   `core/night_lst.py` ve aşağıdaki Metodoloji bölümü.
+- **Doğrulanmamış endeks**: HVI, sıcak hava dalgalarındaki acil başvuru,
+  ambulans çağrısı ya da ölüm verisiyle karşılaştırılmamıştır. Grup payları
+  ve bileşen seçimi literatürdeki çerçeveye dayanan bir yargıdır. Harita
+  "nereye önce bakılmalı" sorusuna yanıt verir; bir yolun ötekinden kaç kat
+  daha tehlikeli olduğunu ölçmez.
+- **Yüzey sıcaklığı hava sıcaklığı değildir**: LST, uydunun gördüğü
+  yüzeyin (çatı, asfalt, ağaç tepesi) sıcaklığıdır; yayanın hissettiği hava
+  sıcaklığı, nem, rüzgar ve gölge bundan farklıdır. Ağaç tepesi serin
+  görünen bir sokak yaya düzeyinde gölgeli olabilir, çatıları sıcak görünen
+  dar bir sokak yaya düzeyinde gölgede kalabilir.
+- **Termal çözünürlük 100 m**: sıcaklık yol başına raporlansa da komşu
+  sokaklar çoğunlukla aynı termal ölçümü paylaşır (bkz. Metodoloji).
+- **Şehirler arası karşılaştırma**: bileşenler her şehrin kendi dağılımına
+  göre ölçeklenir. Bir şehirde "Aşırı Kritik" çıkan yol, o şehrin en riskli
+  yollarındandır; başka bir şehrin "Aşırı Kritik" yoluyla aynı mutlak riski
+  taşıdığı anlamına gelmez.
 - **10 metrelik yol tamponu**: sıcaklık ve NDVI örneklemesinde kullanılan
   bu dar tampon, çok dar sokaklarda komşu bir yolun etkisini
   karıştırabilir; çok geniş bulvarlarda ise koridorun tamamını
@@ -692,8 +756,8 @@ turkiye-heat-risk/
   `sege_2022_ilce.csv` güncellenmelidir.
 - **Tek ilçeli şehirler**: 70 şehrin 54'ü tek ilçe kapsar; bu şehirlerde
   nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE bileşenleri tüm mahallelerde
-  aynı değeri alır ve HVI'ı ayırt etmez. Harita yalnızca LST, NDVI ve
-  altyapı bileşenlerini yansıtır. Ayrıca Ağrı, Iğdır, Kırklareli ve
+  aynı değeri alır, HVI'ı ayırt etmez ve endekse alınmaz. Harita yalnızca
+  LST, NDVI, yapılaşma ve erişim bileşenlerini yansıtır. Ayrıca Ağrı, Iğdır, Kırklareli ve
   Karaman'da ilçe sayımı il düzeyinden inandırıcı olmayacak kadar
   saptığı için il düzeyi 0-14/65+ oranları kullanılır.
 - **TÜİK-şablonlu ana şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
