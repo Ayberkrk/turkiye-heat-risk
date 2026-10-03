@@ -1,7 +1,9 @@
 import json
 
 import numpy as np
+import pytest
 import rasterio
+import rasterio.warp
 from rasterio.transform import from_origin
 
 from core.city_config import CityConfig
@@ -197,7 +199,12 @@ def test_composite_scene_arrays_pixel_nan_in_all_scenes_stays_nan():
 
 # --- build_lst_ndvi_mosaic: karonun birden fazla sahnesi doğru şekilde kompozitleniyor mu ---
 
-def _write_scene_bands(scene_dir, crs, thermal_raw, size=4, res=30.0):
+# Sentetik sahnelerin sol üst köşesi: _make_config bbox'ının (27.0-27.1 D,
+# 38.0-38.1 K) içinde kalan bir UTM 35N noktası.
+SCENE_ORIGIN = (504000.0, 4214000.0)
+
+
+def _write_scene_bands(scene_dir, crs, thermal_raw, size=4, res=30.0, origin=SCENE_ORIGIN):
     """Bir sahnenin dört bandını (kırmızı, NIR, termal, QA_PIXEL) yazar.
 
     Kırmızı/NIR sabit tutulur (NDVI testin odağı değil); QA_PIXEL tamamı
@@ -206,7 +213,7 @@ def _write_scene_bands(scene_dir, crs, thermal_raw, size=4, res=30.0):
     farklılaştırılır ki medyan kompozit gözlemlenebilsin.
     """
     scene_dir.mkdir(parents=True, exist_ok=True)
-    transform = from_origin(500000.0, 4400000.0, res, res)
+    transform = from_origin(origin[0], origin[1], res, res)
     base_profile = {
         "driver": "GTiff", "height": size, "width": size, "count": 1,
         "crs": crs, "transform": transform,
@@ -215,8 +222,9 @@ def _write_scene_bands(scene_dir, crs, thermal_raw, size=4, res=30.0):
         dst.write(np.full((size, size), 8000, dtype="uint16"), 1)
     with rasterio.open(scene_dir / "band5_nir.tif", "w", dtype="uint16", nodata=0, **base_profile) as dst:
         dst.write(np.full((size, size), 15000, dtype="uint16"), 1)
+    thermal = thermal_raw if isinstance(thermal_raw, np.ndarray) else np.full((size, size), thermal_raw)
     with rasterio.open(scene_dir / "band10_thermal.tif", "w", dtype="uint16", nodata=0, **base_profile) as dst:
-        dst.write(np.full((size, size), thermal_raw, dtype="uint16"), 1)
+        dst.write(thermal.astype("uint16"), 1)
     with rasterio.open(scene_dir / "band_qa_pixel.tif", "w", dtype="uint16", **base_profile) as dst:
         dst.write(np.full((size, size), 0b0100_0000, dtype="uint16"), 1)
 
@@ -291,3 +299,75 @@ def test_build_lst_ndvi_mosaic_single_scene_per_tile_is_unaffected(tmp_path, mon
     with rasterio.open(lst_path) as src:
         result = src.read(1)
     assert np.isclose(result[0, 0], expected_c, atol=0.05)
+
+
+def _run_mosaic(tmp_path, monkeypatch, scenes: dict, crs="EPSG:32635"):
+    data_raw, data_proc = tmp_path / "raw", tmp_path / "proc"
+    data_proc.mkdir(parents=True)
+    for name, kwargs in scenes.items():
+        _write_scene_bands(data_raw / name, crs, **kwargs)
+    metadata = {"scenes": [{"tile": "180_33", "scene_id": name, "folder": name} for name in scenes]}
+    (data_raw / "scene_metadata.json").write_text(json.dumps(metadata))
+    monkeypatch.setattr("core.raster.year_paths", lambda city_id, year, main_year: (data_raw, data_proc))
+    lst_path, _ = build_lst_ndvi_mosaic(_make_config(crs), "2026", "2026")
+    return lst_path
+
+
+def test_build_lst_ndvi_mosaic_aligns_same_shape_scenes_with_shifted_origin(tmp_path, monkeypatch):
+    # Gerçek Landsat davranışı: aynı karonun iki sahnesi aynı boyutta ama
+    # başlangıç noktası kayık gelebilir (İzmir 180/034, 2020: 900 m). İki
+    # sahne de AYNI zemin desenini görüyor (doğuya doğru artan sıcaklık);
+    # B sahnesi iki piksel doğudan başlıyor. Diziler hizalanmadan üst üste
+    # konursa farklı zemin noktaları ortalanır ve desen bozulur.
+    size, shift = 8, 2
+    ground = 40000 + 1000 * np.arange(size + shift)  # zemindeki sütun başına ham değer
+    scene_a = np.tile(ground[:size], (size, 1))
+    scene_b = np.tile(ground[shift:], (size, 1))
+    lst_path = _run_mosaic(tmp_path, monkeypatch, {
+        "sceneA": {"thermal_raw": scene_a, "size": size},
+        "sceneB": {"thermal_raw": scene_b, "size": size,
+                   "origin": (SCENE_ORIGIN[0] + shift * 30.0, SCENE_ORIGIN[1])},
+    })
+
+    with rasterio.open(lst_path) as src:
+        result = src.read(1)
+        assert src.transform.c == SCENE_ORIGIN[0]
+    expected = ground * 0.00341802 + 149.0 - 273.15
+    assert result.shape == (size, size + shift)
+    assert np.allclose(result[0], expected, atol=0.01)
+
+
+def test_build_lst_ndvi_mosaic_handles_scenes_of_different_shape(tmp_path, monkeypatch):
+    # Aynı karonun sahneleri birkaç piksel farklı boyutta gelebilir; bu,
+    # np.stack'i "all input arrays must have the same shape" ile çökertiyordu.
+    lst_path = _run_mosaic(tmp_path, monkeypatch, {
+        "sceneA": {"thermal_raw": 40000, "size": 6},
+        "sceneB": {"thermal_raw": 50000, "size": 8},
+    })
+    to_c = lambda raw: raw * 0.00341802 + 149.0 - 273.15
+    with rasterio.open(lst_path) as src:
+        result = src.read(1)
+    assert result.shape == (8, 8)
+    # Ortak alan iki sahnenin medyanı, yalnızca B'nin kapsadığı alan B'nin değeri.
+    assert np.isclose(result[0, 0], (to_c(40000) + to_c(50000)) / 2, atol=0.01)
+    assert np.isclose(result[7, 7], to_c(50000), atol=0.01)
+
+
+def test_build_lst_ndvi_mosaic_reads_only_the_city_bbox(tmp_path, monkeypatch):
+    # Sahne bbox'tan çok daha geniş (batıya doğru 60 km): çıktı tüm sahneyi
+    # değil, bbox ve payını kaplamalı.
+    size = 2400  # 72 km
+    lst_path = _run_mosaic(tmp_path, monkeypatch, {
+        "sceneA": {"thermal_raw": 42000, "size": size, "origin": (440000.0, 4250000.0)},
+    })
+    with rasterio.open(lst_path) as src:
+        assert src.width < 500 and src.height < 500
+        west, south, east, north = rasterio.warp.transform_bounds(src.crs, "EPSG:4326", *src.bounds)
+    assert west < 27.0 and east > 27.1 and south < 38.0 and north > 38.1
+
+
+def test_build_lst_ndvi_mosaic_fails_clearly_when_no_tile_covers_bbox(tmp_path, monkeypatch):
+    with pytest.raises(RuntimeError, match="kesişmiyor"):
+        _run_mosaic(tmp_path, monkeypatch, {
+            "sceneA": {"thermal_raw": 42000, "origin": (700000.0, 4400000.0)},
+        })

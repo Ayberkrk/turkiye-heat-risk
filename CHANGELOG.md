@@ -27,6 +27,14 @@ otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
 - **Ayarlanabilir sezon**: Landsat sahne arama penceresi kodda sabit
   (1 Temmuz - 31 Ağustos) olmak yerine `landsat.season_start` /
   `season_end` ile şehir bazında ayarlanabiliyor; varsayılan değişmedi.
+- **Hata düzeltmesi (çoklu sahne kompoziti)**: aynı karonun farklı tarihli
+  sahneleri aynı ızgarada gelmez; başlangıç noktası yüzlerce metre kayar,
+  boyut birkaç piksel değişir. Kompozit bunları olduğu gibi üst üste
+  koyuyordu: boyutlar farklıysa çöküyor, tesadüfen eşitse kayık pikselleri
+  sessizce aynı piksel sayıyordu (İzmir 2020'de 900 m). Sahneler artık
+  kompozitten önce ortak bir ızgaraya oturtuluyor. `MOSAIC_VERSION` 2.
+- Mozaik artık tam Landsat sahnesini değil yalnızca şehir bbox'ını (1 km
+  payla) okuyor; bellek ve disk kullanımı bir büyüklük mertebesi düşüyor.
 - **Hata düzeltmesi**: Landsat bantları arama anında bir kez imzalanıyordu;
   Planetary Computer imzası yaklaşık 45 dakika geçerli olduğu için uzun süren
   indirmelerde kalan dosyalar 403 ile düşüyordu. Her bant artık indirilmeden

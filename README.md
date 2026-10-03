@@ -205,6 +205,9 @@ herhangi biri taşıyan pikseller `NaN`/nodata yapılır (`core/raster.py`,
 seçilen `max_scenes_per_tile` kadar sahnenin LST/NDVI'si ayrı ayrı
 hesaplanıp (QA maskesi her biri kendi ızgarasında uygulanmış olarak) piksel
 bazlı **medyanı** alınır (`core/raster.py`, `composite_scene_arrays`).
+Aynı karonun farklı tarihli sahneleri aynı piksel ızgarasında gelmediği
+için (başlangıç noktası yüzlerce metre kayabilir) sahneler önce karonun
+ortak ızgarasına oturtulur (`tile_grid`), sonra medyanı alınır.
 Medyan, ortalamadan daha dayanıklıdır - aykırı tek bir bulutlu/anormal
 günün sonucu domine etmesini engeller. Bu, aşağıdaki "Metodolojik uyarı"da
 bahsedilen tek-sahne kaynaklı gürültüyü azaltır (aynı yaklaşım, gece ısı
