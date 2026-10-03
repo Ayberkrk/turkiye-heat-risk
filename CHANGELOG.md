@@ -45,6 +45,9 @@ otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
   Planetary Computer imzası yaklaşık 45 dakika geçerli olduğu için uzun süren
   indirmelerde kalan dosyalar 403 ile düşüyordu. Her bant artık indirilmeden
   hemen önce yeniden imzalanıyor.
+- İndirme geçici ağ hatalarında (okuma zaman aşımı, bağlantı kopması) dört
+  kereye kadar yeniden deniyor ve veriyi önce `.part` dosyasına yazıyor;
+  onlarca bantlık bir indirmede tek bir kopma artık pipeline'ı düşürmüyor.
 - README: termal bandın 100 m gerçek çözünürlüğü, yüzey ve hava sıcaklığı
   farkı, endeksin sağlık verisiyle doğrulanmadığı ve şehirler arası
   karşılaştırma sınırı açıkça yazıldı.

@@ -164,3 +164,75 @@ def test_download_band_resigns_url_instead_of_reusing_search_time_token(monkeypa
     assert signed == ["https://blob.example/B4.TIF"]
     assert requested == ["https://blob.example/B4.TIF?sig=taze"]
     assert (tmp_path / "b4.tif").read_bytes() == b"veri"
+
+
+def _download_fakes(monkeypatch, responses):
+    """`requests.get`'i sırayla `responses`'taki davranışları üreten bir sahteyle değiştirir."""
+    import requests
+
+    from core import satellite
+
+    calls = []
+
+    class _Response:
+        def __init__(self, chunks):
+            self._chunks = chunks
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            for chunk in self._chunks:
+                if isinstance(chunk, Exception):
+                    raise chunk
+                yield chunk
+
+    def fake_get(url, **kwargs):
+        calls.append(url)
+        return _Response(responses[len(calls) - 1])
+
+    monkeypatch.setattr("core.satellite.planetary_computer.sign", lambda url: url)
+    monkeypatch.setattr("core.satellite.requests.get", fake_get)
+    monkeypatch.setattr("core.satellite.time.sleep", lambda seconds: None)
+    return satellite, requests, calls
+
+
+def test_download_band_retries_after_read_timeout_and_leaves_no_partial_file(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    import requests
+
+    # İlk deneme veri akarken kopuyor (Eskişehir indirmesinde yaşandı),
+    # ikincisi tamamlanıyor. Sonuç yalnızca ikinci denemenin verisi olmalı.
+    satellite, _, calls = _download_fakes(monkeypatch, [
+        [b"yarim", requests.ConnectionError("Read timed out.")],
+        [b"tam", b"veri"],
+    ])
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF")})
+    target = tmp_path / "b4.tif"
+
+    satellite.download_band(item, "red", target)
+
+    assert len(calls) == 2
+    assert target.read_bytes() == b"tamveri"
+    assert not (tmp_path / "b4.tif.part").exists()
+
+
+def test_download_band_gives_up_after_all_attempts_without_writing_target(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    import requests
+
+    from core import satellite as sat
+
+    failing = [[requests.ConnectionError("Read timed out.")]] * sat.DOWNLOAD_ATTEMPTS
+    satellite, _, calls = _download_fakes(monkeypatch, failing)
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF")})
+    target = tmp_path / "b4.tif"
+
+    with pytest.raises(requests.ConnectionError):
+        satellite.download_band(item, "red", target)
+
+    assert len(calls) == sat.DOWNLOAD_ATTEMPTS
+    # Yarım dosya hedefe yazılmamalı: var olan dosya "indirildi" sayılırdı.
+    assert not target.exists() and not (tmp_path / "b4.tif.part").exists()
