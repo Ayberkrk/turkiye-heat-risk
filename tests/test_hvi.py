@@ -8,7 +8,8 @@ import core.hvi as hvi
 from core.city_config import CityConfig
 from core.hvi import (
     COMPONENT_FLOOR, bucket_5, combine_groups, group_scores, hvi_from_components,
-    informative_components, normalize_0_1, robust_bounds, robust_normalize_0_1,
+    informative_components, normalize_0_1, pooled_group_bounds, rescale_groups, robust_bounds,
+    robust_normalize_0_1,
 )
 
 
@@ -87,6 +88,11 @@ def test_informative_components_drops_constant_columns():
 
 # --- Gruplu birleştirme ----------------------------------------------------
 
+# Grup skorlarını olduğu gibi bırakan sınırlar: tek satırlık tablolarda
+# birleştirme mantığını yeniden ölçeklemeden bağımsız sınamak için.
+UNIT_BOUNDS = {"hazard": (0.0, 1.0), "exposure": (0.0, 1.0), "vulnerability": (0.0, 1.0)}
+
+
 def _components(**overrides) -> pd.DataFrame:
     base = {
         "hazard_norm": 0.5, "exposure_norm": 0.5, "sensitivity_yapilasma_norm": 0.5,
@@ -116,22 +122,61 @@ def test_hazard_weighs_as_much_as_a_whole_group_not_one_of_nine():
     # Sıcaklığı 0.5 -> 1.0 yapmak, altı kırılganlık bileşeninden yalnızca
     # birini 0.5 -> 1.0 yapmaktan belirgin biçimde daha çok artırmalı; düz
     # dokuz bileşenli geometrik ortalamada ikisi aynı artışı verirdi.
-    base = hvi_from_components(_components()).iloc[0]
-    hotter = hvi_from_components(_components(hazard_norm=1.0)).iloc[0]
-    older = hvi_from_components(_components(sensitivity_yasli_norm=1.0)).iloc[0]
+    base = hvi_from_components(_components(), bounds=UNIT_BOUNDS).iloc[0]
+    hotter = hvi_from_components(_components(hazard_norm=1.0), bounds=UNIT_BOUNDS).iloc[0]
+    older = hvi_from_components(_components(sensitivity_yasli_norm=1.0), bounds=UNIT_BOUNDS).iloc[0]
     assert hotter - base > 3 * (older - base) > 0
 
 
 def test_group_with_missing_member_is_nan():
     values = _components()
     values.loc[0, "sensitivity_yesil_norm"] = np.nan
-    assert np.isnan(hvi_from_components(values).iloc[0])
+    assert np.isnan(hvi_from_components(values, bounds=UNIT_BOUNDS).iloc[0])
 
 
 def test_component_weights_shift_group_weight():
     # Duyarlılık profili: tehlike ağırlığı 2 ise tehlike grubunun payı artar.
     values = _components(hazard_norm=1.0)
-    assert hvi_from_components(values, {"hazard_norm": 2.0}).iloc[0] > hvi_from_components(values).iloc[0]
+    heavier = hvi_from_components(values, {"hazard_norm": 2.0}, bounds=UNIT_BOUNDS).iloc[0]
+    assert heavier > hvi_from_components(values, bounds=UNIT_BOUNDS).iloc[0]
+
+
+def test_narrow_group_still_moves_the_ranking_after_rescaling():
+    # İzmir'de görülen durum: kırılganlık grubu, bileşenleri birbirini
+    # götürdüğü için dar bir bantta (burada 0.45-0.55) kalıyor; tehlike ve
+    # maruziyet ise tüm aralığa yayılıyor. Yeniden ölçekleme olmadan dar grup
+    # sıralamaya neredeyse hiç katkı vermiyordu.
+    rng = np.random.default_rng(0)
+    n = 2000
+    groups = pd.DataFrame({
+        "hazard": rng.uniform(0, 1, n), "exposure": rng.uniform(0, 1, n),
+        "vulnerability": rng.uniform(0.45, 0.55, n),
+    })
+    raw = combine_groups(groups)
+    bounds = {group: robust_bounds(groups[group]) for group in groups}
+    rescaled = combine_groups(rescale_groups(groups, bounds))
+
+    def influence(score):
+        return score.rank().corr(groups["vulnerability"].rank())
+
+    assert influence(raw) < 0.15
+    assert influence(rescaled) > 0.4
+
+
+def test_pooled_group_bounds_use_one_ruler_for_all_years():
+    # İki yıl ayrı ayrı ölçeklenseydi her yılın en sıcak yolu 1.0 alır ve
+    # "ikinci yıl daha sıcak" bilgisi kaybolurdu.
+    def table(hazard):
+        return pd.DataFrame({"hazard_norm": hazard, "exposure_norm": np.linspace(0, 1, len(hazard))})
+
+    cool, hot = table(np.linspace(0.0, 0.5, 50)), table(np.linspace(0.5, 1.0, 50))
+    bounds = pooled_group_bounds([cool, hot])
+    assert bounds["hazard"][0] < 0.05 and bounds["hazard"][1] > 0.95
+    cool_score = hvi_from_components(cool, bounds=bounds)
+    hot_score = hvi_from_components(hot, bounds=bounds)
+    assert hot_score.mean() > cool_score.mean()
+    # Aynı maruziyetteki yol, sıcak yılda daha yüksek skor almalı.
+    assert (hot_score.to_numpy() >= cool_score.to_numpy()).all()
 
 
 # --- compute_heat_vulnerability_index (uçtan uca, sentetik) ----------------

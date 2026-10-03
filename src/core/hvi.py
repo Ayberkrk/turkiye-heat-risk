@@ -26,7 +26,13 @@ Birleştirme iki aşamalıdır (bkz. `COMPONENT_GROUPS`):
      yapılaşma yoğunluğu), Kırılganlık (yaşlı, çocuk, sosyoekonomik, sağlık
      ve yeşil alan erişimi, ağaç örtüsü). Grup içi skor üyelerin aritmetik
      ortalamasıdır - aynı grubun üyeleri birbirini telafi edebilir.
-  2. Üç grup skorunun **geometrik ortalaması** × 100 nihai skordur - gruplar
+  2. Grup skorları, tüm yılların ortak dağılımına göre yeniden 0-1'e
+     ölçeklenir. Ortalama almak yayılımı daraltır (altı bileşenli grupta
+     bileşenler birbirini götürür: yaşlı ve çocuk oranı ters ilişkilidir);
+     bu adım olmadan dar bantta kalan grup, geometrik ortalamada sıralamayı
+     hiç etkilemiyordu (İzmir'de kırılganlık grubunun skorla sıra
+     korelasyonu 0,00 idi).
+  3. Üç grup skorunun **geometrik ortalaması** × 100 nihai skordur - gruplar
      birbirini telafi edemez: sıcak olmayan ya da kimsenin yaşamadığı bir
      yolda risk düşük kalır.
 
@@ -95,7 +101,7 @@ COMPONENT_FLOOR = 0.05
 # Çıktı sürümü - bileşen sayısı/formülü, yapılaşma tamponu veya
 # `roads_with_hvi.geojson` sütun şeması değiştiğinde artırılır; eski önbellek
 # güncel çıktı gibi kullanılmamalıdır (bkz. core/cache.py).
-HVI_FORMULA_VERSION = 3
+HVI_FORMULA_VERSION = 4
 
 
 # Sağlam (aykırı değere dayanıklı) ölçeklemede kullanılan alt/üst yüzdelikler.
@@ -186,16 +192,41 @@ def combine_groups(groups: pd.DataFrame, group_weights: dict[str, float] | None 
     return pd.Series(np.exp(np.log(floored) @ (w / w.sum())) * 100, index=groups.index)
 
 
-def hvi_from_components(values: pd.DataFrame, weights: dict[str, float] | None = None) -> pd.Series:
+def pooled_group_bounds(tables: list[pd.DataFrame],
+                        weights: dict[str, float] | None = None) -> dict[str, tuple[float, float]]:
+    """Grup skorlarının yeniden ölçekleneceği sınırları, verilen tüm tablolardan
+    (tipik olarak her yıl için bir tablo) ORTAK olarak hesaplar.
+
+    Sınırlar yıl başına ayrı hesaplansaydı aynı grup skoru iki yılda farklı
+    değere ölçeklenir ve yıllar karşılaştırılamazdı.
+    """
+    groups = pd.concat([group_scores(table, weights) for table in tables], ignore_index=True)
+    return {group: robust_bounds(groups[group]) for group in groups.columns}
+
+
+def rescale_groups(groups: pd.DataFrame, bounds: dict[str, tuple[float, float]]) -> pd.DataFrame:
+    """Grup skorlarını `bounds`'a göre 0-1'e çeker (gerekçesi modül docstring'inde)."""
+    return pd.DataFrame(
+        {group: scale_between(groups[group], *bounds[group]) for group in groups.columns}, index=groups.index,
+    )
+
+
+def hvi_from_components(values: pd.DataFrame, weights: dict[str, float] | None = None,
+                        bounds: dict[str, tuple[float, float]] | None = None) -> pd.Series:
     """Bileşen tablosundan nihai skoru üretir (grup içi aritmetik, gruplar arası geometrik).
 
     `weights` verilmezse her bileşen grubunda, her grup da endekste eşit
     paya sahiptir. Verilirse (duyarlılık analizi, bkz. core/impact_analysis.py)
     bileşen ağırlıkları grup içinde uygulanır, grubun ağırlığı da üyelerinin
     ağırlık ortalamasıdır.
+
+    `bounds` grup skorlarının yeniden ölçekleme sınırlarıdır (bkz.
+    pooled_group_bounds); birden fazla tablo (yıl, senaryo) karşılaştırılacaksa
+    hepsine AYNI sınırlar verilmelidir. Verilmezse yalnızca bu tablodan hesaplanır.
     """
     weights = weights or {}
     groups = group_scores(values, weights)
+    groups = rescale_groups(groups, bounds or pooled_group_bounds([values], weights))
     group_weights = {
         group: float(np.mean([weights.get(column, 1.0) for column in COMPONENT_GROUPS[group]
                               if column in values.columns]))
@@ -384,6 +415,7 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
     def _scale(series: pd.Series, lo: float, hi: float) -> pd.Series:
         return series * 0 if hi == lo else (series - lo) / (hi - lo)
 
+    values_by_year = {}
     for year in years:
         # Ağaç örtüsü NDVI'nin TERSİ ile riske katkı sağlar: az ağaç = yüksek risk.
         roads[f"hazard_norm_{year}"] = scale_between(roads[f"risk_score_{year}"], risk_low, risk_high)
@@ -397,11 +429,13 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
         # endekse alınmayan sabit bileşenleri de kapsar: demografisi eşlenmemiş
         # bir yol, o bileşen ayırt etmiyor diye skor almamalı.
         complete = roads[static_components].notna().all(axis=1) & values.notna().all(axis=1)
+        values_by_year[year] = values.where(complete)
 
-        # Grup skorları da yazılır: "bu yol neden yüksek?" sorusu önce grup
-        # (sıcak mı, kalabalık mı, kırılgan mı), sonra bileşen düzeyinde
-        # yanıtlanabilir.
-        groups = group_scores(values).where(complete)
+    # Grup skorları da yazılır: "bu yol neden yüksek?" sorusu önce grup (sıcak
+    # mı, kalabalık mı, kırılgan mı), sonra bileşen düzeyinde yanıtlanabilir.
+    group_bounds = pooled_group_bounds(list(values_by_year.values()))
+    for year in years:
+        groups = rescale_groups(group_scores(values_by_year[year]), group_bounds)
         for group in groups.columns:
             roads[f"group_{group}_{year}"] = groups[group].round(4)
         roads[f"hvi_score_{year}"] = combine_groups(groups)

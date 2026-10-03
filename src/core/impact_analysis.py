@@ -23,7 +23,7 @@ import rasterstats
 import requests
 
 from core.city_config import CityConfig
-from core.hvi import COMPONENT_FLOOR, hvi_from_components, informative_components
+from core.hvi import COMPONENT_FLOOR, hvi_from_components, informative_components, pooled_group_bounds
 from core.paths import city_data_proc, city_data_raw, year_paths
 
 WEATHER_API = "https://archive-api.open-meteo.com/v1/archive"
@@ -200,16 +200,25 @@ def _active_components(roads: gpd.GeoDataFrame) -> list[str]:
     ]
 
 
-def _combine(values: pd.DataFrame, components: list[str], profile: str) -> pd.Series:
-    """Ana endeksle aynı gruplu birleştirme (bkz. core/hvi.py); eksik bileşeni olan yol NaN kalır.
+def _component_table(
+    roads: gpd.GeoDataFrame, lst: pd.Series, ndvi: pd.Series,
+    lst_bounds: tuple[float, float], ndvi_bounds: tuple[float, float],
+) -> pd.DataFrame:
+    """Ana endeksle aynı birleştirmeye (bkz. core/hvi.py) girecek bileşen tablosu.
 
     Statik bileşenlerden tüm yollarda sabit olanlar ana endekste olduğu gibi
-    dışarıda bırakılır ama eksiklik denetimine girer. Tehlike ve ağaç örtüsü
-    her zaman kullanılır.
+    dışarıda bırakılır ama eksiklik denetimine girer: herhangi bir bileşeni
+    eksik olan yolun satırı tümüyle NaN'dır. Tehlike ve ağaç örtüsü her
+    zaman kullanılır.
     """
+    components = _active_components(roads)
+    values = pd.DataFrame(index=roads.index)
+    values["hazard_norm"] = _normalize(lst, *lst_bounds)
+    values["sensitivity_agac_norm"] = 1 - _normalize(ndvi, *ndvi_bounds)
+    for column in components[2:]:
+        values[column] = pd.to_numeric(roads[column], errors="coerce")
     used = components[:2] + informative_components(values, components[2:])
-    complete = values[components].notna().all(axis=1)
-    return hvi_from_components(values[used], WEIGHT_PROFILES[profile]).where(complete)
+    return values[used].where(values[components].notna().all(axis=1))
 
 
 def _weights(profile: str, components: list[str]) -> np.ndarray:
@@ -225,21 +234,21 @@ def _scores_for_buffer(
     ndvi_by_year: dict[str, pd.Series],
     profile: str,
     lst_bounds: tuple[float, float] | None = None,
+    group_bounds: dict[str, tuple[float, float]] | None = None,
 ) -> dict[str, pd.Series]:
     all_lst = pd.concat([lst_by_year[year] for year in years], ignore_index=True)
     all_ndvi = pd.concat([ndvi_by_year[year] for year in years], ignore_index=True)
     lst_low, lst_high = lst_bounds or (float(all_lst.min()), float(all_lst.max()))
     ndvi_low, ndvi_high = float(all_ndvi.min()), float(all_ndvi.max())
-    components = _active_components(roads)
-    result = {}
-    for year in years:
-        values = pd.DataFrame(index=roads.index)
-        values["hazard_norm"] = _normalize(lst_by_year[year], lst_low, lst_high)
-        values["sensitivity_agac_norm"] = 1 - _normalize(ndvi_by_year[year], ndvi_low, ndvi_high)
-        for column in components[2:]:
-            values[column] = pd.to_numeric(roads[column], errors="coerce")
-        result[year] = _combine(values, components, profile)
-    return result
+    tables = {
+        year: _component_table(roads, lst_by_year[year], ndvi_by_year[year], (lst_low, lst_high), (ndvi_low, ndvi_high))
+        for year in years
+    }
+    # Grup ölçeği tüm yıllar için ortaktır; dışarıdan verilirse (hava
+    # düzeltmeli seri) temel seriyle aynı cetvel kullanılır.
+    weights = WEIGHT_PROFILES[profile]
+    group_bounds = group_bounds or pooled_group_bounds(list(tables.values()), weights)
+    return {year: hvi_from_components(tables[year], weights, group_bounds) for year in years}
 
 
 def _summarize_robustness(
@@ -407,14 +416,15 @@ def _make_impact_geodata(
     target_index = set(base.loc[valid].nlargest(target_count).index)
     mask = pd.Series(output.index.isin(target_index), index=output.index)
 
+    def table(lst: pd.Series, ndvi: pd.Series) -> pd.DataFrame:
+        return _component_table(roads, lst, ndvi, component_bounds["lst"], component_bounds["ndvi"])
+
+    # Senaryolar temel skorla aynı grup cetvelini kullanmalı; aksi halde
+    # müdahale edilmeyen yolların skoru da (ölçek kaydığı için) değişirdi.
+    group_bounds = component_bounds.get("groups") or pooled_group_bounds([table(latest_lst, latest_ndvi)])
+
     def score(lst: pd.Series, ndvi: pd.Series) -> pd.Series:
-        components = _active_components(roads)
-        values = pd.DataFrame(index=roads.index)
-        values["hazard_norm"] = _normalize(lst, *component_bounds["lst"])
-        values["sensitivity_agac_norm"] = 1 - _normalize(ndvi, *component_bounds["ndvi"])
-        for column in components[2:]:
-            values[column] = pd.to_numeric(roads[column], errors="coerce")
-        return _combine(values, components, "equal")
+        return hvi_from_components(table(lst, ndvi), bounds=group_bounds)
 
     ndvi_low, ndvi_high = component_bounds["ndvi"]
     tree_ndvi = latest_ndvi.copy()
@@ -562,6 +572,11 @@ def run_impact_analysis(
         "lst": (float(all_base_lst.min()), float(all_base_lst.max())),
         "ndvi": (float(all_base_ndvi.min()), float(all_base_ndvi.max())),
     }
+    bounds["groups"] = pooled_group_bounds([
+        _component_table(roads, lst_buffers[default_buffer][year], ndvi_buffers[default_buffer][year],
+                         bounds["lst"], bounds["ndvi"])
+        for year in years
+    ])
     base_scores = _scores_for_buffer(roads, years, lst_buffers[default_buffer], ndvi_buffers[default_buffer], "equal")
     adjusted_by_year = {}
     for year in years:
@@ -569,7 +584,7 @@ def run_impact_analysis(
         adjusted_by_year[year] = corrected
     weather_scores = _scores_for_buffer(
         roads, years, adjusted_by_year, ndvi_buffers[default_buffer], "equal",
-        lst_bounds=bounds["lst"],
+        lst_bounds=bounds["lst"], group_bounds=bounds["groups"],
     )
     center = [float((config.bbox[1] + config.bbox[3]) / 2), float((config.bbox[0] + config.bbox[2]) / 2)]
     impact, interventions = _make_impact_geodata(
