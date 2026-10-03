@@ -48,6 +48,11 @@ otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
 - İndirme geçici ağ hatalarında (okuma zaman aşımı, bağlantı kopması) dört
   kereye kadar yeniden deniyor ve veriyi önce `.part` dosyasına yazıyor;
   onlarca bantlık bir indirmede tek bir kopma artık pipeline'ı düşürmüyor.
+- Şehirler sayfası (`docs/index.html`) her haritanın hangi formül sürümüyle
+  üretildiğini manifest'ten okuyup eski kalanları işaretliyor; şehirler
+  artık skora göre sıralanmıyor (yüzdeler şehirler arasında karşılaştırılamaz).
+- **Eskişehir henüz yeniden üretilmedi**: `docs/eskisehir` v1.x formülü ve
+  tek sahne yöntemiyle duruyor, sayfada "eski formül" olarak işaretli.
 - README: termal bandın 100 m gerçek çözünürlüğü, yüzey ve hava sıcaklığı
   farkı, endeksin sağlık verisiyle doğrulanmadığı ve şehirler arası
   karşılaştırma sınırı açıkça yazıldı.

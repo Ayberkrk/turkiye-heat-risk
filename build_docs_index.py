@@ -20,6 +20,7 @@ SRC_DIR = Path(__file__).resolve().parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+from core.hvi import HVI_FORMULA_VERSION  # noqa: E402
 from core.paths import DOCS_DIR  # noqa: E402
 
 
@@ -28,16 +29,37 @@ def _load_city_stats() -> list[dict]:
     if not DOCS_DIR.exists():
         return stats
     for stats_path in sorted(DOCS_DIR.glob("*/stats.json")):
-        stats.append(json.loads(stats_path.read_text()))
+        city = json.loads(stats_path.read_text())
+        city["formula_version"] = _formula_version(stats_path.parent)
+        stats.append(city)
     return stats
+
+
+def _formula_version(city_dir: Path) -> int | None:
+    """Şehrin haritasının hangi HVI formül sürümüyle üretildiğini döndürür.
+
+    Manifest'i olmayan (manifest eklenmeden önce üretilmiş) harita için None.
+    """
+    manifest_path = city_dir / "manifest.json"
+    if not manifest_path.exists():
+        return None
+    return json.loads(manifest_path.read_text()).get("versions", {}).get("hvi_formula_version")
+
+
+def _is_current(stats: dict) -> bool:
+    return stats.get("formula_version") == HVI_FORMULA_VERSION
 
 
 def _city_card(stats: dict) -> str:
     years = ", ".join(stats["years"])
     top_mahalle = stats.get("top_risk_mahalle") or "Bilinmiyor"
+    # Formül değiştiğinde her şehir aynı anda yeniden üretilmeyebilir; eski
+    # formülle kalan harita güncel olanlarla aynı sayfada işaretsiz durmamalı.
+    stale = "" if _is_current(stats) else '<p class="eski">Eski formülle üretildi, yenilenecek</p>'
     return f"""
     <a class="kart" href="./{stats['city_id']}/index.html">
         <h2>{stats['name']}</h2>
+        {stale}
         <div class="istatistik"><b>{stats['avg_hvi_percentage']:.1f}</b><span>ortalama HVI yüzdesi</span></div>
         <p>{stats['road_count']:,} yol segmenti · {years}</p>
         <p>En riskli mahalle: <b>{top_mahalle}</b></p>
@@ -53,7 +75,9 @@ def build_index() -> Path:
             "`python pipeline.py --city <sehir>` çalıştırın."
         )
 
-    cities.sort(key=lambda c: c["avg_hvi_percentage"], reverse=True)
+    # Güncel formülle üretilenler önce; yüzdeler şehirler arasında
+    # karşılaştırılamadığı için sıralama ada göredir, skora göre değil.
+    cities.sort(key=lambda c: (not _is_current(c), c["name"]))
     cards_html = "\n".join(_city_card(c) for c in cities)
 
     html = f"""<!DOCTYPE html>
@@ -75,14 +99,17 @@ def build_index() -> Path:
   .istatistik b {{ font-size: 28px; color: #fd8d3c; }}
   .istatistik span {{ font-size: 12px; color: #aaa; }}
   .kart p {{ font-size: 13px; color: #ccc; margin: 4px 0; }}
+  .kart p.eski {{ color: #fdae6b; font-size: 12px; margin: -6px 0 10px; }}
 </style>
 </head>
 <body>
 <h1>Kentsel Isı Hassasiyeti Endeksi (HVI)</h1>
-<p class="aciklama">Sıcaklık, ağaç örtüsü, nüfus yoğunluğu, yaşlı/çocuk
-oranı, sağlık/yeşil alan erişimi ve yapılaşma yoğunluğunu birleştiren
-çok bileşenli bir risk skoru. Bir şehre tıklayarak yol bazlı interaktif
-haritayı açabilirsiniz.</p>
+<p class="aciklama">Yüzey sıcaklığını (tehlike), nüfus ve yapılaşma
+yoğunluğunu (maruziyet), yaş, sosyoekonomik durum, sağlık ve yeşil alan
+erişimini (kırılganlık) birleştiren bir önceliklendirme endeksi. Bir şehre
+tıklayarak yol bazlı interaktif haritayı açabilirsiniz.</p>
+<p class="aciklama">Skorlar her şehrin kendi içinde ölçeklenir: yüzdeler bir
+şehrin içindeki yolları sıralar, şehirleri birbiriyle karşılaştırmaz.</p>
 <div class="kartlar">
 {cards_html}
 </div>
