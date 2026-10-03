@@ -128,3 +128,39 @@ def test_fetch_landsat_scenes_searches_configured_season(monkeypatch, tmp_path):
     with pytest.raises(RuntimeError):
         satellite.fetch_landsat_scenes(config, "2024", "2024")
     assert captured["datetime"] == "2024-06-01/2024-09-15"
+
+
+# --- download_band: süresi dolmuş imzayla indirmeye çalışmamalı --------------
+
+def test_download_band_resigns_url_instead_of_reusing_search_time_token(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from core import satellite
+
+    # Arama anında imzalanmış (ve bu arada süresi dolmuş olabilecek) adres.
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF?se=eski&sig=eski")})
+    signed, requested = [], []
+
+    def fake_sign(url):
+        signed.append(url)
+        return url + "?sig=taze"
+
+    class _Response:
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            return [b"veri"]
+
+    def fake_get(url, **kwargs):
+        requested.append(url)
+        return _Response()
+
+    monkeypatch.setattr("core.satellite.planetary_computer.sign", fake_sign)
+    monkeypatch.setattr("core.satellite.requests.get", fake_get)
+
+    satellite.download_band(item, "red", tmp_path / "b4.tif")
+
+    assert signed == ["https://blob.example/B4.TIF"]
+    assert requested == ["https://blob.example/B4.TIF?sig=taze"]
+    assert (tmp_path / "b4.tif").read_bytes() == b"veri"

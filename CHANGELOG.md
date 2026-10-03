@@ -27,6 +27,10 @@ otomatik yenilenir. Yayınlanan haritaların hangi formülle üretildiği
 - **Ayarlanabilir sezon**: Landsat sahne arama penceresi kodda sabit
   (1 Temmuz - 31 Ağustos) olmak yerine `landsat.season_start` /
   `season_end` ile şehir bazında ayarlanabiliyor; varsayılan değişmedi.
+- **Hata düzeltmesi**: Landsat bantları arama anında bir kez imzalanıyordu;
+  Planetary Computer imzası yaklaşık 45 dakika geçerli olduğu için uzun süren
+  indirmelerde kalan dosyalar 403 ile düşüyordu. Her bant artık indirilmeden
+  hemen önce yeniden imzalanıyor.
 - README: termal bandın 100 m gerçek çözünürlüğü, yüzey ve hava sıcaklığı
   farkı, endeksin sağlık verisiyle doğrulanmadığı ve şehirler arası
   karşılaştırma sınırı açıkça yazıldı.

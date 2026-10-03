@@ -80,7 +80,12 @@ def select_best_scenes_per_tile(items, max_per_tile: int = 1) -> dict[tuple[int,
 
 
 def download_band(item, asset_name: str, save_path: Path) -> None:
-    url = item.assets[asset_name].href
+    # Adres indirmeden hemen önce yeniden imzalanır. Arama sırasında alınan
+    # imza yaklaşık 45 dakika geçerlidir; yavaş bağlantıda ya da çok karolu
+    # şehirlerde indirme bundan uzun sürer ve kalan dosyalar 403 döndürür.
+    # Kütüphane zaten imzalı bir adresi yeniden imzalamadığı için eski imza
+    # önce atılır.
+    url = planetary_computer.sign(item.assets[asset_name].href.split("?")[0])
     response = requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT_SECONDS)
     response.raise_for_status()
     with open(save_path, "wb") as f:
