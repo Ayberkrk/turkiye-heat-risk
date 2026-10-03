@@ -3,7 +3,7 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
-## v2.0.0 - yayınlanmadı
+## v2.0.0 - 2026-10-03
 
 HVI formülü değişti; skorlar, kategoriler ve sıralamalar v1.x ile
 karşılaştırılamaz. `HVI_FORMULA_VERSION` 4'e çıktı, eski önbellekler
