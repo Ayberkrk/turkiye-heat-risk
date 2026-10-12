@@ -1,7 +1,6 @@
 import json
 
 import build_docs_index
-
 from core.hvi import HVI_FORMULA_VERSION
 
 

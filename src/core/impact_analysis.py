@@ -130,8 +130,10 @@ def _temperature_anomalies(
         year_anomalies = []
         for grid_id, location in enumerate(locations):
             daily = location.get("daily", {})
+            # Eksik ya da kısa bir sıcaklık dizisi hata değil: o ızgara noktası
+            # aşağıda NaN anomaliye düşer.
             temperatures = dict(zip(
-                daily.get("time", []), daily.get("temperature_2m_mean", []), strict=True,
+                daily.get("time", []), daily.get("temperature_2m_mean", []), strict=False,
             ))
             observed = [float(temperatures[day.isoformat()]) for day in wanted
                         if temperatures.get(day.isoformat()) is not None]

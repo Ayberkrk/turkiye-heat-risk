@@ -2,6 +2,7 @@ import sys
 import types
 
 import pytest
+
 import validate_city
 from validate_city import REQUIRED_ADAPTER_PARAM_COUNTS, _signature_param_count_error, validate
 

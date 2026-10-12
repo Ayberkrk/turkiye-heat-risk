@@ -2,7 +2,7 @@
 # initial lint rollout; new code should still stay within the 120-character limit.
 target-version = "py312"
 line-length = 120
-src = ["src"]
+src = ["src", "."]
 
 [lint]
 select = ["E", "F", "I", "B", "UP"]
