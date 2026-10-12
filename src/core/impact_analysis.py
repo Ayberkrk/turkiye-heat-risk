@@ -8,8 +8,8 @@ ve varsayımsal ağaçlandırma/gölgeleme senaryoları.
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import math
 from datetime import date, timedelta
 from pathlib import Path
@@ -23,7 +23,9 @@ import rasterstats
 import requests
 
 from core.city_config import CityConfig
-from core.hvi import COMPONENT_FLOOR, hvi_from_components, informative_components, pooled_group_bounds
+
+# Keep COMPONENT_FLOOR available through this module for existing callers.
+from core.hvi import COMPONENT_FLOOR, hvi_from_components, informative_components, pooled_group_bounds  # noqa: F401
 from core.paths import city_data_proc, city_data_raw, year_paths
 
 WEATHER_API = "https://archive-api.open-meteo.com/v1/archive"
@@ -128,7 +130,9 @@ def _temperature_anomalies(
         year_anomalies = []
         for grid_id, location in enumerate(locations):
             daily = location.get("daily", {})
-            temperatures = dict(zip(daily.get("time", []), daily.get("temperature_2m_mean", [])))
+            temperatures = dict(zip(
+                daily.get("time", []), daily.get("temperature_2m_mean", []), strict=True,
+            ))
             observed = [float(temperatures[day.isoformat()]) for day in wanted
                         if temperatures.get(day.isoformat()) is not None]
             normals = [float(value) for day_text, value in temperatures.items()
@@ -616,6 +620,7 @@ def run_impact_analysis(
                 component: float(weight)
                 for component, weight in zip(
                     _active_components(roads), _weights(profile, _active_components(roads)),
+                    strict=True,
                 )
             }
             for profile in WEIGHT_PROFILES

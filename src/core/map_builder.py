@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -158,7 +158,9 @@ def _prepare_layers(roads: gpd.GeoDataFrame, years: list[str]):
 # fonksiyonu vermek, sonradan `addData()` ile eklenen (tembel yüklenen)
 # özellikler için çalışmaz.
 NIGHT_LST_LABELS = ["Serin", "Ilıman", "Orta", "Sıcak", "Çok sıcak"]
-NIGHT_LST_COLORS = dict(zip(NIGHT_LST_LABELS, ["#313695", "#74add1", "#fed976", "#fd8d3c", "#a50026"]))
+NIGHT_LST_COLORS = dict(zip(
+    NIGHT_LST_LABELS, ["#313695", "#74add1", "#fed976", "#fd8d3c", "#a50026"], strict=True,
+))
 
 
 def _load_night_lst(config: CityConfig, default_year: str) -> gpd.GeoDataFrame | None:
@@ -257,21 +259,21 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
     # HVI kategorileri ile gece ısı katmanları aynı düz listede aralarında
     # hiçbir ayrım olmadan görünüyordu; ilk "Gece:" satırının üstüne ince
     # bir başlık ekleniyor (bkz. aşağıdaki `load` script'i).
-    m.get_root().html.add_child(folium.Element(f"""
+    m.get_root().html.add_child(folium.Element("""
     <script>
-    window.addEventListener('load', function() {{
+    window.addEventListener('load', function() {
         var etiketler = document.querySelectorAll('.leaflet-control-layers-overlays label');
-        for (var i = 0; i < etiketler.length; i++) {{
-            if (etiketler[i].textContent.indexOf('Gece:') !== -1) {{
+        for (var i = 0; i < etiketler.length; i++) {
+            if (etiketler[i].textContent.indexOf('Gece:') !== -1) {
                 var ayrac = document.createElement('div');
                 ayrac.textContent = 'Gece Isı Haritası (mahalle, MODIS)';
                 ayrac.style.cssText = 'margin-top:6px;padding-top:6px;border-top:1px solid #ccc;'
                     + 'font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.03em;';
                 etiketler[i].parentNode.insertBefore(ayrac, etiketler[i]);
                 break;
-            }}
-        }}
-    }});
+            }
+        }
+    });
     </script>
     """))
 
@@ -596,7 +598,7 @@ def _build_manifest(config: CityConfig, years: list[str], default_year: str,
     return {
         "city_id": config.city_id,
         "city_name": config.name,
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "years": list(years),
         "default_year": default_year,
         "config": {

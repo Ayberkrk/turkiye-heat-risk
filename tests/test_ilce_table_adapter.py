@@ -36,8 +36,14 @@ def _osm_frame(ilce: dict[str, tuple], mahalle: list[tuple]) -> gpd.GeoDataFrame
 
 def _write_tables(tmp_path: Path, nufus_rows: list[tuple], sege_rows: list[tuple]) -> tuple[Path, Path]:
     nufus_csv, sege_csv = tmp_path / "ilce_nufus.csv", tmp_path / "sege.csv"
-    nufus_csv.write_text("ILCE;NUFUS;YASLI_ORAN;COCUK_ORAN\n" + "".join(f"{a};{b};{c};{d}\n" for a, b, c, d in nufus_rows))
-    sege_csv.write_text("ILCE;SKOR\n" + "".join(f"{a};{b}\n" for a, b in sege_rows))
+    nufus_csv.write_text(
+        "ILCE;NUFUS;YASLI_ORAN;COCUK_ORAN\n" + "".join(f"{a};{b};{c};{d}\n" for a, b, c, d in nufus_rows),
+        encoding="utf-8",
+    )
+    sege_csv.write_text(
+        "ILCE;SKOR\n" + "".join(f"{a};{b}\n" for a, b in sege_rows),
+        encoding="utf-8",
+    )
     return nufus_csv, sege_csv
 
 

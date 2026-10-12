@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 import rasterio
 import rasterstats
 import requests

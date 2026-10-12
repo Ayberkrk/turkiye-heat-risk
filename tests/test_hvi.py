@@ -1,14 +1,21 @@
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import pytest
 from shapely.geometry import LineString, Point, box
 
 import core.hvi as hvi
 from core.city_config import CityConfig
 from core.hvi import (
-    COMPONENT_FLOOR, bucket_5, combine_groups, group_scores, hvi_from_components,
-    informative_components, normalize_0_1, pooled_group_bounds, rescale_groups, robust_bounds,
+    COMPONENT_FLOOR,
+    bucket_5,
+    combine_groups,
+    group_scores,
+    hvi_from_components,
+    informative_components,
+    normalize_0_1,
+    pooled_group_bounds,
+    rescale_groups,
+    robust_bounds,
     robust_normalize_0_1,
 )
 

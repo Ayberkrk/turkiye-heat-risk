@@ -8,8 +8,8 @@ sağlar - pipeline'ın geri kalanı hiçbir yerde şehir adını hardcode etmez.
 from __future__ import annotations
 
 import importlib
-from datetime import date
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import Any
 
