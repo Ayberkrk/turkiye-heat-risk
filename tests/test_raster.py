@@ -9,9 +9,9 @@ from rasterio.transform import from_origin
 from core.city_config import CityConfig
 from core.raster import (
     build_lst_ndvi_mosaic,
+    composite_scene_arrays,
     compute_lst,
     compute_ndvi,
-    composite_scene_arrays,
     qa_invalid_mask,
     reproject_to_crs,
 )
@@ -344,7 +344,8 @@ def test_build_lst_ndvi_mosaic_handles_scenes_of_different_shape(tmp_path, monke
         "sceneA": {"thermal_raw": 40000, "size": 6},
         "sceneB": {"thermal_raw": 50000, "size": 8},
     })
-    to_c = lambda raw: raw * 0.00341802 + 149.0 - 273.15
+    def to_c(raw):
+        return raw * 0.00341802 + 149.0 - 273.15
     with rasterio.open(lst_path) as src:
         result = src.read(1)
     assert result.shape == (8, 8)

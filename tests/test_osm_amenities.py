@@ -13,7 +13,6 @@ from core.osm_amenities import (
     load_health_points,
 )
 
-
 # --- _other_tags_get: OGR "osm" şemasının HSTORE benzeri other_tags dizgesi ---
 
 def test_other_tags_get_extracts_a_known_key():

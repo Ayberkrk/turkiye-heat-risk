@@ -1,5 +1,4 @@
 import json
-from datetime import date
 
 import geopandas as gpd
 import numpy as np

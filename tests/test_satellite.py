@@ -7,7 +7,6 @@ from rasterio.transform import from_origin
 
 from core.satellite import is_valid_geotiff, select_best_scenes_per_tile
 
-
 # --- is_valid_geotiff: dosya var mı VE gerçekten açılabiliyor mu ---
 
 def test_is_valid_geotiff_returns_false_for_missing_file(tmp_path):

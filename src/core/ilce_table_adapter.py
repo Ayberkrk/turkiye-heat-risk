@@ -27,7 +27,6 @@ import pandas as pd
 from core.city_config import CityConfig
 from core.text_utils import normalize_name
 
-
 MERKEZ_KEY = "MERKEZ"
 
 
