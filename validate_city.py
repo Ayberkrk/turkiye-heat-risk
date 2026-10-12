@@ -5,7 +5,8 @@ Kullanım:
 
 Kontrol ettikleri:
   1. `src/cities/<sehir>/config.yaml` var mı ve gerekli tüm alanları içeriyor mu
-  2. bbox [batı, güney, doğu, kuzey] biçiminde ve koordinatlar geçerli mi
+  2. bbox [batı, güney, doğu, kuzey] biçiminde, koordinatlar geçerli ve CRS
+     metre cinsinden doğru UTM diliminde mi
   3. Adapter modülü import edilebiliyor mu ve gerekli iki fonksiyonu
      (`fetch_population_data`, `build_neighborhood_layer`) uyguluyor mu
   4. OSM `.pbf` adresi erişilebilir mi
