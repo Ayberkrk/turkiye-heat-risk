@@ -201,3 +201,8 @@ Değişikliklerini bir dala (branch) taşı, PR açarken şunları belirt:
 Kendin katkı sağlamak istemiyor ama bir şehrin eklenmesini istiyorsan,
 `.github/ISSUE_TEMPLATE/` altındaki "Yeni şehir talebi" şablonuyla bir
 issue aç.
+
+## Davranış kuralları
+
+Bu proje [Contributor Covenant](CODE_OF_CONDUCT.md) davranış kurallarını
+benimser. Katkıda bulunarak bu kurallara uymayı kabul etmiş olursun.
