@@ -1,6 +1,7 @@
 import pytest
+import yaml
 
-from core.city_config import validate_config_dict
+from core.city_config import CITIES_DIR, validate_config_dict
 
 VALID_CONFIG = {
     "city": {"name": "Test Şehir", "bbox": [27.0, 38.0, 27.5, 38.5], "crs": "EPSG:32635"},
@@ -57,10 +58,44 @@ def test_invalid_crs_is_rejected(bad_crs):
     assert any("crs" in e for e in errors)
 
 
-@pytest.mark.parametrize("good_crs", ["EPSG:32635", "EPSG:4326", "EPSG:32636"])
-def test_valid_epsg_crs_is_accepted(good_crs):
+def test_valid_utm_crs_is_accepted():
+    good_crs = "EPSG:32635"
     cfg = {**VALID_CONFIG, "city": {**VALID_CONFIG["city"], "crs": good_crs}}
     assert validate_config_dict(cfg) == []
+
+
+def test_geographic_crs_is_rejected():
+    cfg = {**VALID_CONFIG, "city": {**VALID_CONFIG["city"], "crs": "EPSG:4326"}}
+    errors = validate_config_dict(cfg)
+    assert any("projeksiyonlu" in error for error in errors)
+
+
+def test_wrong_utm_zone_is_rejected():
+    cfg = {**VALID_CONFIG, "city": {**VALID_CONFIG["city"], "crs": "EPSG:32636"}}
+    errors = validate_config_dict(cfg)
+    assert any("UTM dilimiyle uyuşmuyor" in error for error in errors)
+
+
+def test_utm_zone_boundary_accepts_adjacent_zone():
+    cfg = {
+        **VALID_CONFIG,
+        "city": {
+            **VALID_CONFIG["city"],
+            "bbox": [29.8, 38.0, 30.2, 38.5],
+            "crs": "EPSG:32636",
+        },
+    }
+    assert validate_config_dict(cfg) == []
+
+
+def test_all_city_configs_pass_crs_validation():
+    city_configs = list(CITIES_DIR.glob("*/config.yaml"))
+    assert len(city_configs) == 70
+    for config_path in city_configs:
+        with open(config_path, encoding="utf-8") as config_file:
+            config = yaml.safe_load(config_file)
+        errors = validate_config_dict(config)
+        assert errors == [], f"{config_path}: {errors}"
 
 
 @pytest.mark.parametrize("bad_config", [None, [], "city: izmir"])

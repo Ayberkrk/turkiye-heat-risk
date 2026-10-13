@@ -3,6 +3,11 @@
 Bu dosya, pipeline'da ve desteklenen şehirlerde yapılan önemli
 değişiklikleri sürüm sürüm listeler.
 
+## Unreleased
+
+- Şehir config doğrulaması artık coğrafi veya metre cinsinden olmayan CRS'leri
+  reddediyor; UTM CRS'inin bbox merkezinin dilimiyle uyumunu da denetliyor.
+
 ## v2.0.0 - 2026-10-03
 
 HVI formülü değişti; skorlar, kategoriler ve sıralamalar v1.x ile

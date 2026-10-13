@@ -26,6 +26,75 @@ REQUIRED_CITY_KEYS = ["name", "bbox", "crs"]
 REQUIRED_OSM_KEYS = ["pbf_url", "highway_types", "admin_level_ilce", "admin_level_mahalle"]
 REQUIRED_POPULATION_KEYS = ["adapter"]
 
+# Şehir bbox'ları UTM dilim sınırına çok yakınsa, merkez boylamındaki küçük
+# farklar nedeniyle iki komşu dilim de pratikte kullanılabilir. 0,5 derece,
+# yanlışlıkla kopyalanmış bir CRS'i kabul etmeyecek kadar dar, sınırdaki
+# şehirleri gereksiz yere reddetmeyecek kadar geniş bir toleranstır.
+UTM_ZONE_BOUNDARY_TOLERANCE_DEGREES = 0.5
+
+
+def _utm_zone_from_longitude(longitude: float) -> int:
+    """Boylamı 1-60 arasındaki UTM dilim numarasına çevirir."""
+    return min(60, int((longitude + 180) // 6) + 1)
+
+
+def _utm_epsg_for_zone(zone: int) -> int:
+    """Türkiye'nin kuzey yarımküresi için UTM EPSG kodunu döndürür."""
+    return 32600 + zone
+
+
+def _near_utm_zone_boundary(longitude: float) -> bool:
+    """Boylam UTM dilim sınırının seçilen tolerans içinde mi?"""
+    zone = _utm_zone_from_longitude(longitude)
+    west_boundary = -180 + 6 * (zone - 1)
+    east_boundary = west_boundary + 6
+    distance = min(abs(longitude - west_boundary), abs(east_boundary - longitude))
+    return distance <= UTM_ZONE_BOUNDARY_TOLERANCE_DEGREES
+
+
+def _validate_city_crs(crs_value: Any, bbox: list[float]) -> list[str]:
+    """CRS'in metre cinsinden projeksiyonlu ve bbox ile uyumlu olduğunu denetler."""
+    try:
+        crs = pyproj.CRS(crs_value)
+    except (pyproj.exceptions.CRSError, TypeError, ValueError):
+        return [f"'city.crs' geçerli bir EPSG/CRS tanımı değil: '{crs_value}'"]
+
+    errors: list[str] = []
+    if not crs.is_projected:
+        errors.append("'city.crs' projeksiyonlu ve metre cinsinden olmalı; coğrafi CRS kullanılamaz")
+        return errors
+
+    units = {axis.unit_name.lower() for axis in crs.axis_info if axis.unit_name}
+    if units not in ({"metre"}, {"meter"}):
+        rendered_units = ", ".join(sorted(units)) or "belirsiz birim"
+        errors.append(f"'city.crs' metre cinsinden olmalı (bulunan birim: {rendered_units})")
+
+    utm_zone = crs.utm_zone
+    if not utm_zone:
+        return errors
+
+    zone_number = int(utm_zone[:-1])
+    hemisphere = utm_zone[-1]
+    if hemisphere != "N":
+        errors.append("'city.crs' Türkiye şehirleri için kuzey yarımküre UTM dilimi (EPSG:326xx) olmalı")
+        return errors
+
+    west, _, east, _ = bbox
+    center_longitude = (west + east) / 2
+    expected_zone = _utm_zone_from_longitude(center_longitude)
+    expected_epsg = _utm_epsg_for_zone(expected_zone)
+    accepted_zones = {expected_zone}
+    if _near_utm_zone_boundary(center_longitude):
+        accepted_zones.update({expected_zone - 1, expected_zone + 1})
+    accepted_zones = {zone for zone in accepted_zones if 1 <= zone <= 60}
+
+    if zone_number not in accepted_zones:
+        errors.append(
+            f"'city.crs' bbox merkezinin UTM dilimiyle uyuşmuyor: beklenen EPSG:{expected_epsg} "
+            f"(boylam {center_longitude:.3f}°, dilim {expected_zone}), bulunan {crs.to_string()}"
+        )
+    return errors
+
 
 @dataclass
 class CityConfig:
@@ -114,10 +183,15 @@ def validate_config_dict(cfg: Any) -> list[str]:
 
         crs = city.get("crs")
         if crs is not None:
-            try:
-                pyproj.CRS(crs)
-            except (pyproj.exceptions.CRSError, TypeError, ValueError):
-                errors.append(f"'city.crs' geçerli bir EPSG/CRS tanımı değil: '{crs}'")
+            if isinstance(bbox, list) and len(bbox) == 4 and not any(
+                isinstance(value, bool) or not isinstance(value, (int, float)) for value in bbox
+            ):
+                errors.extend(_validate_city_crs(crs, bbox))
+            else:
+                try:
+                    pyproj.CRS(crs)
+                except (pyproj.exceptions.CRSError, TypeError, ValueError):
+                    errors.append(f"'city.crs' geçerli bir EPSG/CRS tanımı değil: '{crs}'")
 
     osm = cfg["osm"]
     if not isinstance(osm, dict):
