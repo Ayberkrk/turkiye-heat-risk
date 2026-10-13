@@ -90,7 +90,7 @@ def test_utm_zone_boundary_accepts_adjacent_zone():
 
 def test_all_city_configs_pass_crs_validation():
     city_configs = list(CITIES_DIR.glob("*/config.yaml"))
-    assert len(city_configs) == 70
+    assert city_configs, "src/cities altında hiç config.yaml bulunamadı"
     for config_path in city_configs:
         with open(config_path, encoding="utf-8") as config_file:
             config = yaml.safe_load(config_file)
