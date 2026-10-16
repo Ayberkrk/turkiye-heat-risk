@@ -1,0 +1,208 @@
+# Katkıda Bulunma: Yeni Bir Şehir Ekleme
+
+Bu proje şehir bazlı bir mimariye sahiptir: `src/core/` altındaki kod
+tamamen şehirden bağımsızdır, her şehrin kendi parametreleri ve nüfus veri
+mantığı `src/cities/<sehir>/` altında izole edilir. Yeni bir şehir eklemek
+`src/core/` içindeki hiçbir dosyayı değiştirmeyi gerektirmemelidir.
+
+## Adımlar
+
+### 1. `src/cities/<sehir>/` dizinini oluştur
+
+```bash
+mkdir -p src/cities/<sehir>
+touch src/cities/<sehir>/__init__.py
+```
+
+`<sehir>` küçük harf, Türkçe karaktersiz, kısa bir kimlik olmalı (ör.
+`ankara`, `antalya`) - bu kimlik `--city <sehir>` bayrağında ve
+`src/cities/<sehir>/config.yaml` yolunda kullanılır.
+
+### 2. `config.yaml`'ı doldur
+
+`src/cities/izmir/config.yaml` dosyasını örnek al. Zorunlu alanlar:
+
+```yaml
+city:
+  name: "Şehrin Görünen Adı"
+  bbox: [batı, güney, doğu, kuzey]   # derece cinsinden
+  crs: "EPSG:xxxxx"                   # şehrin bulunduğu UTM dilimi (metre cinsinden CRS) -
+                                       # başka bir şehrinkini kopyalama, boylama göre hesapla:
+                                       # UTM dilimi = floor((boylam + 180) / 6) + 1, EPSG = 32600 + dilim (kuzey yarımküre)
+
+landsat:
+  max_cloud_cover: 30                 # % - gerekirse gevşet
+  season_start: "07-01"               # isteğe bağlı, "AA-GG" - sıcak sezonun başı
+  season_end: "08-31"                 # isteğe bağlı - tüm yıllar aynı pencereyi kullanır
+
+osm:
+  pbf_url: "https://download.geofabrik.de/... veya https://download.openstreetmap.fr/..."
+  admin_level_ilce: <sayı>            # OSM admin_level - ülkeden ülkeye değişir
+  admin_level_mahalle: <sayı>
+  highway_types: [...]                # hangi yol tiplerinin analize dahil edileceği
+
+roads:
+  buffer_meters: 10
+
+population:
+  adapter: "cities.<sehir>.adapter"   # aşağıdaki adım 3
+  # Adapter'ının ihtiyaç duyduğu ek anahtarları buraya ekleyebilirsin
+  # (CKAN dataset ID'leri, dosya yolları, API anahtarları vb.)
+```
+
+`admin_level_ilce`/`admin_level_mahalle` değerlerini önceden doğrulamak
+için:
+
+```python
+import geopandas as gpd
+gdf = gpd.read_file("<pbf-dosyasi>", layer="multipolygons", bbox=(batı, güney, doğu, kuzey))
+print(sorted(gdf[gdf["boundary"] == "administrative"]["admin_level"].dropna().unique()))
+```
+
+### 3. Nüfus/demografi veri kaynağını belirt ve adapter'ı yaz
+
+`src/core/hvi.py`, nüfus yoğunluğu, yaşlı oranı ve çocuk oranını
+`mahalle_gdf` üzerinden okur. Bu veri şehirden şehre çok farklı
+biçimlerde geldiği için (CKAN, TÜİK, Eurostat, ulusal istatistik
+kurumu API'si...) genel bir şema zorlanmaz; bunun yerine her şehir kendi
+**adapter**'ını yazar.
+
+`src/cities/<sehir>/adapter.py` şu iki fonksiyonu uygulamalıdır:
+
+```python
+def fetch_population_data(config: CityConfig) -> dict[str, Path]:
+    """Nüfus/demografi kaynaklarını indirir (zaten indirilmişse atlar) ve
+    yerel dosya yollarını döndürür."""
+
+def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
+                              config: CityConfig) -> gpd.GeoDataFrame:
+    """Mahalle sınırlarını nüfus verileriyle zenginleştirir. Dönen
+    GeoDataFrame en az şu sütunları içermelidir:
+      - mahalle_adi, ilce_adi, geometry
+      - nufus_yogunlugu   (kişi/km²)
+      - yasli_oran        (0-1 arası kesir, 65+ nüfus oranı)
+      - cocuk_oran        (0-1 arası kesir, 0-14 nüfus oranı)
+
+    İsteğe bağlı: `sosyoekonomik_skor` sütununu da eklersen (yüksek = daha
+    gelişmiş/az kırılgan), HVI bunu dokuzuncu bir bileşen olarak otomatik
+    kullanır - `src/core/hvi.py` bu sütunun var olup olmadığını kontrol
+    eder, eklemesen de pipeline hatasız çalışır.
+    """
+```
+
+İki referans örnek mevcut, farklı veri kaynağı biçimleri için:
+
+- `src/cities/izmir/adapter.py`: belediyenin kendi CKAN açık veri
+  portalından (mahalle seviyesinde nüfus/yaş) CSV çekme, Türkçe karakter
+  normalizasyonu, konumsal (isme göre değil) mahalle-ilçe eşlemesi ve
+  resmi bir raporu (SEGE-2022) küçük bir referans CSV olarak repoya gömme.
+- `src/cities/eskisehir/adapter.py`: belediyeye özel bir portal
+  OLMADIĞINDA kullanılabilecek şablon - TÜİK ADNKS ilçe yaş sayımlarını
+  (İŞKUR il faaliyet raporları ya da TÜİK tabloları) statik CSV olarak
+  kullanır. Yeni şehir eklerken aynı yıl için ilçe düzeyinde 0-14, 15-64
+  ve 65+ sayımlarını doğrula; il düzeyi yaş oranlarını ilçe verisi yerine
+  kullanma. Gerekli ilçe sayımları bulunamazsa şehri ekleme. Depoda bu
+  kuraldan önce eklenmiş, il düzeyi oran kullanan kayıtlar vardır; yeni
+  katkılarda bu eski istisnaları çoğaltma. Veri yılını ve kaynağı adapter
+  ve config atfında belirt.
+  Bu şablon, kendi CKAN portalı olmayan HERHANGİ bir Türkiye şehri için
+  neredeyse değişiklik yapmadan uyarlanabilir - ortak mantık
+  `src/core/ilce_table_adapter.py`'de, o şehrin adapter'ı sadece kendi
+  `ilce_nufus.csv` ve `sege_2022_ilce.csv` yollarını verir (Şanlıurfa,
+  Antalya, Mersin ve Adana böyle eklendi; en kısa örnek
+  `src/cities/adana/`). Not: bu yaklaşım nüfus yoğunluğunu ve yaşlı/
+  çocuk oranını ilçe seviyesinde sabitler (mahalle içi farklılığı
+  yakalayamaz) - CKAN gibi daha ince taneli bir kaynak varsa İzmir'in
+  yöntemi tercih edilmeli.
+
+**TÜİK-şablonlu bir şehir eklerken dikkat (yapılan hatalardan):**
+- `ilce_nufus.csv` için ilçe nüfuslarının toplamının resmi il toplamına
+  eşit çıktığını kontrol et (toplamı tutmayan kaynak yanlıştır).
+- `ilce_nufus.csv` içindeki `YASLI_ORAN`/`COCUK_ORAN` **0-1 arası kesir**
+  olmalı ve çocuk oranı **0-14** yaş tanımıyla hesaplanmalı. Haberlerdeki
+  "çocuk nüfus oranı" genellikle TÜİK'in 0-17 tanımıdır (Şanlıurfa'da
+  %43,3 vs gerçek 0-14 %36,8) - kullanma. Her hedef ilçe için aynı yılın
+  0-14 / 15-64 / 65+ sayımlarını ve toplam nüfusunu kaynak tablodan al;
+  üç yaş grubunun toplamının ilçe toplamına eşitliğini doğrula.
+- SEGE-2022 skorlarını ikincil kaynaklardan değil resmi rapordan al
+  (baka.gov.tr'deki PDF; Ek-1 ve il tabloları). Metin `pypdf` ile
+  çıkarılabilir; ondalık ayraç virgüldür (`3,173` = 3.173).
+- bbox'ı elle yazma, tam idari sınırdan da alma: `tools/fit_city_bbox.py`
+  ilçenin küçük/yoğun (<3 km²) mahalle kümesinden çizer ve sonucu gerçek
+  OSM'de ölçer (aşağıdaki kapsam). Bölge özütlerini bir dizine
+  `<bolge>.osm.pbf` adıyla koyup `python tools/fit_city_bbox.py <sehir>
+  --pbf-dir <dizin> [--apply]` çalıştır.
+- **Kapsam** = bbox'taki yolların kaçının demografisi eşlenmiş bir mahalleye
+  düştüğü. CSV bütünlük testleri bunu ölçemez; yalnızca gerçek OSM sınırları
+  gösterir. `python validate_city.py <sehir> --osm-coverage` en az %60
+  ister. Bulunan tuzaklar: OSM'de merkez ilçe "<İl> Merkez" yazılır, tabloda
+  "Merkez" (adapter bunu eşler); OSM'deki mahalle sınırları küçük şehirlerde
+  bazen kentin yarısını örtmez; sabit bir koordinat karesi (0,2 derece)
+  çoğu zaman yanlış yere düşer (Kilis, Kilis'e değil Gaziantep'e düşüyordu).
+- **Tek ilçeli şehirlerde** nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE
+  bileşenlerinin hepsi bir sabittir (tek bir değer) ve HVI sıralamasına katkı
+  vermez; HVI fiilen sıcaklık, ağaç örtüsü, sağlık/yeşil alan erişimi ve
+  yapılaşmadan oluşur. Bunu şehrin adapter'ında belirt, mümkünse komşu
+  ilçelerin verisini de ekleyerek çok ilçeli bir çekirdek kur.
+- `sege_2022_ilce.csv` içindeki `KADEME` rapordaki skor eşiklerine
+  uymalıdır (bunu bir test doğrular).
+- OSM özütünü indirirken `curl -C -` (devam ettirme) KULLANMA: sunucudaki
+  `-latest` dosyası güncellenirse yarım eski + yeni parçadan bozuk bir
+  dosya oluşur; Content-Length ile boyutu doğrula.
+
+Farklı bir veri kaynağı biçimin varsa (ör. GeoJSON, doğrudan bir API)
+sadece bu iki fonksiyonun imzasına uymak yeterlidir - CKAN'a veya
+TÜİK'e özel hiçbir şey zorunlu değildir.
+
+Ham/işlenmiş veri (`data/raw/<sehir>/`, `data/processed/<sehir>/`) şehir
+kimliğine göre otomatik ayrılır - bu konuda adapter'ında hiçbir şey
+yapmana gerek yok, `src/core/paths.py` bunu senin için halleder.
+
+### 4. Doğrulama scriptini çalıştır
+
+```bash
+python validate_city.py <sehir>
+python validate_city.py <sehir> --osm-coverage --pbf <bolge>.osm.pbf   # gerçek OSM ile kapsam
+```
+
+Bu, hiçbir veri indirmeden/işlemeden şunları kontrol eder (`--osm-coverage`
+hariç, o indirilmiş bir OSM özütü ister):
+- `config.yaml`'ın gerekli tüm alanları içerdiğini
+- `bbox`'ın geçerli bir koordinat aralığı olduğunu
+- Adapter modülünün import edilebildiğini ve iki fonksiyonu da
+  uyguladığını
+- OSM pbf URL'inin ve (varsa) CKAN tabanlı nüfus kaynağının gerçekten
+  erişilebilir olduğunu
+- (`--osm-coverage` ile) bbox'taki yolların yeterli payının demografisi
+  eşlenmiş bir mahalleye düştüğünü
+
+Hata varsa script bunları listeleyip çıkış kodu 1 ile sonlanır.
+
+### 5. Uçtan uca çalıştır
+
+```bash
+python pipeline.py --city <sehir> --years <yıl1> <yıl2>
+```
+
+İlk çalıştırma Landsat sahnelerini ve OSM özütünü indirir - internet
+bağlantısına göre 15-25 dakika ve birkaç GB disk alanı gerektirebilir.
+Script kesintiye uğrarsa aynı komutla kaldığı yerden devam eder.
+
+### 6. Pull request aç
+
+Değişikliklerini bir dala (branch) taşı, PR açarken şunları belirt:
+- Hangi şehir eklendi, bbox ve veri kaynağı ne
+- `validate_city.py <sehir>` ve `pipeline.py --city <sehir>` çıktısının
+  başarıyla tamamlandığını (loglardan kısa bir alıntı yeterli)
+- Nüfus verisinin lisansı/kullanım şartları (açık veri portalı, TÜİK vb.)
+
+## Yeni şehir talebi (kod yazmadan)
+
+Kendin katkı sağlamak istemiyor ama bir şehrin eklenmesini istiyorsan,
+`.github/ISSUE_TEMPLATE/` altındaki "Yeni şehir talebi" şablonuyla bir
+issue aç.
+
+## Davranış kuralları
+
+Bu proje [Contributor Covenant](CODE_OF_CONDUCT.md) davranış kurallarını
+benimser. Katkıda bulunarak bu kurallara uymayı kabul etmiş olursun.
