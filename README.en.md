@@ -3,6 +3,7 @@
 [![Tests](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml/badge.svg)](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![version](https://img.shields.io/github/v/tag/Ayberkrk/turkiye-heat-risk?label=version&color=informational)](https://github.com/Ayberkrk/turkiye-heat-risk/releases)
+[![good first issues](https://img.shields.io/github/issues/Ayberkrk/turkiye-heat-risk/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/Ayberkrk/turkiye-heat-risk/labels/good%20first%20issue)
 
 See [CHANGELOG.md](CHANGELOG.md) for the release history and
 [CITATION.cff](CITATION.cff) for citation.

@@ -52,6 +52,11 @@ population:
   # (CKAN dataset IDs, file paths, API keys, etc.)
 ```
 
+`validate_city.py` checks this CRS rule automatically: the CRS must be projected
+and in metres, and its UTM zone must match the longitude of the bbox centre. For
+centres within 0.5 degrees of a zone boundary, the neighbouring UTM zone is also
+accepted.
+
 To verify the `admin_level_ilce` (district) / `admin_level_mahalle`
 (neighbourhood) values in advance:
 

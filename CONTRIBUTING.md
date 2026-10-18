@@ -32,11 +32,6 @@ city:
                                        # başka bir şehrinkini kopyalama, boylama göre hesapla:
                                        # UTM dilimi = floor((boylam + 180) / 6) + 1, EPSG = 32600 + dilim (kuzey yarımküre)
 
-`validate_city.py` bu CRS kuralını otomatik olarak denetler: CRS projeksiyonlu
-ve metre cinsinden olmalı, UTM dilimi de bbox merkezinin boylamıyla uyumlu
-olmalıdır. Dilim sınırına 0,5 derece yakın merkezlerde komşu UTM dilimi de
-kabul edilir.
-
 landsat:
   max_cloud_cover: 30                 # % - gerekirse gevşet
   season_start: "07-01"               # isteğe bağlı, "AA-GG" - sıcak sezonun başı
@@ -56,6 +51,11 @@ population:
   # Adapter'ının ihtiyaç duyduğu ek anahtarları buraya ekleyebilirsin
   # (CKAN dataset ID'leri, dosya yolları, API anahtarları vb.)
 ```
+
+`validate_city.py` bu CRS kuralını otomatik olarak denetler: CRS projeksiyonlu
+ve metre cinsinden olmalı, UTM dilimi de bbox merkezinin boylamıyla uyumlu
+olmalıdır. Dilim sınırına 0,5 derece yakın merkezlerde komşu UTM dilimi de
+kabul edilir.
 
 `admin_level_ilce`/`admin_level_mahalle` değerlerini önceden doğrulamak
 için:
