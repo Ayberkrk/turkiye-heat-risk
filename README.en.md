@@ -1,11 +1,13 @@
-# Kentsel Isı Adası ve Isı Hassasiyet Endeksi (HVI)
+# Urban Heat Island and Heat Vulnerability Index (HVI)
 
-[![Testler](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml/badge.svg)](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml)
-[![lisans](https://img.shields.io/badge/lisans-MIT-blue)](LICENSE)
-[![sürüm](https://img.shields.io/github/v/tag/Ayberkrk/turkiye-heat-risk?label=s%C3%BCr%C3%BCm&color=informational)](https://github.com/Ayberkrk/turkiye-heat-risk/releases)
+[![Tests](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml/badge.svg)](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![version](https://img.shields.io/github/v/tag/Ayberkrk/turkiye-heat-risk?label=version&color=informational)](https://github.com/Ayberkrk/turkiye-heat-risk/releases)
 
-Sürüm geçmişi için [CHANGELOG.md](CHANGELOG.md), atıf için
-[CITATION.cff](CITATION.cff) dosyalarına bakın.
+See [CHANGELOG.md](CHANGELOG.md) for the release history and
+[CITATION.cff](CITATION.cff) for citation.
+
+> The Turkish original of this document: [README.md](README.md).
 
 ## English summary
 
@@ -36,579 +38,582 @@ Quick start (produces a single-file interactive HTML map):
 python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
-The rest of this README - methodology, findings, setup, project layout,
-known limitations - is in Turkish (this is an Izmir/Türkiye-focused
-project). Machine translation works well if you want the full detail; the
-summary above and the code/docstrings should be enough to navigate the
-repository.
+The rest of this document is the English translation of the Turkish original.
+If the two disagree, [README.md](README.md) is the reference.
 
 ---
 
-Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
-Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
-birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; şu an 70 şehir destekleniyor (İzmir, Eskişehir, Şanlıurfa,
-Antalya, Mersin, Adana ve 64 şehir daha; kaynakları ve gerçek OSM ile ölçülen
-kapsamları [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
-Yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
-mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
+An open-data, reproducible urban heat risk analysis pipeline. It combines
+Landsat land surface temperature, the OpenStreetMap road network and
+demographic data to map heat risk at street scale. It has a city-agnostic
+architecture; 70 cities are supported today (İzmir, Eskişehir, Şanlıurfa,
+Antalya, Mersin, Adana and 64 more cities; their sources and their coverage
+measured against real OSM are on the [register
+page](docs/turkiye-ilce-yas-verisi-taramasi.md)).
+Adding a new city is possible without changing any file in `src/core/`
+(see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
-**Canlı harita:** <https://ayberkrk.github.io/turkiye-heat-risk/> (GitHub
-Pages'te barındırılan, veri talep üzerine yüklenen küçük sürüm; kaynağı
-`docs/`). Tamamen çevrimdışı, tek dosyalık sürüm (~60 MB, GitHub'ın 50 MB
-uyarı/100 MB ret sınırını aştığı için depoda tutulmuyor) aşağıdaki komutla
-birkaç dakikada yerelde üretilir:
+**Live map:** <https://ayberkrk.github.io/turkiye-heat-risk/> (a small version
+hosted on GitHub Pages that loads data on demand; its source is in `docs/`).
+The fully offline, single-file version (~60 MB; not kept in the repository
+because it exceeds GitHub's 50 MB warning / 100 MB rejection limit) is produced
+locally in a few minutes with the command below:
 
 ```bash
 python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
-![İzmir HVI interaktif haritası: yol ağı Isı Hassasiyet Endeksi'ne göre turuncudan bordoya renklendirilmiş, sağ üstte katman kontrolü, sol altta yıl seçici ve gösterge](assets/screenshots/harita-genel.png)
+![İzmir HVI interactive map: the road network coloured from orange to dark red by the Heat Vulnerability Index, with the layer control at top right and the year selector and legend at bottom left](assets/screenshots/harita-genel.png)
 
-## İçindekiler
+## Table of contents
 
-- [Ne yapıyor?](#ne-yapıyor)
-- [Başka bir şehre/bölgeye uyarlama](#başka-bir-şehrebölgeye-uyarlama)
-- [Metodoloji](#metodoloji)
-- [Çok yıllı duyarlılık ve müdahale analizi](#çok-yıllı-duyarlılık-ve-müdahale-analizi)
-- [2020 → 2026: Bulgular](#2020--2026-bulgular)
-- [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
-- [Proje yapısı](#proje-yapısı)
-- [Bilinen sınırlamalar](#bilinen-sınırlamalar)
+- [What does it do?](#what-does-it-do)
+- [Adapting to another city/region](#adapting-to-another-cityregion)
+- [Methodology](#methodology)
+- [Multi-year sensitivity and intervention analysis](#multi-year-sensitivity-and-intervention-analysis)
+- [2020 → 2026: Findings](#2020--2026-findings)
+- [Setup and running](#setup-and-running)
+- [Project structure](#project-structure)
+- [Known limitations](#known-limitations)
 
-## Ne yapıyor?
+## What does it do?
 
-1. **Uydu verisi** - Landsat 8/9 (Microsoft Planetary Computer) üzerinden
-   İzmir büyükşehir alanını kaplayan en az bulutlu yaz sahnelerini indirir.
-2. **Yüzey sıcaklığı (LST) ve NDVI** - termal banttan gerçek yüzey
-   sıcaklığını (°C), kırmızı/yakın-kızılötesi banttan bitki örtüsü
-   yoğunluğunu hesaplar; sahneleri tek bir kesintisiz mozaikte birleştirir.
-3. **Yol ağı ↔ sıcaklık eşlemesi** - OpenStreetMap'ten çekilen ~44.000 yol
-   segmentinin her birine, 10 metrelik bir tampon içindeki ortalama LST'yi
-   atar ve 0-100 arası bir "risk skoru"na çevirir.
-4. **Isı Hassasiyet Endeksi (HVI)** - sıcaklık, ağaç örtüsü, nüfus
-   yoğunluğu, yaşlı/çocuk nüfus oranı, hastane/eczaneye uzaklık, yeşil
-   alana uzaklık ve yapılaşma yoğunluğunu tek bir 0-100 skorda birleştirir;
-   "burası hem sıcak hem kalabalık/yaşlı/çocuk nüfuslu hem de ağaçsız ve
-   sağlık hizmetine uzak, yani gerçek risk burada" sorusuna cevap verir.
-   Her bileşenin kendi değeri de ayrı ayrı saklanır - nihai skor tek başına
-   değil, onu oluşturan etkenlerle birlikte görünür (bkz. Metodoloji).
-5. **İnteraktif harita** - kategori bazlı aç/kapa katmanları, 2020/2026
-   yıl seçici ve her yola tıklandığında skoru oluşturan tüm bileşenleri
-   gösteren bir tooltip içeren, tarayıcıda tek dosya olarak açılabilen bir
-   Folium/Leaflet haritası üretir.
-6. **Çok yıllı analiz paketi (isteğe bağlı)** - üç veya daha fazla yılı
-   ERA5-Land hava anomalisiyle karşılaştırır; HVI ağırlıklarını ve yol
-   tamponlarını değiştirerek sıralama kararlılığını ölçer; ağaçlandırma ve
-   gölgeleme what-if senaryolarını ayrı bir haritada gösterir.
+1. **Satellite data** - downloads the least cloudy summer scenes covering the
+   İzmir metropolitan area from Landsat 8/9 (Microsoft Planetary Computer).
+2. **Land surface temperature (LST) and NDVI** - computes the true surface
+   temperature (°C) from the thermal band and vegetation density from the
+   red/near-infrared bands; merges the scenes into a single seamless mosaic.
+3. **Road network ↔ temperature join** - assigns to each of the ~44,000 road
+   segments pulled from OpenStreetMap the mean LST within a 10-metre buffer and
+   converts it to a 0-100 "risk score".
+4. **Heat Vulnerability Index (HVI)** - combines temperature, tree cover,
+   population density, elderly/child population share, distance to
+   hospital/pharmacy, distance to green space and built-up density into a single
+   0-100 score; it answers the question "this place is both hot and
+   crowded/elderly/child-heavy and also treeless and far from health care, so
+   the real risk is here". Each component's own value is stored separately
+   too - the final score is visible not on its own but together with the
+   factors that make it up (see Methodology).
+5. **Interactive map** - produces a Folium/Leaflet map that opens as a single
+   file in the browser, with category-based toggleable layers, a 2020/2026 year
+   selector and a tooltip that shows every component making up the score when a
+   road is clicked.
+6. **Multi-year analysis package (optional)** - compares three or more years
+   against the ERA5-Land air anomaly; measures ranking stability by changing the
+   HVI weights and road buffers; shows afforestation and shading what-if
+   scenarios on a separate map.
 
-## Başka bir şehre/bölgeye uyarlama
+## Adapting to another city/region
 
-Proje artık şehir bazlı bir mimariye sahip: `src/core/` altındaki kod
-tamamen şehirden bağımsızdır, İzmir'e özel her şey
-`src/cities/izmir/config.yaml` ve `src/cities/izmir/adapter.py` içinde
-izole edilmiştir. Yeni bir şehir eklemek `src/core/` içindeki
-sabitleri değiştirmeyi **gerektirmez** - adım adım süreç için
-[CONTRIBUTING.md](CONTRIBUTING.md)'ye bakın. Özetle:
+The project now has a per-city architecture: the code under `src/core/` is
+entirely city-agnostic; everything specific to İzmir is isolated in
+`src/cities/izmir/config.yaml` and `src/cities/izmir/adapter.py`. Adding a new
+city does **not** require changing the constants in `src/core/` - for the
+step-by-step process see [CONTRIBUTING.md](CONTRIBUTING.md). In short
+(`<city>` below stands for the city identifier you choose):
 
-**1. `src/cities/<sehir>/config.yaml` oluştur**
-`bbox` (derece cinsinden [batı, güney, doğu, kuzey]), hedef UTM `crs`'i,
-OSM `.osm.pbf` özüt URL'i ([openstreetmap.fr](https://download.openstreetmap.fr/extracts/)
-veya [Geofabrik](https://download.geofabrik.de/)), `admin_level_ilce` /
-`admin_level_mahalle` (bu etiket ülkeden ülkeye değişir - kendi bölgende
-`osm_gdf['admin_level'].unique()` ile önceden doğrula) buraya yazılır.
+**1. Create `src/cities/<city>/config.yaml`**
+Here you write `bbox` (as [west, south, east, north] in degrees), the target
+UTM `crs`, the OSM `.osm.pbf` extract URL
+([openstreetmap.fr](https://download.openstreetmap.fr/extracts/) or
+[Geofabrik](https://download.geofabrik.de/)), and `admin_level_ilce` /
+`admin_level_mahalle` (the OSM admin levels for district and neighbourhood;
+they change from country to country - check yours beforehand with
+`osm_gdf['admin_level'].unique()`).
 
-**2. Bir demografi "adapter"ı yaz (en fazla emek isteyen adım)**
-İki referans örnek farklı veri kaynağı senaryolarını gösterir:
-  - `src/cities/izmir/adapter.py`: belediyenin kendi CKAN tabanlı açık veri
-    portalı varsa (`acikveri.bizizmir.com`), mahalle seviyesinde nüfus/yaş.
-  - `src/cities/eskisehir/adapter.py`: böyle bir portal YOKSA, TÜİK'in
-    herkese açık ilçe seviyesindeki ADNKS yayınlarını statik CSV olarak
-    kullanan şablon - kendi CKAN'ı olmayan başka bir Türkiye şehri için
-    neredeyse değişiklik yapmadan uyarlanabilir. Ortak mantık
-    `src/core/ilce_table_adapter.py`'de. Yeni şehir eklerken aynı yıl için
-    ilçe düzeyinde 0-14, 15-64 ve 65+ sayımlarını doğrula; il oranlarını
-    ilçe satırına yedek olarak yazma. Depodaki bazı eski şehir kayıtlarında
-    il oranı kullanımı vardır; bunlar kayıt sayfasında ayrıca işaretlenmiştir.
-    `tools/fit_city_bbox.py` bbox'ı yoğun mahalle kümesinden çizer ve gerçek
-    OSM ile HVI kapsamını ölçer (eşik %60, bkz. `validate_city.py
-    --osm-coverage`). Merkez ilçe OSM'de "<İl> Merkez", CSV'de "Merkez"
-    (ya da tersi) yazılmış olabilir; `core/ilce_table_adapter.py` bunu eşler.
+**2. Write a demographic "adapter" (the most labour-intensive step)**
+Two reference examples show different data source scenarios:
+  - `src/cities/izmir/adapter.py`: neighbourhood-level population/age if the
+    municipality has its own CKAN-based open data portal
+    (`acikveri.bizizmir.com`).
+  - `src/cities/eskisehir/adapter.py`: the template for when such a portal does
+    NOT exist, using TÜİK's publicly available district-level ADNKS releases as
+    static CSV - it can be adapted for almost any other Turkish city without its
+    own CKAN with next to no changes. The shared logic is in
+    `src/core/ilce_table_adapter.py`. When adding a new city, verify the
+    district-level 0-14, 15-64 and 65+ counts for the same year; do not write
+    provincial shares into a district row as a fallback. Some older city records
+    in the repository use provincial shares; these are also flagged on the
+    register page. `tools/fit_city_bbox.py` derives the bbox from the dense
+    neighbourhood cluster and measures the HVI coverage against real OSM
+    (threshold 60%, see `validate_city.py --osm-coverage`). The central district
+    may be written as "<Province> Merkez" in OSM and "Merkez" in the CSV (or the
+    other way round); `core/ilce_table_adapter.py` maps this.
 
-Her iki örnek de `fetch_population_data()` / `build_neighborhood_layer()`
-arayüzünü uygular. Yeni bir şehir için aynı arayüzü uygulayan kendi
-adapter'ını `src/cities/<sehir>/adapter.py` altında yaz:
-  - Mahalle/idari sınır poligonlarını OSM'den çekmeye devam edebilirsin.
-  - Nüfus yoğunluğu, yaşlı ve çocuk nüfus oranı verisini yerel istatistik
-    kurumundan (TÜİK, Eurostat, US Census vb.) veya belediyenin kendi açık
-    veri portalından CSV/JSON olarak al.
-  - Mahalle-ilçe eşlemesi her iki adapter'da da **isme göre değil konumsal
-    sorguyla** (`sjoin`, centroid içinde mi) yapılıyor - aynı isimli
-    mahallelerin yanlış ilçeyle eşleşmesini önlüyor. Bu yaklaşımı koru,
-    hangi ülkede olursan ol işe yarar.
+Both examples implement the `fetch_population_data()` /
+`build_neighborhood_layer()` interface. Write your own adapter implementing the
+same interface under `src/cities/<city>/adapter.py` for a new city:
+  - You can keep fetching neighbourhood/administrative boundary polygons from
+    OSM.
+  - Get the population density, elderly population share and child population
+    share data as CSV/JSON from the national statistics office (TÜİK, Eurostat,
+    US Census, etc.) or from the municipality's own open data portal.
+  - The neighbourhood-district mapping is done in both adapters **by spatial
+    query, not by name** (`sjoin`, whether the centroid falls inside) - this
+    prevents same-named neighbourhoods from being matched with the wrong
+    district. Keep this approach; it works whatever country you are in.
 
-**3. Doğrula ve çalıştır**
+**3. Validate and run**
 ```bash
-python validate_city.py <sehir>
-python pipeline.py --city <sehir> --years <yıllar>
+python validate_city.py <city>
+python pipeline.py --city <city> --years <years>
 ```
-`validate_city.py`, config.yaml'ın gerekli alanları içerdiğini, bbox'ın
-geçerli olduğunu, adapter'ın import edilebildiğini ve veri kaynağı
-URL'lerinin erişilebilir olduğunu indirmeden önce kontrol eder.
+`validate_city.py` checks before downloading that config.yaml contains the
+required fields, that the bbox is valid, that the adapter can be imported and
+that the data source URLs are reachable.
 
-**4. HVI bileşenlerini değiştir**
-`src/core/hvi.py` içindeki `COMPONENT_GROUPS` hangi bileşenin hangi gruba
-(tehlike, maruziyet, kırılganlık) girdiğini tanımlar. Yeni bir bileşen
-eklemek için sütununu `robust_normalize_0_1` ile üret, ilgili gruba ekle ve
-`HVI_FORMULA_VERSION`'ı artır.
+**4. Change the HVI components**
+`COMPONENT_GROUPS` in `src/core/hvi.py` defines which component goes into which
+group (hazard, exposure, vulnerability). To add a new component, produce its
+column with `robust_normalize_0_1`, add it to the relevant group and increment
+`HVI_FORMULA_VERSION`.
 
-## Metodoloji
+## Methodology
 
-### Yüzey sıcaklığı (LST)
+### Land surface temperature (LST)
 
-Landsat Collection 2 Level-2 ürünleri, termal bandı laboratuvarda zaten
-Kelvin cinsinden yüzey sıcaklığına kalibre eder. Tek gereken ölçek dönüşümü:
+Landsat Collection 2 Level-2 products already calibrate the thermal band to
+surface temperature in Kelvin in the laboratory. All that is needed is the scale
+conversion:
 
 ```
-LST(K) = piksel_değeri × 0.00341802 + 149.0
+LST(K) = pixel_value × 0.00341802 + 149.0
 LST(°C) = LST(K) - 273.15
 ```
 
-Sahneler varsayılan olarak 1 Temmuz - 31 Ağustos arasında aranır. Sıcak
-sezon şehirden şehre değiştiği için pencere `config.yaml`'ın `landsat`
-bölümünden ayarlanabilir (`season_start: "06-15"`, `season_end: "09-15"`).
-Yıllar arası karşılaştırmada aynı pencere kullanılmalıdır; pencereyi
-değiştirdikten sonra `--force` ile sahneleri yeniden seçtirin.
+Scenes are searched by default between 1 July and 31 August. Since the hot
+season changes from city to city, the window can be adjusted in the `landsat`
+section of `config.yaml` (`season_start: "06-15"`, `season_end: "09-15"`). The
+same window must be used when comparing across years; after changing the window,
+have the scenes re-selected with `--force`.
 
-**Termal bandın gerçek çözünürlüğü 100 m'dir.** Landsat 8/9 TIRS algılayıcısı
-yüzey sıcaklığını yaklaşık 100 m'de ölçer; USGS ürünü 30 m ızgaraya yeniden
-örnekler. Bu yüzden haritadaki sıcaklık yol segmenti başına raporlansa da
-birbirine 100 m'den yakın sokaklar büyük ölçüde aynı ölçümü paylaşır:
-harita mahalle içi sıcak bölgeleri ayırt eder, tek tek komşu sokakları
-değil. NDVI (30 m) bu sınırlamayı taşımaz.
+**The thermal band's true resolution is 100 m.** The Landsat 8/9 TIRS sensor
+measures surface temperature at about 100 m; the USGS product resamples it to a
+30 m grid. So although the temperature on the map is reported per road segment,
+streets closer than 100 m to each other largely share the same measurement: the
+map distinguishes hot areas within a neighbourhood, not individual neighbouring
+streets. NDVI (30 m) does not carry this limitation.
 
-Bulutlar kızılötesiyi bozduğu için her sahne aranırken bulut oranı %30'un
-altında tutulur ve her uydu karosu (path/row) için mevcut en temiz
-`max_scenes_per_tile` (varsayılan 3, `config.yaml`'ın `landsat` bölümünden
-ayarlanır) kadar tarih seçilir.
+Because clouds corrupt the infrared, the cloud cover is kept below 30% while
+searching each scene, and up to `max_scenes_per_tile` (default 3, set in the
+`landsat` section of `config.yaml`) dates are selected for each satellite tile
+(path/row).
 
-Sahne düzeyindeki düşük bulut oranı tek başına yeterli değil: toplam bulut
-oranı düşük bir sahnede bile bulutun küçük bir kısmı doğrudan çalışma
-alanının üzerine düşebilir. Bu yüzden `QA_PIXEL` bandı da indirilip LST ve
-NDVI hesaplanmadan önce, sahnenin kendi piksel ızgarasında (mozaikleme ve
-yeniden izdüşürmeden önce) piksel düzeyinde bir bulut maskesi uygulanır:
-fill, dilated cloud, cirrus, cloud, cloud shadow ve snow bayraklarından
-herhangi biri taşıyan pikseller `NaN`/nodata yapılır (`core/raster.py`,
-`qa_invalid_mask`).
+A low scene-level cloud cover alone is not enough: even in a scene with a low
+total cloud cover, a small part of the cloud may fall directly over the study
+area. So the `QA_PIXEL` band is also downloaded and, before LST and NDVI are
+computed, a pixel-level cloud mask is applied on the scene's own pixel grid
+(before mosaicking and reprojection): pixels carrying any of the fill, dilated
+cloud, cirrus, cloud, cloud shadow and snow flags are made `NaN`/nodata
+(`core/raster.py`, `qa_invalid_mask`).
 
-**Çoklu sahne kompoziti:** tek bir sahne seçmek yerine, her karo için
-seçilen `max_scenes_per_tile` kadar sahnenin LST/NDVI'si ayrı ayrı
-hesaplanıp (QA maskesi her biri kendi ızgarasında uygulanmış olarak) piksel
-bazlı **medyanı** alınır (`core/raster.py`, `composite_scene_arrays`).
-Aynı karonun farklı tarihli sahneleri aynı piksel ızgarasında gelmediği
-için (başlangıç noktası yüzlerce metre kayabilir) sahneler önce karonun
-ortak ızgarasına oturtulur (`tile_grid`), sonra medyanı alınır.
-Medyan, ortalamadan daha dayanıklıdır - aykırı tek bir bulutlu/anormal
-günün sonucu domine etmesini engeller. Bu, aşağıdaki "Metodolojik uyarı"da
-bahsedilen tek-sahne kaynaklı gürültüyü azaltır (aynı yaklaşım, gece ısı
-adası katmanı için `core/night_lst.py`'de zaten kullanılıyordu).
-`max_scenes_per_tile: 1` ile eski tek-sahne davranışına dönülebilir.
+**Multi-scene composite:** instead of selecting a single scene, the LST/NDVI of
+the `max_scenes_per_tile` scenes selected for each tile are computed separately
+(with the QA mask applied on each one's own grid) and their pixel-wise **median**
+is taken (`core/raster.py`, `composite_scene_arrays`). Since scenes of the same
+tile from different dates do not come on the same pixel grid (the origin can
+shift by hundreds of metres), the scenes are first fitted to the tile's common
+grid (`tile_grid`) and then the median is taken. The median is more robust than
+the mean - it prevents a single outlier cloudy/abnormal day from dominating the
+result. This reduces the single-scene noise mentioned in the "Methodological
+caveat" below (the same approach was already used for the night heat island
+layer in `core/night_lst.py`). With `max_scenes_per_tile: 1` the old
+single-scene behaviour can be restored.
 
-**UTM dilim sınırındaki şehirler:** USGS her Landsat sahnesini kendi
-merkezine en yakın UTM dilimine işler. Bir şehrin bbox'ı iki komşu path/row
-karosunun kesiştiği ve bu karoların farklı UTM dilimlerine düştüğü bir
-noktaya denk gelirse (Eskişehir'de yaşandı: 4 karodan 3'ü UTM 36N/EPSG:32636,
-biri UTM 35N/EPSG:32635), mozaikleme öncesi tüm sahneler `config.crs`'e
-yeniden izdüşürülür (`core/raster.py`, `reproject_to_crs`) - aksi halde
-`stream_mosaic` farklı dilimdeki sahneyi (aynı sayısal koordinatlar farklı
-coğrafi konuma karşılık geldiği için) yanlış yere yapıştırır ve o bölgede
-neredeyse hiç geçerli piksel kalmaz.
+**Cities on a UTM zone boundary:** USGS projects each Landsat scene into the UTM
+zone closest to its centre. If a city's bbox happens to fall at a point where
+two neighbouring path/row tiles intersect and these tiles fall into different
+UTM zones (this happened in Eskişehir: 3 of 4 tiles in UTM 36N/EPSG:32636, one
+in UTM 35N/EPSG:32635), all scenes are reprojected to `config.crs` before
+mosaicking (`core/raster.py`, `reproject_to_crs`) - otherwise `stream_mosaic`
+pastes the scene from the different zone in the wrong place (because the same
+numerical coordinates correspond to a different geographic location) and almost
+no valid pixels remain in that area.
 
-### Yol ↔ sıcaklık eşlemesi (spatial join)
+### Road ↔ temperature join (spatial join)
 
-Yollar çizgi geometrisi olduğu için doğrudan piksel ortalaması alınamaz;
-her yola 10 metrelik bir tampon (buffer) verilip bu koridorun içine düşen
-piksellerin **ortalaması** (aykırı değerlere karşı `mean`, `max`'tan daha
-dayanıklı) `rasterstats.zonal_stats` ile hesaplanır. Sonuç, tüm yolların
-ortak min-max aralığına göre 0-100'e normalize edilerek "risk skoru"na
-çevrilir.
+Since roads are line geometries, a pixel average cannot be taken directly; each
+road is given a 10-metre buffer and the **mean** of the pixels falling inside
+this corridor (against outliers `mean` is more robust than `max`) is computed
+with `rasterstats.zonal_stats`. The result is converted into a "risk score" by
+normalising it to 0-100 according to the common min-max range of all roads.
 
-### Isı Hassasiyet Endeksi (HVI): çok bileşenli ve açıklanabilir
+### Heat Vulnerability Index (HVI): multi-component and explainable
 
-HVI, dokuz bileşeni üç grupta toplar ve grupları geometrik ortalamayla
-birleştirir:
+The HVI collects nine components into three groups and combines the groups with
+the geometric mean:
 
 ```
-Grup skoru = grubun bileşenlerinin aritmetik ortalaması
-HVI        = geometrik_ortalama(Tehlike, Maruziyet, Kırılganlık) × 100
+Group score = arithmetic mean of the group's components
+HVI         = geometric_mean(Hazard, Exposure, Vulnerability) × 100
 ```
 
-| Grup | Bileşen | Ne ölçer | Kaynak |
+| Group | Component | What it measures | Source |
 |---|---|---|---|
-| Tehlike | Yüzey sıcaklığı | LST risk skoru (yıl bazlı) | Landsat termal bant |
-| Maruziyet | Nüfus yoğunluğu | Kişi/km² | Şehir adapter'ı (belediye açık verisi ya da TÜİK) |
-| Maruziyet | Yapılaşma yoğunluğu | Yolun 150 m çevresindeki bina yoğunluğu | OSM bina (`building`) katmanı |
-| Kırılganlık | Yaşlı oranı | 65+ nüfus oranı (ilçe) | Şehir adapter'ı |
-| Kırılganlık | Çocuk oranı | 0-14 nüfus oranı (ilçe) | Şehir adapter'ı |
-| Kırılganlık | Sosyoekonomik gelişmişlik | İlçe bazlı SEGE-2022 skorunun tersi | T.C. Sanayi ve Teknoloji Bakanlığı, resmi SEGE-2022 raporu |
-| Kırılganlık | Sağlık erişimi | En yakın hastane/klinik/eczaneye uzaklık | OSM (`amenity=hospital/clinic/pharmacy`) |
-| Kırılganlık | Yeşil alan erişimi | En yakın park/orman/çayır poligonuna uzaklık | OSM (`leisure=park`, `landuse=forest` vb.) |
-| Kırılganlık | Ağaç örtüsü | Yol tamponundaki ortalama NDVI'nin tersi | Landsat NDVI |
+| Hazard | Surface temperature | LST risk score (per year) | Landsat thermal band |
+| Exposure | Population density | People/km² | City adapter (municipal open data or TÜİK) |
+| Exposure | Built-up density | Building density within 150 m of the road | OSM building (`building`) layer |
+| Vulnerability | Elderly share | 65+ population share (district) | City adapter |
+| Vulnerability | Child share | 0-14 population share (district) | City adapter |
+| Vulnerability | Socioeconomic development | Inverse of the district-level SEGE-2022 score | T.C. Ministry of Industry and Technology, official SEGE-2022 report |
+| Vulnerability | Health access | Distance to the nearest hospital/clinic/pharmacy | OSM (`amenity=hospital/clinic/pharmacy`) |
+| Vulnerability | Green space access | Distance to the nearest park/forest/meadow polygon | OSM (`leisure=park`, `landuse=forest` etc.) |
+| Vulnerability | Tree cover | Inverse of the mean NDVI in the road buffer | Landsat NDVI |
 
-**Neden gruplu?** v1.x'te dokuz bileşenin düz geometrik ortalaması
-alınıyordu. Orada bileşen sayısı gizli bir ağırlıktı: yedi kırılganlık
-bileşenine karşı tek bir sıcaklık bileşeni, bir *ısı* endeksinde sıcaklığın
-payını 1/9'a indiriyordu. Ayrıca birbiriyle ilişkili bileşenler (NDVI ile
-LST, bina ile nüfus yoğunluğu) aynı sinyali iki kez sayıyordu. Gruplu yapıda
-her grubun payı, içindeki bileşen sayısından bağımsız olarak 1/3'tür. Bu,
-afet riski literatüründeki Tehlike × Maruziyet × Kırılganlık çerçevesiyle
-aynı sıralamayı verir (üç grubun geometrik ortalaması, çarpımlarının küp
-köküdür).
+**Why grouped?** In v1.x the plain geometric mean of the nine components was
+taken. There the number of components was a hidden weight: a single temperature
+component against seven vulnerability components pushed temperature's share in a
+*heat* index down to 1/9. Also, components related to each other (NDVI with LST,
+buildings with population density) counted the same signal twice. In the grouped
+structure each group's share is 1/3 regardless of how many components it holds.
+This gives the same ranking as the Hazard × Exposure × Vulnerability framework in
+the disaster risk literature (the geometric mean of the three groups is the cube
+root of their product).
 
-**Grup içi ve gruplar arası fark:** aynı gruptaki bileşenler birbirini
-telafi edebilir (yaşlı oranı düşük ama sağlık erişimi kötü bir yol orta
-kırılganlıkta çıkar), bu yüzden grup içinde aritmetik ortalama kullanılır.
-Gruplar ise birbirini telafi edemez: sıcak olmayan ya da kimsenin
-yaşamadığı bir yolda kırılganlık ne kadar yüksek olursa olsun risk düşük
-kalmalıdır, bu yüzden gruplar arasında geometrik ortalama kullanılır.
+**Within-group and between-group difference:** components in the same group can
+compensate for one another (a road with a low elderly share but poor health
+access comes out at medium vulnerability), so the arithmetic mean is used within
+a group. The groups, however, cannot compensate for one another: however high
+the vulnerability on a road that is not hot or where nobody lives, the risk must
+stay low, so the geometric mean is used between groups.
 
-**Grup skorları birleştirilmeden önce yeniden ölçeklenir.** Ortalama almak
-yayılımı daraltır: altı bileşenli kırılganlık grubunda bileşenler birbirini
-götürür (yaşlı ve çocuk oranı ters ilişkilidir) ve grup skoru dar bir bantta
-kalır. Dar bantta kalan bir grup, ağırlığı 1/3 olsa bile sıralamayı
-etkilemez; İzmir'de bu adım olmadan kırılganlığın HVI ile sıra korelasyonu
-0,00 çıkıyordu. Bu yüzden üç grup skoru da tüm yılların ortak dağılımına
-göre 0-1'e çekilir, sonra birleştirilir. Bu adım etkileri eşitlemez (bkz.
-"Bulgular"daki ölçüm) ama hiçbir grubun dekoratif kalmasını önler.
+**Group scores are rescaled before being combined.** Taking a mean narrows the
+spread: in the six-component vulnerability group the components cancel each
+other out (elderly and child shares are inversely related) and the group score
+stays in a narrow band. A group stuck in a narrow band does not affect the
+ranking even if its weight is 1/3; in İzmir, without this step, vulnerability's
+rank correlation with the HVI came out at 0.00. So all three group scores are
+pulled to 0-1 according to the common distribution of all years, and then
+combined. This step does not equalise the effects (see the measurement in
+"Findings") but it prevents any group from staying decorative.
 
-**Ölçekleme aykırı değere dayanıklı:** her bileşen min-max yerine %2-%98
-yüzdelik aralığına göre 0-1'e çekilir, dışarıda kalan değerler 0 ya da 1'e
-kırpılır. Min-max'ta tek bir uç yol (ör. en yakın hastaneye 40 km uzaktaki
-bir kırsal segment) geri kalan tüm yolları ölçeğin dar bir bandına
-sıkıştırıyordu.
+**Scaling is robust to outliers:** each component is pulled to 0-1 according to
+the 2%-98% percentile range instead of min-max, and values outside are clipped to
+0 or 1. With min-max a single extreme road (e.g. a rural segment 40 km from the
+nearest hospital) squeezed all the remaining roads into a narrow band of the
+scale.
 
-**Ayırt etmeyen bileşenler endekse alınmaz:** bir bileşen şehrin tüm
-yollarında aynı değeri alıyorsa (tek ilçeli şehirlerde ilçe düzeyindeki
-demografik bileşenler) grup ortalamasına girmez; aksi halde sabit bir 0,
-grubun diğer üyelerinin etkisini seyreltirdi. Pipeline bu durumda hangi
-bileşenleri dışarıda bıraktığını ekrana yazar.
+**Components that do not discriminate are not included in the index:** if a
+component takes the same value on all of a city's roads (district-level
+demographic components in single-district cities) it does not enter the group
+mean; otherwise a constant 0 would dilute the effect of the group's other
+members. In this case the pipeline prints which components it left out.
 
-Geometrik ortalamanın bir yan etkisi var: 0, "hiç risk yok" değil "veri
-kümesindeki en düşük değer" demektir ve tek başına tüm skoru sıfırlar. Bu
-yüzden grup skorları birleştirilmeden önce `[0,05, 1]` aralığına
-ölçeklenir. Böylece "bir grup düşükse toplam risk de düşer" davranışı
-korunur ama tek bir grup skoru tamamen ele geçiremez.
+The geometric mean has a side effect: 0 means "the lowest value in the dataset",
+not "no risk at all", and on its own it zeroes the whole score. So group scores
+are scaled to the range `[0.05, 1]` before being combined. This preserves the
+behaviour "if one group is low, the total risk is low too", but a single group
+score cannot take over completely.
 
-**Bu seçimler bir yargıdır, ölçüm değil.** Grup paylarının eşit olması ve
-bileşenlerin hangi gruba girdiği, sağlık sonuçlarıyla kalibre edilmiş
-değildir. `analyze_pipeline.py` farklı ağırlık profilleriyle sıralamanın ne
-kadar değiştiğini raporlar (bkz. "Çok yıllı duyarlılık ve müdahale
-analizi"); endeksin kendisi hastane başvurusu ya da ölüm verisiyle henüz
-doğrulanmamıştır (bkz. "Bilinen sınırlamalar").
+**These choices are a judgement, not a measurement.** The equal group shares and
+which group the components fall into are not calibrated against health outcomes.
+`analyze_pipeline.py` reports how much the ranking changes with different weight
+profiles (see "Multi-year sensitivity and intervention analysis"); the index
+itself has not yet been validated against hospital admissions or mortality data
+(see "Known limitations").
 
-**İki yıl karşılaştırılabilir:** HVI yüzdesi ve Jenks kategori sınırları
-her yıl ayrı ayrı değil, tüm yılların **ortak** dağılımından hesaplanır.
-Her yıl kendi içinde 0-100'e ölçeklenseydi tanım gereği her yılın en kötü
-yolu %100 çıkar ve "2026'da risk arttı" demek mümkün olmazdı. LST risk
-skorunda uygulanan ortak ölçek mantığı HVI'de de sürdürülür.
+**The two years are comparable:** the HVI percentage and the Jenks category
+breaks are computed from the **common** distribution of all years, not separately
+for each year. If each year were scaled to 0-100 within itself, by definition
+each year's worst road would come out at 100% and it would be impossible to say
+"risk increased in 2026". The common-scale logic applied to the LST risk score is
+carried on in the HVI too.
 
-**Etiketler yüzdelik dilime göre:** haritadaki "yüksek / orta / çok yakın"
-gibi etiketler eşit genişlikte aralıklara değil, sıralamaya (yüzdelik
-dilim) göre üretilir. Eşit aralık kullanıldığında birkaç uç değer tüm
-skalayı ele geçiriyor ve yolların %91'i "hastaneye çok yakın" çıkıyordu;
-şimdi her etiket yolların yaklaşık beşte birine denk geliyor.
+**Labels by percentile:** labels on the map such as "high / medium / very close"
+are produced according to rank (percentile), not equal-width intervals. With
+equal intervals a few extreme values took over the whole scale and 91% of roads
+came out "very close to the hospital"; now each label corresponds to roughly a
+fifth of the roads.
 
-**Açıklanabilirlik:** nihai HVI skorunun yanında her bileşenin kendi
-normalize değeri ve üç grup skoru da GeoJSON'a yazılır (`hazard_norm_<yıl>`,
-`exposure_norm`, `sensitivity_*_norm`, `group_*_<yıl>` sütunları) ve haritadaki tooltip'te
-"Sıcaklık: yüksek, Ağaç örtüsü: çok düşük, Hastaneye uzaklık: uzak..."
-şeklinde okunabilir etiketlere çevrilir - bir yolun HVI'sinin neden
-yüksek/düşük olduğu haritadan doğrudan görülebilir.
+**Explainability:** alongside the final HVI score, each component's own
+normalised value and the three group scores are written to the GeoJSON
+(`hazard_norm_<year>`, `exposure_norm`, `sensitivity_*_norm`, `group_*_<year>`
+columns) and turned into readable labels in the map tooltip such as
+"Temperature: high, Tree cover: very low, Distance to hospital: far..." - why a
+road's HVI is high/low can be seen directly on the map.
 
-Yaş dağılımı verisi sadece **ilçe** seviyesinde mevcut olduğu için, bir
-ilçenin yaşlı/çocuk oranı o ilçenin tüm mahallelerine aynı şekilde
-uygulanır (downscaling) - ilçe-içi ince farkları gözden kaçırır ama kaba
-veriyle çalışırken standart ve dürüst bir yaklaşımdır.
+Since age distribution data exists only at **district** level, a district's
+elderly/child share is applied to all of that district's neighbourhoods in the
+same way (downscaling) - it misses fine within-district differences, but it is a
+standard and honest approach when working with coarse data.
 
-**Sosyoekonomik bileşen:** İzmir B.Ş.B. açık veri portalında ve TÜİK'te
-mahalle/ilçe seviyesinde güncel, güvenilir bir eğitim/gelir göstergesi
-bulunamadı; onun yerine T.C. Sanayi ve Teknoloji Bakanlığı'nın resmi
-**"İlçelerin Sosyo-Ekonomik Gelişmişlik Sıralaması Araştırması
-(SEGE-2022)"** raporundaki ilçe bazlı gelişmişlik skoru kullanıldı - bu,
-81 ilin tüm ilçelerini 56 değişkenle (demografi, istihdam, eğitim, sağlık,
-finans, rekabetçilik, yaşam kalitesi) kapsayan, kamuya açık, tek seferlik
-yayımlanmış resmi bir araştırma. Bu yüzden CKAN'dan indirilmek yerine
-`src/cities/izmir/sege_2022_ilce.csv` olarak küçük bir referans dosyası
-halinde repoya dahil edildi (bkz. `cities/izmir/adapter.py`). Bu bileşen
-**isteğe bağlıdır** - başka bir şehrin adapter'ı bu veriyi sağlamazsa HVI
-kalan bileşenlerle hesaplanmaya devam eder.
+**Socioeconomic component:** no current, reliable education/income indicator at
+neighbourhood/district level could be found in the İzmir Metropolitan
+Municipality open data portal or at TÜİK; instead the district-level development
+score from the T.C. Ministry of Industry and Technology's official **"Research on
+the Socio-Economic Development Ranking of Districts (SEGE-2022)"** report was
+used - a publicly available, one-off official study covering all the districts of
+the 81 provinces with 56 variables (demography, employment, education, health,
+finance, competitiveness, quality of life). That is why, instead of being
+downloaded from CKAN, it was included in the repository as a small reference
+file, `src/cities/izmir/sege_2022_ilce.csv` (see `cities/izmir/adapter.py`). This
+component is **optional** - if another city's adapter does not provide this data,
+the HVI continues to be computed with the remaining components.
 
-**Bu HVI, kapsamlı bir sağlık veya sosyoekonomik kırılganlık modeli değil;
-mevcut açık verilerle oluşturulmuş, çok bileşenli bir önceliklendirme
-endeksidir.**
+**This HVI is not a comprehensive health or socioeconomic vulnerability model;
+it is a multi-component prioritisation index built from the available open
+data.**
 
-### Kategorilere ayırma: neden Jenks doğal kırılım?
+### Categorisation: why Jenks natural breaks?
 
-HVI skorları üç grup skorunun geometrik ortalaması olduğu için dağılım çarpık -
-çoğu yol düşük skorda toplanır, az sayıda yol çok yüksek skora sıçrar.
-İlk denemede `pd.qcut` (her kategoriye eşit sayıda yol) kullanıldı ama bu,
-verideki gerçek yapıyı değil, zorla eşit dağıtılmış bir bölünmeyi
-yansıtıyordu. **Jenks doğal kırılım** (`jenkspy`) bunun yerine grup-içi
-varyansı minimize edip gruplar-arası varyansı maksimize eden sınırları
-matematiksel olarak bulur - yani "doğada var olan" kümelenme noktalarını
-tespit eder, kategorilere zorla eşit yol sayısı dağıtmaz. Jenks sınırları
-2020 ve 2026 için ayrı ayrı değil, iki yılın **ortak** dağılımından bir
-kez hesaplanır; böylece "Kritik" her iki yılda aynı eşiği ifade eder ve
-bir yolun yıllar arasında kategori değiştirmesi gerçek bir değişimi
-gösterir.
+Because the HVI scores are the geometric mean of three group scores, the
+distribution is skewed - most roads pile up at low scores and a few roads jump
+to very high scores. The first attempt used `pd.qcut` (an equal number of roads
+in each category), but that reflected a forcibly equal division, not the real
+structure in the data. **Jenks natural breaks** (`jenkspy`) instead finds
+mathematically the breaks that minimise within-group variance and maximise
+between-group variance - that is, it detects the clustering points "that exist in
+nature", rather than forcibly distributing an equal number of roads into
+categories. The Jenks breaks are computed once from the **common** distribution
+of the two years, not separately for 2020 and 2026; so "Critical" means the same
+threshold in both years and a road changing category between years shows a real
+change.
 
-(Bu, tooltip'teki "yüksek / çok yakın" gibi bileşen etiketlerinden ayrı
-bir karardır: **kategoriler** Jenks ile, **etiketler** yüzdelik dilimle
-üretilir. Kategorilerde amaç verideki gerçek kümelenmeyi bulmak,
-etiketlerde ise okuyucuya "bu yol diğerlerine göre nerede duruyor"
-sorusunun cevabını vermek.)
+(This is a separate decision from the component labels such as "high / very
+close" in the tooltip: **categories** are produced with Jenks, **labels** with
+percentiles. With categories the aim is to find the real clustering in the data;
+with labels, to give the reader the answer to the question "where does this road
+stand relative to the others".)
 
-### Zaman serisi: 2020 vs 2026 neden "ortak" normalize ediliyor?
+### Time series: why are 2020 vs 2026 normalised "commonly"?
 
-Risk skorunu her yıl kendi min-max'ıyla normalize edersen, "2020'de 45°C"
-ile "2026'da 45°C" farklı skorlara denk gelir - karşılaştırma anlamsızlaşır.
-Bunun yerine iki yılın LST değerleri birleştirilip **tek bir ortak
-min-max aralığı** bulunur, her iki yıl da bu aynı cetvelle ölçülür.
+If you normalise the risk score with each year's own min-max, "45°C in 2020" and
+"45°C in 2026" correspond to different scores - the comparison becomes
+meaningless. Instead the LST values of the two years are combined and **a single
+common min-max range** is found; both years are measured with this same ruler.
 
-### Gece ısı adası (isteğe bağlı, `--night-lst`)
+### Night heat island (optional, `--night-lst`)
 
-Landsat'ın termal bandı gündüz geçişi için tasarlanmıştır; gece ısı adası
-etkisi (şehir merkezlerinin kırsala göre geceleri daha yavaş soğuması,
-genelde gündüzden daha güçlü hissedilen bir etki) bu veri setinde yoktu.
-`--night-lst` bayrağı, aynı Planetary Computer altyapısından MODIS'in
-"LST_Night_1km" ürününü çeker (yazın tüm 8 günlük kompozitlerinin
-piksel bazlı ortalaması, tek bir bulutlu gecenin sonucu domine etmesini
-önlemek için). MODIS 1 km çözünürlükte olduğu için (Landsat'ın 30 m'sinin
-aksine) bu katman yol segmenti değil **mahalle** ölçeğinde sunulur ve
-HVI skoruna dahil edilmez - haritada ayrı, varsayılan olarak kapalı bir
-katmandır.
+Landsat's thermal band is designed for the daytime overpass; the night heat
+island effect (city centres cooling more slowly at night than the countryside, an
+effect generally felt more strongly than in the day) was not in this data set.
+The `--night-lst` flag fetches MODIS's "LST_Night_1km" product from the same
+Planetary Computer infrastructure (the pixel-wise mean of all its 8-day summer
+composites, to prevent a single cloudy night from dominating the result). Because
+MODIS is at 1 km resolution (unlike Landsat's 30 m), this layer is presented at
+**neighbourhood** scale rather than per road segment and is not included in the
+HVI score - it is a separate layer on the map, off by default.
 
-## Çok yıllı duyarlılık ve müdahale analizi
+## Multi-year sensitivity and intervention analysis
 
-Ana hattın haritası iki ya da daha fazla yılı karşılaştırabilir. Daha uzun
-dönem, hava düzeltmesi ve karar senaryoları için en az üç yılın ana pipeline
-çıktıları hazır olduktan sonra ikinci komutu çalıştırın. Örnek:
+The main pipeline's map can compare two or more years. For a longer period,
+weather correction and decision scenarios, run the second command after the main
+pipeline outputs for at least three years are ready. Example:
 
 ```bash
 python pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
 python analyze_pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
 ```
 
-Analiz belirtilen yılların hazır raster ve yol/HVI çıktısını okur; uydu
-indirme ve ana hattı yeniden çalıştırmaz. Landsat 8/9 arşivinin 2013'ten
-başlayan yılları kullanılabilir. Hava kaynağı
-[Open-Meteo tarihsel hava API'sindeki ERA5-Land yeniden analizidir](https://open-meteo.com/en/docs/historical-weather-api).
-ERA5-Land 1950'den beri tutarlı tarihsel sıcaklık serisi sunar. Çalışma
-alanında 12 örnek konum kullanılır.
+The analysis reads the prepared raster and road/HVI output of the given years; it
+does not re-run the satellite download and the main pipeline. Years from 2013
+onwards of the Landsat 8/9 archive are usable. The weather source is
+[the ERA5-Land reanalysis in Open-Meteo's historical weather
+API](https://open-meteo.com/en/docs/historical-weather-api). ERA5-Land provides a
+consistent historical temperature series since 1950. 12 sample locations are used
+in the study area.
 
-Hava düzeltmesi, seçili Landsat sahne günlerinin 2 m hava sıcaklığı
-ortalamasını aynı takvim günlerinin ±7 gün penceresindeki 1991-2020
-normalinden çıkarır. Bu anomali, yolun Landsat LST'sinden `β × anomali`
-olarak düşülür. `β` varsayımsal eşleştirme katsayısıdır; `β=0`, `0.5` ve
-`1` sonuçları raporlanır. ERA5-Land hava sıcaklığı ile Landsat yüzey
-sıcaklığı farklı ölçümlerdir; düzeltilmiş değer bir hassasiyet tahminidir,
-istasyon ölçümüyle doğrulanmış LST değildir. Yıllık doğrusal eğim
-betimleyici bir özettir, nedensel iklim etkisi tahmini değildir.
+The weather correction subtracts the mean 2 m air temperature of the selected
+Landsat scene days from the 1991-2020 normal of the same calendar days within a
+±7 day window. This anomaly is subtracted from the road's Landsat LST as
+`β × anomaly`. `β` is a hypothetical matching coefficient; the results for
+`β=0`, `0.5` and `1` are reported. ERA5-Land air temperature and Landsat surface
+temperature are different measurements; the corrected value is a sensitivity
+estimate, not an LST value validated against station measurements. The annual
+linear trend is a descriptive summary, not a causal climate effect estimate.
 
-HVI duyarlılık tablosu mevcut bileşenleri üç açık ağırlık profiliyle
-hesaplar: eşit, ısı öncelikli ve eşitlik öncelikli. Mekânsal duyarlılık
-analizi varsayılan olarak 10, 30 ve 50 m yol tamponlarında LST/NDVI
-örneklerini yeniden alır. Her seçenek için son yılın ilk %10 riskli yol
-kümesinin varsayılan profile göre örtüşmesi ve Spearman sıra korelasyonu
-raporlanır. Böylece farklı puan aralıklarından kaynaklanan farklar yerine
-öncelik listesinde hangi yolların kaldığı ölçülür.
+The HVI sensitivity table computes the existing components with three explicit
+weight profiles: equal, heat-priority and equity-priority. The spatial
+sensitivity analysis by default re-samples LST/NDVI in 10, 30 and 50 m road
+buffers. For each option, the overlap of the last year's top 10% riskiest road
+set with the default profile and the Spearman rank correlation are reported. Thus,
+instead of differences arising from different score ranges, which roads remain in
+the priority list is measured.
 
-Halk sağlığıyla yakınsaklık kontrolü, ilçe bazında yol uzunluğuna göre
-ağırlıklandırılmış LST ile açık veri kaynaklı 65+ yaş oranını karşılaştırır.
-İlçe sayısı ve Pearson/Spearman ilişkileri
-`heat_health_convergence.csv` içindedir. Yaş oranı HVI bileşeni olduğundan
-bu, bağımsız bir doğruluk testi değil; ham ısı haritası ile sağlık açısından
-hassas yaş grubu dağılımının örtüşme kontrolüdür. Mahalle düzeyinde yaş
-verisi olmadığı için sonuç ilçe ölçeğini aşan bir iddiada bulunmaz.
+The public-health convergence check compares the road-length-weighted LST with the
+65+ age share from open data sources at district level. The number of districts
+and the Pearson/Spearman relationships are in `heat_health_convergence.csv`. Since
+the age share is an HVI component this is not an independent accuracy test; it is
+an overlap check of the raw heat map with the distribution of the age group that
+is sensitive from a health point of view. Because there is no neighbourhood-level
+age data, the result makes no claim beyond the district scale.
 
-Senaryolar son yılın eşit ağırlıklı HVI sıralamasındaki varsayılan ilk %20
-yol segmentine uygulanır. Başlangıç varsayımları ağaç senaryosunda NDVI
-`+0.15`, gölgeleme senaryosunda LST `-2°C` ve birleşik senaryoda ikisidir.
-`--target-share`, `--ndvi-delta` ve `--cooling-c` ile değiştirilebilir.
-Çıktı ortalama HVI değişimine ek olarak hedeflenen yolların 65+ oranını,
-nüfus yoğunluğunu ve üst 65+ beşte birlik dilimdeki payını verir. Bu
-what-if hesabı ölçülmüş ağaç/gölge etkisi, maliyet ya da sağlık sonucu
-değildir.
+Scenarios are applied to the default top 20% of road segments in the last year's
+equal-weight HVI ranking. The initial assumptions are NDVI `+0.15` in the tree
+scenario, LST `-2°C` in the shading scenario and both in the combined scenario.
+They can be changed with `--target-share`, `--ndvi-delta` and `--cooling-c`. In
+addition to the mean HVI change, the output gives the 65+ share, the population
+density and the share in the top 65+ quintile of the targeted roads. This what-if
+calculation is not a measured tree/shade effect, a cost or a health outcome.
 
-Analiz ürünleri `data/processed/<şehir>/impact_analysis/` altına yazılır:
-`annual_weather_adjusted.csv`, `robustness.csv`,
-`heat_health_convergence.csv`, `intervention_scenarios.csv`,
-`impact_scenarios.geojson`, `analysis_summary.json` ve
-`analysis_map.html`. GeoJSON büyük olduğundan harita dosya URL'si ile
-değil, bu klasörde bir yerel HTTP sunucusu açılarak görüntülenir:
+The analysis products are written under
+`data/processed/<city>/impact_analysis/`: `annual_weather_adjusted.csv`,
+`robustness.csv`, `heat_health_convergence.csv`, `intervention_scenarios.csv`,
+`impact_scenarios.geojson`, `analysis_summary.json` and `analysis_map.html`.
+Because the GeoJSON is large, the map is viewed not via a file URL but by
+starting a local HTTP server in this folder:
 
 ```bash
 cd data/processed/izmir/impact_analysis
 python -m http.server 8000
 ```
 
-Ardından `http://localhost:8000/analysis_map.html` adresini açın.
+Then open `http://localhost:8000/analysis_map.html`.
 
-## 2020 → 2026: Bulgular
+## 2020 → 2026: Findings
 
-*(İzmir, 6 yıllık pencere. Her yıl için 4 uydu karosunda karo başına 3,
-toplam 12 temmuz-ağustos Landsat sahnesinin piksel bazlı medyanı. Sayılar
-haritanın da beslendiği aynı veri setinden: `data/processed/izmir/
-roads_timeseries.geojson` ve `roads_with_hvi.geojson`. Hangi sahnelerin
-kullanıldığı `docs/izmir/manifest.json` içinde.)*
+*(İzmir, a 6-year window. For each year, the pixel-wise median of 4 satellite
+tiles with 3 July-August Landsat scenes per tile, 12 in total. The numbers come
+from the same data set that also feeds the map:
+`data/processed/izmir/roads_timeseries.geojson` and
+`roads_with_hvi.geojson`. Which scenes were used is in
+`docs/izmir/manifest.json`.)*
 
-**Sıcaklık - genel eğilim:**
-- 44.041 yol segmentinin ortalama yüzey sıcaklığı 2020'de 42,6 °C, 2026'da
-  43,1 °C: ortalama değişim **+0,47 °C**.
-- En çok ısınan yol: **+13,5 °C** · en çok soğuyan yol: **-7,6 °C**
-- Yolların **%49'u** ısındı (+0,5 °C'den fazla), **%23'ü** soğudu, **%27'si**
-  pratik olarak değişmedi. Yalnızca %1,6'sı +3 °C ve üzeri ısındı.
+**Temperature - overall trend:**
+- The mean surface temperature of 44,041 road segments was 42.6 °C in 2020 and
+  43.1 °C in 2026: mean change **+0.47 °C**.
+- Most-warmed road: **+13.5 °C** · most-cooled road: **-7.6 °C**
+- **49%** of roads warmed (by more than +0.5 °C), **23%** cooled, **27%**
+  practically did not change. Only 1.6% warmed by +3 °C or more.
 
-> **Önceki sürümlerdeki "+3,29 °C" rakamı hakkında:** v1.x README'si ortalama
-> +3,29 °C ısınma ve "yolların %98'i ısındı" diyordu. O sayılar karo başına
-> **tek** sahneden üretilmişti ve iki yılın seçilen günleri arasındaki hava
-> farkını yansıtıyordu. Aynı karonun üç sahnesinin medyanı alındığında fark
-> +0,47 °C'ye iniyor. Ders: tek bir uydu geçişinden yıllar arası ısınma
-> sonucu çıkarılmaz.
+> **About the "+3.29 °C" figure in earlier versions:** the v1.x README said a
+> mean warming of +3.29 °C and "98% of roads warmed". Those numbers were produced
+> from a **single** scene per tile and reflected the weather difference between
+> the days selected for the two years. With the median of three scenes of the
+> same tile the difference falls to +0.47 °C. The lesson: a year-over-year
+> warming conclusion cannot be drawn from a single satellite overpass.
 
-**HVI - risk dağılımı (gruplu metodoloji, 5 kategori, iki yılın ortak
-Jenks sınırlarıyla; demografisi eşlenen 43.183 yol):**
+**HVI - risk distribution (grouped methodology, 5 categories, with the two
+years' common Jenks breaks; 43,183 roads with matched demographics):**
 
-| Kategori | 2020 | 2026 | Değişim |
+| Category | 2020 | 2026 | Change |
 |---|---|---|---|
-| Düşük | 7.462 | 5.659 | -1.803 |
-| Orta | 11.902 | 12.091 | +189 |
-| Yüksek | 9.569 | 10.739 | +1.170 |
-| Kritik | 9.694 | 9.799 | +105 |
-| Aşırı Kritik | 4.556 | 4.895 | +339 |
+| Low | 7,462 | 5,659 | -1,803 |
+| Medium | 11,902 | 12,091 | +189 |
+| High | 9,569 | 10,739 | +1,170 |
+| Critical | 9,694 | 9,799 | +105 |
+| Extreme Critical | 4,556 | 4,895 | +339 |
 
-Kategori sınırları iki yılın ortak dağılımından bir kez hesaplandığı için
-"Kritik" her iki yılda aynı eşiği ifade eder. Kayma esas olarak alt uçta:
-Düşük kategorisinden çıkan yollar Orta ve Yüksek'e geçmiş; Kritik ve Aşırı
-Kritik toplamı **%3 artmış** (14.250'den 14.694'e). Demografi ve OSM
-bileşenleri iki yılda aynı olduğu için bu değişimin tamamı sıcaklık ve
-bitki örtüsünden gelir.
+Because the category breaks are computed once from the two years' common
+distribution, "Critical" means the same threshold in both years. The shift is
+mainly at the lower end: roads leaving the Low category moved to Medium and High;
+the Critical and Extreme Critical total **increased by 3%** (from 14,250 to
+14,694). Since the demographic and OSM components are the same in both years, all
+of this change comes from temperature and vegetation.
 
-> Not: bu sayılar v1.x'tekilerle karşılaştırılamaz. v2.0.0'da endeks gruplu
-> yapıya geçti, ölçekleme değişti ve sıcaklık girdisi tek sahne yerine
-> medyan kompozitten geliyor.
+> Note: these numbers cannot be compared with those in v1.x. In v2.0.0 the index
+> moved to a grouped structure, the scaling changed and the temperature input
+> comes from a median composite instead of a single scene.
 
-**En yüksek ortalama HVI'ye sahip 5 mahalle (2026, en az 20 yol segmenti
-olan 418 mahalle arasından):**
+**The 5 neighbourhoods with the highest mean HVI (2026, among the 418
+neighbourhoods with at least 20 road segments):**
 
-1. Umut Mahallesi (Karabağlar) - %90,4
-2. Sarıyer Mahallesi (Karabağlar) - %89,7
-3. Uğur Mumcu Mahallesi (Karabağlar) - %89,4
-4. İhsan Alyanak Mahallesi (Karabağlar) - %88,5
-5. Bozyaka Mahallesi (Karabağlar) - %86,4
+1. Umut Mahallesi (Karabağlar) - 90.4%
+2. Sarıyer Mahallesi (Karabağlar) - 89.7%
+3. Uğur Mumcu Mahallesi (Karabağlar) - 89.4%
+4. İhsan Alyanak Mahallesi (Karabağlar) - 88.5%
+5. Bozyaka Mahallesi (Karabağlar) - 86.4%
 
-İlçe ortalamasında Karabağlar (%70,5) açık ara önde; ardından Buca (%56,2),
-Bayraklı (%55,3) ve Karşıyaka (%53,7) geliyor. Listenin başı v1.x ile büyük
-ölçüde aynı mahalleler: sonuç, formül değişikliğine karşı kararlı.
+At district-average level Karabağlar (70.5%) is far ahead; then come Buca (56.2%),
+Bayraklı (55.3%) and Karşıyaka (53.7%). The top of the list is largely the same
+neighbourhoods as in v1.x: the result is stable against the formula change.
 
-**Grupların endekse gerçek etkisi (2026, grup skoru ile HVI arasındaki sıra
-korelasyonu):** maruziyet 0,82 · tehlike 0,39 · kırılganlık 0,23. Üç grubun
-ağırlığı eşit olsa da etkileri eşit değil: İzmir'de riskin mekânsal
-dağılımını en çok nüfus ve yapılaşma yoğunluğu belirliyor. Yani bu harita
-ağırlıklı olarak "sıcak VE kalabalık" yerleri öne çıkarır; kırılganlık
-bileşenleri ilçe düzeyinde olduğu için mahalle içi ayrımı zayıftır.
+**The groups' real effect on the index (2026, rank correlation between the group
+score and the HVI):** exposure 0.82 · hazard 0.39 · vulnerability 0.23. Although
+the three groups have equal weight, their effects are not equal: in İzmir the
+spatial distribution of risk is determined most of all by population and built-up
+density. In other words this map highlights mainly places that are "hot AND
+crowded"; because the vulnerability components are at district level,
+within-neighbourhood discrimination is weak.
 
-**Ne yapılabilir?**
-- Kritik/Aşırı Kritik kategorisindeki 14.694 yol segmenti (skorlu yolların
-  ~%34'ü) ağaçlandırma, gölgelendirme, açık renk yüzey gibi müdahaleler için
-  önceliklendirilebilir.
-- Bir yolun HVI'si haritadaki tooltip'ten "neden" sorusuyla birlikte
-  okunabiliyor - ör. bir yol hem sıcak hem ağaçsız hem hastaneye uzaksa,
-  bu üç ayrı müdahale türünü (gölgelendirme, sağlık erişimi planlaması,
-  acil durum hazırlığı) aynı anda işaret eder.
-- İzlemenin sürdürülmesi öneriliyor - `--years` parametresiyle gelecek
-  yıllar kolayca eklenebilir.
+**What can be done?**
+- The 14,694 road segments in the Critical/Extreme Critical category (~34% of the
+  scored roads) can be prioritised for interventions such as afforestation,
+  shading, light-coloured surfaces.
+- A road's HVI can be read from the map tooltip together with the "why" question -
+  e.g. if a road is both hot and treeless and far from a hospital, this points at
+  the same time to three separate types of intervention (shading, health access
+  planning, emergency preparedness).
+- Continuing the monitoring is recommended - future years can be added easily
+  with the `--years` parameter.
 
-**Metodolojik uyarı:** +0,47 °C, iki yılın yaz medyan kompozitleri
-arasındaki yüzey sıcaklığı farkıdır ve uzun dönem iklim trendi olarak
-yorumlanmamalıdır. İki nokta bir trend belirlemez; medyan kompozit
-tek-günlük anomalileri azaltır ama o yazın genel hava koşullarını
-(sıcak/serin yaz, toprak nemi) gidermez. Hava koşullarından arındırılmış
-çok yıllı bir tahmin için `analyze_pipeline.py` kullanılabilir.
+**Methodological caveat:** +0.47 °C is the surface temperature difference between
+the two years' summer median composites and should not be interpreted as a
+long-term climate trend. Two points do not establish a trend; the median
+composite reduces single-day anomalies but does not remove that summer's general
+weather conditions (hot/cool summer, soil moisture). For a multi-year estimate
+cleaned of weather conditions, `analyze_pipeline.py` can be used.
 
-## Kurulum ve çalıştırma
+## Setup and running
 
 ```bash
-git clone <bu-repo>
+git clone <this-repo>
 cd turkiye-heat-risk
 python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt`'teki sürüm aralıkları major sürüm kırılımlarına karşı
-üst sınırlıdır ama yine de bir aralıktır; bugün çalışan tam ortamı birebir
-yeniden üretmek için (`rasterio`/`geopandas` gibi GDAL tabanlı paketler
-minor sürümde bile davranış değiştirebiliyor) `constraints.txt`'teki
-sabitlenmiş sürümlerle kurun:
+The version ranges in `requirements.txt` are upper-bounded against major-version
+breaks but are still ranges; to reproduce exactly the environment that works
+today (GDAL-based packages such as `rasterio`/`geopandas` can change behaviour
+even in a minor version), install with the pinned versions in `constraints.txt`:
 
 ```bash
 pip install -r requirements.txt -c constraints.txt
 ```
 
-Tüm hattı (indirme → LST/NDVI → yol eşleme → HVI → harita) çalıştırmak için:
+To run the whole pipeline (download → LST/NDVI → road join → HVI → map):
 
 ```bash
 python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
-- `--city`: `src/cities/<sehir>/config.yaml` içindeki şehir kimliği (varsayılan: `izmir`)
-- `--years`: karşılaştırılacak yıllar (2 veya daha fazla olabilir)
-- `--main-year`: hangi yılın "ana/düz" klasör yapısını kullanacağı
-  (`data/raw/<sehir>/...` vs. `data/raw/<sehir>/<yıl>/...`)
-- `--open`: harita üretildikten sonra otomatik tarayıcıda aç
-- `--force`: yol risk skoru ve HVI önbelleğini yok say, yeniden hesapla
-- `--night-lst`: mahalle ölçeğinde MODIS gece ısı adası katmanını da üret
-  (isteğe bağlı, ek bir uydu kaynağı indirir - bkz. Metodoloji)
+- `--city`: the city id in `src/cities/<city>/config.yaml` (default: `izmir`)
+- `--years`: the years to compare (can be 2 or more)
+- `--main-year`: which year uses the "main/plain" folder structure
+  (`data/raw/<city>/...` vs. `data/raw/<city>/<year>/...`)
+- `--open`: open automatically in the browser after the map is produced
+- `--force`: ignore the road risk score and HVI cache, recompute
+- `--night-lst`: also produce the MODIS night heat island layer at neighbourhood
+  scale (optional, downloads an additional satellite source - see Methodology)
 
-Her adım, çıktısı zaten diskte varsa atlanır - script yarıda kesilse bile
-`python pipeline.py --city izmir` ile kaldığı yerden devam eder. İlk
-çalıştırma (4 Landsat sahnesi × 2 yıl + OSM özütü) makul bir internet
-bağlantısında ~15-25 dakika ve ~5-6 GB disk alanı gerektirir.
+Every step is skipped if its output is already on disk - even if the script is
+interrupted halfway, `python pipeline.py --city izmir` continues from where it
+left off. The first run (4 Landsat scenes × 2 years + OSM extract) takes ~15-25
+minutes and ~5-6 GB of disk space on a reasonable internet connection.
 
-Yol risk skoru ve HVI çıktıları formül sürümü değiştiğinde otomatik
-olarak yeniden hesaplanır (bkz. `src/core/cache.py`); veri kaynağı aynı
-kalıp sadece parametre denemek isteniyorsa `--force` ile elle de
-zorlanabilir.
+The road risk score and HVI outputs are recomputed automatically when the formula
+version changes (see `src/core/cache.py`); if the data source stays the same and
+you only want to try parameters, it can be forced by hand with `--force`.
 
-Çok yıllı analiz paketi için yukarıdaki örnekteki yılları ana pipeline'a
-verin, ardından `analyze_pipeline.py --help` ile hava katsayısı, tampon ve
-müdahale varsayımlarını ayarlayın. ERA5-Land ilk çalıştırmada internet
-bağlantısı ister; günlük seri şehir bazında önbelleğe alınır. Analiz işleri
-sıralı yürür ve ayrı ayrı büyük rasterleri eşzamanlı işleme almaz.
+For the multi-year analysis package, give the years in the example above to the
+main pipeline, then adjust the weather coefficient, buffer and intervention
+assumptions with `analyze_pipeline.py --help`. ERA5-Land needs an internet
+connection on the first run; the daily series is cached per city. The analysis
+jobs run sequentially and do not process large rasters concurrently.
 
-## Testler
+## Tests
 
-Saf/mantık ağırlıklı fonksiyonlar (normalizasyon, yüzdelik dilim
-etiketleme, config doğrulama, önbellek geçerliliği) için birim testler
-`tests/` altında yer alır - uydu indirme veya OSM ağı gerektirmez, saniyeler
-içinde çalışır:
+Unit tests for pure/logic-heavy functions (normalisation, percentile labelling,
+config validation, cache validity) are under `tests/` - they need no satellite
+download or OSM network and run in seconds:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
 pytest
 ```
 
-`.github/workflows/tests.yml` aynı suite'i her push ve PR'da otomatik
-çalıştırır - bir katkı (ör. yeni bir şehir adaptörü) testleri kırıyorsa
-merge edilmeden önce görünür.
+`.github/workflows/tests.yml` runs the same suite automatically on every push and
+PR - if a contribution (e.g. a new city adapter) breaks the tests, it is visible
+before merge.
 
-## Docker ile çalıştırma
+## Running with Docker
 
-`rasterio`/GDAL kurulumu makineden makineye (özellikle Windows'ta) sorun
-çıkarabiliyor - `Dockerfile`, "bu imaj çalışıyorsa senin makinende de
-çalışır" garantisi verir. Çıktılar (`data/`, `output/`, `docs/`) konteyner
-dışında kalıcı olsun diye host'a mount edilir:
+Installing `rasterio`/GDAL can be troublesome from machine to machine (especially
+on Windows) - the `Dockerfile` gives the guarantee "if this image works, it works
+on your machine too". The outputs (`data/`, `output/`, `docs/`) are mounted to the
+host so that they persist outside the container:
 
 ```bash
 docker build -t turkiye-heat-risk .
@@ -619,180 +624,183 @@ docker run --rm \
   turkiye-heat-risk --city izmir --years 2020 2026 --main-year 2026
 ```
 
-`.github/workflows/tests.yml` imajın gerçekten build olduğunu ve modülün
-sağlam kurulduğunu her push/PR'da otomatik doğrular (ağır/ağ gerektiren
-tam pipeline'ı çalıştırmadan, hafif bir duman testiyle).
+`.github/workflows/tests.yml` automatically verifies on every push/PR that the
+image really builds and the module installs soundly (with a light smoke test,
+without running the heavy/network-dependent full pipeline).
 
-## Barındırma (GitHub Pages)
+## Hosting (GitHub Pages)
 
-`pipeline.py`, her şehir için iki harita üretir (bkz. `core/map_builder.py`):
-`output/<sehir>_hvi_map.html` (tek dosya, çevrimdışı) ve `docs/<sehir>/`
-(veri ayrı küçük GeoJSON dosyalarına bölünmüş, tarayıcı sadece açılan
-katmanı indirir - ilk sayfa yükü birkaç yüz KB). İkincisini yayınlamak için:
+`pipeline.py` produces two maps for each city (see `core/map_builder.py`):
+`output/<city>_hvi_map.html` (single file, offline) and `docs/<city>/` (data split
+into separate small GeoJSON files, the browser downloads only the layer that is
+opened - first page load a few hundred KB). To publish the second one:
 
-1. En az bir şehir için `python pipeline.py --city <sehir>` çalıştır.
-2. `python build_docs_index.py` ile şehirler arası karşılaştırma sayfasını
-   (`docs/index.html`) üret.
-3. `docs/` klasörünü commit'le, GitHub'da Settings → Pages → Branch: `main`,
-   klasör: `/docs` seç.
+1. Run `python pipeline.py --city <city>` for at least one city.
+2. Produce the cross-city comparison page (`docs/index.html`) with
+   `python build_docs_index.py`.
+3. Commit the `docs/` folder, and in GitHub choose Settings → Pages → Branch:
+   `main`, folder: `/docs`.
 
-Bu deponun kendi sayfası: <https://ayberkrk.github.io/turkiye-heat-risk/>
+This repository's own page: <https://ayberkrk.github.io/turkiye-heat-risk/>
 
-## Tekrar üretilebilirlik: harita manifest'i
+## Reproducibility: the map manifest
 
-Her iki harita çıktısının (`output/<sehir>_hvi_map.html` ve
-`docs/<sehir>/index.html`) yanına, hangi girdi/ayarlarla üretildiklerini
-kaydeden küçük bir JSON dosyası da yazılır: sırasıyla
-`output/<sehir>_hvi_manifest.json` ve `docs/<sehir>/manifest.json` (bkz.
-`core/map_builder.py`, `_build_manifest`). İçeriği:
+Next to both map outputs (`output/<city>_hvi_map.html` and
+`docs/<city>/index.html`), a small JSON file is also written recording the
+inputs/settings they were produced with:
+`output/<city>_hvi_manifest.json` and `docs/<city>/manifest.json` respectively
+(see `core/map_builder.py`, `_build_manifest`). Its contents:
 
-- şehir kimliği/adı, üretim zamanı (UTC)
-- istenen yıllar ve ana (main) yıl
-- şehir config'inin ilgili alanları (bbox, CRS, bulut oranı/karo başına
-  sahne sayısı sınırı, yol tamponu, OSM admin_level'ları, pbf URL'i)
-- her yıl için kullanılan Landsat sahnelerinin kimliği/tarihi/karosu/bulut
-  oranı (`scene_metadata.json`'dan, bkz. `core/satellite.py`)
-- formül/önbellek sürüm numaraları (`HVI_FORMULA_VERSION`,
+- city id/name, production time (UTC)
+- the requested years and the main year
+- the relevant fields of the city config (bbox, CRS, cloud cover/scene-count-per-
+  tile limit, road buffer, OSM admin_levels, pbf URL)
+- for each year, the identity/date/tile/cloud cover of the Landsat scenes used
+  (from `scene_metadata.json`, see `core/satellite.py`)
+- formula/cache version numbers (`HVI_FORMULA_VERSION`,
   `RISK_TIMESERIES_VERSION`, `MOSAIC_VERSION`, `SCENE_FETCH_VERSION`)
-- gece ısı adası katmanının (`--night-lst`) istenip istenmediği
+- whether the night heat island layer (`--night-lst`) was requested
 
-Ham raster'lar, tam `roads_with_hvi.geojson` gibi büyük ara çıktılar veya
-kimlik bilgisi (zaten hiçbiri saklanmıyor) manifest'e YAZILMAZ - sadece
-küçük, tanımlayıcı metadata. İncelemek için:
+Raw rasters, large intermediate outputs such as the full `roads_with_hvi.geojson`,
+or credentials (none are stored anyway) are NOT written to the manifest - only
+small, descriptive metadata. To inspect it:
 
 ```bash
 python -m json.tool docs/izmir/manifest.json
 ```
 
-## Proje yapısı
+## Project structure
 
 ```
 turkiye-heat-risk/
-├── pipeline.py               # Tek üst seviye giriş noktası: python pipeline.py --city izmir
-├── analyze_pipeline.py       # Çok yıllı hava/duyarlılık/what-if analiz paketi
-├── validate_city.py           # Yeni bir şehir config.yaml'ını hızlıca doğrular
-├── build_docs_index.py        # docs/ altındaki şehirler için karşılaştırma sayfası üretir
+├── pipeline.py               # Single top-level entry point: python pipeline.py --city izmir
+├── analyze_pipeline.py       # Multi-year weather/sensitivity/what-if analysis package
+├── validate_city.py           # Quickly validates a new city's config.yaml
+├── build_docs_index.py        # Produces the comparison page for the cities under docs/
 ├── src/
-│   ├── core/                  # Şehirden bağımsız, genel pipeline mantığı
-│   │   ├── city_config.py     #   config.yaml yükleyici + doğrulama
-│   │   ├── satellite.py       #   Landsat indirme
-│   │   ├── raster.py          #   LST/NDVI hesaplama + bellek-güvenli mozaikleme
-│   │   ├── roads.py           #   OSM yol ağı + yıllık sıcaklık/NDVI eşleme
-│   │   ├── impact_analysis.py #   hava düzeltmesi, HVI duyarlılığı ve müdahale senaryoları
-│   │   ├── osm_amenities.py   #   sağlık/yeşil alan/bina katmanları (OSM'den)
-│   │   ├── hvi.py             #   çok bileşenli HVI hesaplama
-│   │   ├── map_builder.py     #   interaktif Folium haritası (çevrimdışı + barındırma sürümü)
-│   │   ├── night_lst.py       #   isteğe bağlı: mahalle ölçeğinde MODIS gece ısı adası katmanı
-│   │   ├── cache.py           #   ara çıktılar için sürüm damgalı önbellek geçerliliği
-│   │   ├── ilce_table_adapter.py #  TÜİK-şablonlu şehirlerin ortak mahalle-katmanı mantığı (2 CSV -> mahalle)
-│   │   └── text_utils.py      #   şehirler arası paylaşılan Türkçe metin normalizasyonu
+│   ├── core/                  # City-agnostic, general pipeline logic
+│   │   ├── city_config.py     #   config.yaml loader + validation
+│   │   ├── satellite.py       #   Landsat download
+│   │   ├── raster.py          #   LST/NDVI computation + memory-safe mosaicking
+│   │   ├── roads.py           #   OSM road network + annual temperature/NDVI join
+│   │   ├── impact_analysis.py #   weather correction, HVI sensitivity and intervention scenarios
+│   │   ├── osm_amenities.py   #   health/green space/building layers (from OSM)
+│   │   ├── hvi.py             #   multi-component HVI computation
+│   │   ├── map_builder.py     #   interactive Folium map (offline + hosting version)
+│   │   ├── night_lst.py       #   optional: neighbourhood-scale MODIS night heat island layer
+│   │   ├── cache.py           #   version-stamped cache validity for intermediate outputs
+│   │   ├── ilce_table_adapter.py #  shared neighbourhood-layer logic for TÜİK-templated cities (2 CSV -> neighbourhood)
+│   │   └── text_utils.py      #   Turkish text normalisation shared across cities
 │   └── cities/
 │       ├── izmir/
-│       │   ├── config.yaml         #   İzmir'e özel bbox, URL'ler, sütun eşlemeleri
-│       │   ├── adapter.py          #   İzmir'e özel nüfus/demografi mantığı (CKAN)
-│       │   └── sege_2022_ilce.csv  #   İlçe bazlı sosyoekonomik gelişmişlik skoru (resmi SEGE-2022)
+│       │   ├── config.yaml         #   İzmir-specific bbox, URLs, column mappings
+│       │   ├── adapter.py          #   İzmir-specific population/demography logic (CKAN)
+│       │   └── sege_2022_ilce.csv  #   District-level socioeconomic development score (official SEGE-2022)
 │       ├── eskisehir/
-│       │   ├── config.yaml         #   Eskişehir'e özel bbox, URL'ler
-│       │   ├── adapter.py          #   TÜİK tabanlı nüfus/demografi mantığı (CKAN'sız şablon)
-│       │   ├── ilce_nufus.csv      #   İlçe nüfusu + yaşlı/çocuk oranı (TÜİK ADNKS 2025)
-│       │   └── sege_2022_ilce.csv  #   İlçe bazlı sosyoekonomik gelişmişlik skoru (resmi SEGE-2022)
-│       └── sanliurfa/, antalya/, mersin/, adana/  # Eskişehir ile aynı TÜİK tabanlı şablon
-│           ├── config.yaml         #   şehre özel bbox/CRS/OSM bölge özütü
-│           ├── adapter.py          #   ince sarmalayıcı (core/ilce_table_adapter.py'yi çağırır)
-│           ├── ilce_nufus.csv      #   ilçe nüfusu + il düzeyi yaşlı/çocuk (0-14) oranı
-│           └── sege_2022_ilce.csv  #   ilçe SEGE-2022 skorları (resmi PDF'ten)
-├── tests/                     # Saf/mantık fonksiyonları için birim testler (ağ gerektirmez)
-├── docs/                      # GitHub Pages'in servis ettiği, küçük/fetch tabanlı harita sürümü
-│   ├── index.html             #   şehirler arası karşılaştırma sayfası (build_docs_index.py üretir)
-│   └── <sehir>/                #   index.html + GeoJSON veri dosyaları + manifest.json (bkz. Tekrar üretilebilirlik)
-├── output/                    # pipeline.py tarafından üretilir, git'e dahil değil
-│   ├── <sehir>_hvi_map.html  #   tamamen çevrimdışı, tek dosyalık harita (çift tıklayıp açılabilir)
-│   └── <sehir>_hvi_manifest.json  #   o haritayı üreten girdi/ayarların kaydı
-├── data/                      # pipeline.py tarafından üretilir, git'e dahil değil
-│   ├── raw/<sehir>/           #   indirilen Landsat bantları, OSM özütü, nüfus CSV'leri (şehir bazlı ayrılır)
-│   └── processed/<sehir>/     #   LST/NDVI mozaikleri, ara GeoJSON'lar (şehir bazlı ayrılır)
-├── CONTRIBUTING.md            # Yeni şehir ekleme adımları
+│       │   ├── config.yaml         #   Eskişehir-specific bbox, URLs
+│       │   ├── adapter.py          #   TÜİK-based population/demography logic (template without CKAN)
+│       │   ├── ilce_nufus.csv      #   District population + elderly/child share (TÜİK ADNKS 2025)
+│       │   └── sege_2022_ilce.csv  #   District-level socioeconomic development score (official SEGE-2022)
+│       └── sanliurfa/, antalya/, mersin/, adana/  # Same TÜİK-based template as Eskişehir
+│           ├── config.yaml         #   city-specific bbox/CRS/OSM region extract
+│           ├── adapter.py          #   thin wrapper (calls core/ilce_table_adapter.py)
+│           ├── ilce_nufus.csv      #   district population + provincial-level elderly/child (0-14) share
+│           └── sege_2022_ilce.csv  #   district SEGE-2022 scores (from the official PDF)
+├── tests/                     # Unit tests for pure/logic functions (need no network)
+├── docs/                      # Small/fetch-based map version served by GitHub Pages
+│   ├── index.html             #   cross-city comparison page (produced by build_docs_index.py)
+│   └── <city>/                #   index.html + GeoJSON data files + manifest.json (see Reproducibility)
+├── output/                    # produced by pipeline.py, not included in git
+│   ├── <city>_hvi_map.html  #   fully offline, single-file map (can be opened by double-clicking)
+│   └── <city>_hvi_manifest.json  #   record of the inputs/settings that produced that map
+├── data/                      # produced by pipeline.py, not included in git
+│   ├── raw/<city>/           #   downloaded Landsat bands, OSM extract, population CSVs (separated per city)
+│   └── processed/<city>/     #   LST/NDVI mosaics, intermediate GeoJSONs (separated per city)
+├── CONTRIBUTING.md            # Steps to add a new city
 ├── requirements.txt
-├── requirements-dev.txt       # Test bağımlılıkları (pytest)
-├── Dockerfile / .dockerignore # Tek komutla tekrar üretilebilir çalışma ortamı
+├── requirements-dev.txt       # Test dependencies (pytest)
+├── Dockerfile / .dockerignore # Single-command reproducible working environment
 ├── LICENSE                    # MIT
 └── README.md
 ```
 
-## Bilinen sınırlamalar
+## Known limitations
 
-- **Bulut kapanması**: bir karo için `max_scenes_per_tile` kadar aday
-  sahne birden fazla tarihten denenir (bkz. Metodoloji) ama bazı yıllarda
-  İzmir üzerinde %30 altı bulutlu HİÇBİR yaz sahnesi bulunamayabilir; bu
-  durumda `max_cloud_cover` gevşetilebilir ama sonuç kalitesi düşer.
-- **Yaş verisinin çözünürlüğü**: yaşlı nüfus oranı ilçe seviyesinde -
-  mahalle-içi gerçek dağılım bundan daha değişken olabilir.
-- **Tek gündüz anlık görüntüsü**: yol bazlı LST, sahnenin çekildiği saatteki
-  (Landsat için genelde öğleden sonraya yakın) sıcaklığı yansıtır. Gece ısı
-  adası etkisi (genelde daha güçlü olduğu bilinir) `--night-lst` bayrağıyla
-  ayrı bir katman olarak eklenebilir (MODIS, 1 km çözünürlük) ama bu katman
-  yol değil mahalle ölçeğindedir ve HVI skoruna dahil değildir - bkz.
-  `core/night_lst.py` ve aşağıdaki Metodoloji bölümü.
-- **Doğrulanmamış endeks**: HVI, sıcak hava dalgalarındaki acil başvuru,
-  ambulans çağrısı ya da ölüm verisiyle karşılaştırılmamıştır. Grup payları
-  ve bileşen seçimi literatürdeki çerçeveye dayanan bir yargıdır. Harita
-  "nereye önce bakılmalı" sorusuna yanıt verir; bir yolun ötekinden kaç kat
-  daha tehlikeli olduğunu ölçmez.
-- **Yüzey sıcaklığı hava sıcaklığı değildir**: LST, uydunun gördüğü
-  yüzeyin (çatı, asfalt, ağaç tepesi) sıcaklığıdır; yayanın hissettiği hava
-  sıcaklığı, nem, rüzgar ve gölge bundan farklıdır. Ağaç tepesi serin
-  görünen bir sokak yaya düzeyinde gölgeli olabilir, çatıları sıcak görünen
-  dar bir sokak yaya düzeyinde gölgede kalabilir.
-- **Termal çözünürlük 100 m**: sıcaklık yol başına raporlansa da komşu
-  sokaklar çoğunlukla aynı termal ölçümü paylaşır (bkz. Metodoloji).
-- **Şehirler arası karşılaştırma**: bileşenler her şehrin kendi dağılımına
-  göre ölçeklenir. Bir şehirde "Aşırı Kritik" çıkan yol, o şehrin en riskli
-  yollarındandır; başka bir şehrin "Aşırı Kritik" yoluyla aynı mutlak riski
-  taşıdığı anlamına gelmez.
-- **10 metrelik yol tamponu**: sıcaklık ve NDVI örneklemesinde kullanılan
-  bu dar tampon, çok dar sokaklarda komşu bir yolun etkisini
-  karıştırabilir; çok geniş bulvarlarda ise koridorun tamamını
-  kapsamayabilir. Duyarlılık paketi 30 ve 50 m alternatiflerini de ölçer;
-  hangi tamponun saha gerçeğine uyduğunu kendi başına belirlemez.
-- **Hava düzeltmesinin ölçeği**: ERA5-Land'in yaklaşık 11 km hava
-  sıcaklığı, 30 m Landsat yüzey sıcaklığını ölçmez. Düzeltme katsayısı
-  (`β`) varsayımdır ve ayrı ayrı karşılaştırılmalıdır; analiz yerel hava
-  istasyonlarının yerine geçmez.
-- **Senaryo varsayımları**: NDVI artışı ve LST düşüşü kullanıcı girdisidir.
-  Ağaç türü, taç gelişme süresi, gölge geometrisi, su ihtiyacı, uygulama
-  maliyeti veya maruziyet davranışı modellenmez. Haritadaki fark varsayımlı
-  HVI aritmetiğidir, gerçekleşmesi beklenen sağlık etkisi değildir.
-- **150 metrelik yapılaşma tamponu**: bina yoğunluğu için seçilen bu
-  yarıçap makul bir kentsel doku ölçeğidir ama tek bir seçimdir; komşu
-  yolların tamponları örtüştüğü için yakın yollar benzer yoğunluk değeri
-  alır, yani bu bileşen yol ölçeğinden çok mahalle ölçeğinde ayrıştırır.
-- **SEGE tablosu elle aktarılmıştır**: `sege_2022_ilce.csv` içindeki
-  skorlar resmi rapordan elle çıkarılmıştır; 30 ilçenin tamamı T.C. Sanayi
-  ve Teknoloji Bakanlığı'nın resmi SEGE-2022 raporuyla satır satır
-  karşılaştırılmış ve doğrulanmıştır. Yine de rapor güncellendiğinde bu
-  dosyanın elle yeniden kontrol edilmesi gerekir.
-- **Sosyoekonomik bileşen ilçe seviyesinde**: SEGE-2022 skoru da (yaşlı/
-  çocuk oranı gibi) ilçe seviyesinde - mahalle-içi gerçek dağılım bundan
-  daha değişken olabilir. Ayrıca 2022 tarihli, tek seferlik bir araştırma;
-  gelecekte güncellenmiş bir SEGE raporu yayımlanırsa
-  `sege_2022_ilce.csv` güncellenmelidir.
-- **Tek ilçeli şehirler**: 70 şehrin 54'ü tek ilçe kapsar; bu şehirlerde
-  nüfus yoğunluğu, yaşlı/çocuk oranı ve SEGE bileşenleri tüm mahallelerde
-  aynı değeri alır, HVI'ı ayırt etmez ve endekse alınmaz. Harita yalnızca
-  LST, NDVI, yapılaşma ve erişim bileşenlerini yansıtır. Ayrıca Ağrı, Iğdır, Kırklareli ve
-  Karaman'da ilçe sayımı il düzeyinden inandırıcı olmayacak kadar
-  saptığı için il düzeyi 0-14/65+ oranları kullanılır.
-- **TÜİK-şablonlu ana şehirlerde (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)
-  bir kademe daha kaba çözünürlük**: İzmir'in mahalle seviyesinde CKAN
-  nüfus verisinin aksine bu adapter'lar yaşlı/çocuk oranı için ilçe bazlı
-  bir TÜİK yayını bulamadığından İL'in genel yaş dağılımını (0-14 ve 65+)
-  tüm ilçelere aynı şekilde uyguluyor; nüfus yoğunluğu da mahalle değil
-  ilçe bazında sabit (ilçe alanı OSM idari sınırından hesaplandığı için
-  kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
-  ilçe-içi/mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
-  (bkz. `core/ilce_table_adapter.py` ve her şehrin `adapter.py`
-  docstring'i).
+- **Cloud cover**: for a tile, up to `max_scenes_per_tile` candidate scenes from
+  more than one date are tried (see Methodology) but in some years NO summer scene
+  with under 30% cloud may be found over İzmir; in this case `max_cloud_cover` can
+  be relaxed but the result quality drops.
+- **Age data resolution**: the elderly population share is at district level - the
+  real within-neighbourhood distribution may be more variable than this.
+- **Single daytime snapshot**: the road-level LST reflects the temperature at the
+  time the scene was taken (for Landsat, generally close to the afternoon). The
+  night heat island effect (known to be generally stronger) can be added as a
+  separate layer with the `--night-lst` flag (MODIS, 1 km resolution), but this
+  layer is at neighbourhood rather than road scale and is not included in the HVI
+  score - see `core/night_lst.py` and the Methodology section above.
+- **Unvalidated index**: the HVI has not been compared with emergency admissions,
+  ambulance calls or mortality data during heatwaves. The group shares and the
+  choice of components are a judgement based on the framework in the literature.
+  The map answers the question "where should we look first"; it does not measure
+  how many times more dangerous one road is than another.
+- **Surface temperature is not air temperature**: LST is the temperature of the
+  surface the satellite sees (roof, asphalt, treetop); the air temperature a
+  pedestrian feels, humidity, wind and shade are different from this. A street
+  whose treetops look cool may be shaded at pedestrian level; a narrow street
+  whose roofs look hot may stay in shade at pedestrian level.
+- **Thermal resolution 100 m**: although the temperature is reported per road,
+  neighbouring streets mostly share the same thermal measurement (see
+  Methodology).
+- **Cross-city comparison**: components are scaled according to each city's own
+  distribution. A road that comes out "Extreme Critical" in one city is among that
+  city's riskiest roads; it does not mean that it carries the same absolute risk
+  as another city's "Extreme Critical" road.
+- **10-metre road buffer**: this narrow buffer used in temperature and NDVI
+  sampling may mix in the effect of a neighbouring road on very narrow streets, and
+  on very wide boulevards it may not cover the whole corridor. The sensitivity
+  package also measures 30 and 50 m alternatives; it does not by itself determine
+  which buffer matches ground truth.
+- **Scale of the weather correction**: ERA5-Land's roughly 11 km air temperature
+  does not measure a 30 m Landsat surface temperature. The correction coefficient
+  (`β`) is an assumption and must be compared separately; the analysis is not a
+  substitute for local weather stations.
+- **Scenario assumptions**: the NDVI increase and LST decrease are user input.
+  Tree species, canopy development time, shade geometry, water demand,
+  implementation cost or exposure behaviour are not modelled. The difference on
+  the map is assumed HVI arithmetic, not an expected health effect.
+- **150-metre built-up buffer**: this radius chosen for building density is a
+  reasonable urban fabric scale but is a single choice; because the buffers of
+  neighbouring roads overlap, nearby roads get a similar density value, so this
+  component discriminates at neighbourhood rather than road scale.
+- **The SEGE table was transcribed by hand**: the scores in `sege_2022_ilce.csv`
+  were extracted by hand from the official report; all 30 districts were compared
+  row by row with the T.C. Ministry of Industry and Technology's official
+  SEGE-2022 report and verified. Even so, when the report is updated this file
+  must be re-checked by hand.
+- **Socioeconomic component at district level**: the SEGE-2022 score too (like the
+  elderly/child share) is at district level - the real within-neighbourhood
+  distribution may be more variable than this. It is also a one-off study dated
+  2022; if an updated SEGE report is published in the future,
+  `sege_2022_ilce.csv` should be updated.
+- **Single-district cities**: 54 of the 70 cities cover a single district; in these
+  cities the population density, elderly/child share and SEGE components take the
+  same value in all neighbourhoods, do not discriminate the HVI and are not
+  included in the index. The map reflects only the LST, NDVI, built-up and access
+  components. Also, in Ağrı, Iğdır, Kırklareli and Karaman, because the district
+  counts deviate from the provincial level too implausibly, the provincial-level
+  0-14/65+ shares are used.
+- **A further step of coarser resolution in the TÜİK-templated main cities
+  (Eskişehir, Şanlıurfa, Antalya, Mersin, Adana)**: unlike İzmir's
+  neighbourhood-level CKAN population data, these adapters could not find a
+  district-level TÜİK release for the elderly/child share and therefore apply the
+  PROVINCE's overall age distribution (0-14 and 65+) to all districts in the same
+  way; population density too is constant at district rather than neighbourhood
+  level (because the district area is computed from the OSM administrative
+  boundary, density comes out low in districts with a wide rural hinterland).
+  Real within-district/within-neighbourhood inequality is therefore less visible
+  than in İzmir (see `core/ilce_table_adapter.py` and each city's `adapter.py`
+  docstring).
 
-## Lisans
+## License
 
-MIT. Bkz. [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

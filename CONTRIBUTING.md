@@ -1,5 +1,7 @@
 # Katkıda Bulunma: Yeni Bir Şehir Ekleme
 
+Bu belgenin İngilizce sürümü: [CONTRIBUTING.en.md](CONTRIBUTING.en.md).
+
 Bu proje şehir bazlı bir mimariye sahiptir: `src/core/` altındaki kod
 tamamen şehirden bağımsızdır, her şehrin kendi parametreleri ve nüfus veri
 mantığı `src/cities/<sehir>/` altında izole edilir. Yeni bir şehir eklemek
