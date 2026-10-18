@@ -8,6 +8,8 @@
 Sürüm geçmişi için [CHANGELOG.md](CHANGELOG.md), atıf için
 [CITATION.cff](CITATION.cff) dosyalarına bakın.
 
+Bu belgenin tam İngilizce çevirisi: [README.en.md](README.en.md).
+
 ## English summary
 
 An open-data, reproducible urban heat risk pipeline. It combines Landsat
@@ -38,10 +40,10 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
 The rest of this README - methodology, findings, setup, project layout,
-known limitations - is in Turkish (this is an Izmir/Türkiye-focused
-project). Machine translation works well if you want the full detail; the
-summary above and the code/docstrings should be enough to navigate the
-repository.
+known limitations - was originally written in Turkish (this is an
+Izmir/Türkiye-focused project) and is now also available as a full English
+translation in [README.en.md](README.en.md). If the two disagree, the
+Turkish original (this file) is the reference.
 
 ---
 
