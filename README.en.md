@@ -160,8 +160,9 @@ python validate_city.py <city>
 python pipeline.py --city <city> --years <years>
 ```
 `validate_city.py` checks before downloading that config.yaml contains the
-required fields, that the bbox is valid, that the adapter can be imported and
-that the data source URLs are reachable.
+required fields, that the bbox is valid, that the `crs` is in metres and matches
+the UTM zone of the bbox centre, that the adapter can be imported and that the
+data source URLs are reachable.
 
 **4. Change the HVI components**
 `COMPONENT_GROUPS` in `src/core/hvi.py` defines which component goes into which
@@ -602,12 +603,14 @@ download or OSM network and run in seconds:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
+python -m ruff check .
 pytest
 ```
 
-`.github/workflows/tests.yml` runs the same suite automatically on every push and
-PR - if a contribution (e.g. a new city adapter) breaks the tests, it is visible
-before merge.
+On every push and PR, `.github/workflows/tests.yml` first runs `ruff check`
+(configured in `ruff.toml`), then the same test suite, and checks that the Docker
+image builds - if a contribution (e.g. a new city adapter) breaks the lint or the
+tests, it is visible before merge.
 
 ## Running with Docker
 
@@ -678,6 +681,8 @@ turkiye-heat-risk/
 ├── analyze_pipeline.py       # Multi-year weather/sensitivity/what-if analysis package
 ├── validate_city.py           # Quickly validates a new city's config.yaml
 ├── build_docs_index.py        # Produces the comparison page for the cities under docs/
+├── tools/
+│   └── fit_city_bbox.py       # Fits a new city's bbox to its dense neighbourhood cluster and measures OSM coverage
 ├── src/
 │   ├── core/                  # City-agnostic, general pipeline logic
 │   │   ├── city_config.py     #   config.yaml loader + validation
@@ -690,6 +695,8 @@ turkiye-heat-risk/
 │   │   ├── map_builder.py     #   interactive Folium map (offline + hosting version)
 │   │   ├── night_lst.py       #   optional: neighbourhood-scale MODIS night heat island layer
 │   │   ├── cache.py           #   version-stamped cache validity for intermediate outputs
+│   │   ├── coverage.py        #   share of bbox roads that fall in a neighbourhood with demographics
+│   │   ├── paths.py           #   per-city and per-year data/raw and data/processed paths
 │   │   ├── ilce_table_adapter.py #  shared neighbourhood-layer logic for TÜİK-templated cities (2 CSV -> neighbourhood)
 │   │   └── text_utils.py      #   Turkish text normalisation shared across cities
 │   └── cities/
@@ -702,14 +709,15 @@ turkiye-heat-risk/
 │       │   ├── adapter.py          #   TÜİK-based population/demography logic (template without CKAN)
 │       │   ├── ilce_nufus.csv      #   District population + elderly/child share (TÜİK ADNKS 2025)
 │       │   └── sege_2022_ilce.csv  #   District-level socioeconomic development score (official SEGE-2022)
-│       └── sanliurfa/, antalya/, mersin/, adana/  # Same TÜİK-based template as Eskişehir
+│       └── <68 other cities>/  # Same TÜİK-based template as Eskişehir (list: docs/turkiye-ilce-yas-verisi-taramasi.md)
 │           ├── config.yaml         #   city-specific bbox/CRS/OSM region extract
 │           ├── adapter.py          #   thin wrapper (calls core/ilce_table_adapter.py)
-│           ├── ilce_nufus.csv      #   district population + provincial-level elderly/child (0-14) share
+│           ├── ilce_nufus.csv      #   district population + elderly/child (0-14) share (district level for most, provincial for some; see the register)
 │           └── sege_2022_ilce.csv  #   district SEGE-2022 scores (from the official PDF)
 ├── tests/                     # Unit tests for pure/logic functions (need no network)
 ├── docs/                      # Small/fetch-based map version served by GitHub Pages
 │   ├── index.html             #   cross-city comparison page (produced by build_docs_index.py)
+│   ├── turkiye-ilce-yas-verisi-taramasi.md  # register of the 70 cities' data sources and measured OSM coverage
 │   └── <city>/                #   index.html + GeoJSON data files + manifest.json (see Reproducibility)
 ├── output/                    # produced by pipeline.py, not included in git
 │   ├── <city>_hvi_map.html  #   fully offline, single-file map (can be opened by double-clicking)
@@ -717,12 +725,16 @@ turkiye-heat-risk/
 ├── data/                      # produced by pipeline.py, not included in git
 │   ├── raw/<city>/           #   downloaded Landsat bands, OSM extract, population CSVs (separated per city)
 │   └── processed/<city>/     #   LST/NDVI mosaics, intermediate GeoJSONs (separated per city)
-├── CONTRIBUTING.md            # Steps to add a new city
+├── .github/                   # CI (tests.yml), issue and PR templates
+├── CONTRIBUTING.md            # Steps to add a new city (English: CONTRIBUTING.en.md)
+├── CHANGELOG.md / CITATION.cff / CODE_OF_CONDUCT.md
 ├── requirements.txt
-├── requirements-dev.txt       # Test dependencies (pytest)
+├── constraints.txt            # Pinned versions for an exact reproduction
+├── requirements-dev.txt       # Development dependencies (pytest, ruff)
+├── ruff.toml                  # Lint settings (run in CI)
 ├── Dockerfile / .dockerignore # Single-command reproducible working environment
 ├── LICENSE                    # MIT
-└── README.md
+└── README.md                  # Turkish original (English: README.en.md)
 ```
 
 ## Known limitations

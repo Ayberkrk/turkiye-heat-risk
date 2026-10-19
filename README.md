@@ -156,7 +156,8 @@ python validate_city.py <sehir>
 python pipeline.py --city <sehir> --years <yıllar>
 ```
 `validate_city.py`, config.yaml'ın gerekli alanları içerdiğini, bbox'ın
-geçerli olduğunu, adapter'ın import edilebildiğini ve veri kaynağı
+geçerli olduğunu, `crs`'in metre cinsinden ve bbox merkezinin UTM dilimiyle
+uyumlu olduğunu, adapter'ın import edilebildiğini ve veri kaynağı
 URL'lerinin erişilebilir olduğunu indirmeden önce kontrol eder.
 
 **4. HVI bileşenlerini değiştir**
@@ -599,12 +600,14 @@ içinde çalışır:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
+python -m ruff check .
 pytest
 ```
 
-`.github/workflows/tests.yml` aynı suite'i her push ve PR'da otomatik
-çalıştırır - bir katkı (ör. yeni bir şehir adaptörü) testleri kırıyorsa
-merge edilmeden önce görünür.
+`.github/workflows/tests.yml` her push ve PR'da önce `ruff check`'i
+(ayarları `ruff.toml`'da), ardından aynı test suite'ini çalıştırır ve Docker
+imajının kurulduğunu doğrular - bir katkı (ör. yeni bir şehir adaptörü)
+lint'i ya da testleri kırıyorsa merge edilmeden önce görünür.
 
 ## Docker ile çalıştırma
 
@@ -675,6 +678,8 @@ turkiye-heat-risk/
 ├── analyze_pipeline.py       # Çok yıllı hava/duyarlılık/what-if analiz paketi
 ├── validate_city.py           # Yeni bir şehir config.yaml'ını hızlıca doğrular
 ├── build_docs_index.py        # docs/ altındaki şehirler için karşılaştırma sayfası üretir
+├── tools/
+│   └── fit_city_bbox.py       # Yeni şehir için bbox'ı yoğun mahalle kümesinden çizer, OSM kapsamını ölçer
 ├── src/
 │   ├── core/                  # Şehirden bağımsız, genel pipeline mantığı
 │   │   ├── city_config.py     #   config.yaml yükleyici + doğrulama
@@ -687,6 +692,8 @@ turkiye-heat-risk/
 │   │   ├── map_builder.py     #   interaktif Folium haritası (çevrimdışı + barındırma sürümü)
 │   │   ├── night_lst.py       #   isteğe bağlı: mahalle ölçeğinde MODIS gece ısı adası katmanı
 │   │   ├── cache.py           #   ara çıktılar için sürüm damgalı önbellek geçerliliği
+│   │   ├── coverage.py        #   bbox'taki yolların demografisi eşlenmiş mahalleye düşme oranı
+│   │   ├── paths.py           #   şehir ve yıl bazlı data/raw, data/processed yolları
 │   │   ├── ilce_table_adapter.py #  TÜİK-şablonlu şehirlerin ortak mahalle-katmanı mantığı (2 CSV -> mahalle)
 │   │   └── text_utils.py      #   şehirler arası paylaşılan Türkçe metin normalizasyonu
 │   └── cities/
@@ -699,14 +706,15 @@ turkiye-heat-risk/
 │       │   ├── adapter.py          #   TÜİK tabanlı nüfus/demografi mantığı (CKAN'sız şablon)
 │       │   ├── ilce_nufus.csv      #   İlçe nüfusu + yaşlı/çocuk oranı (TÜİK ADNKS 2025)
 │       │   └── sege_2022_ilce.csv  #   İlçe bazlı sosyoekonomik gelişmişlik skoru (resmi SEGE-2022)
-│       └── sanliurfa/, antalya/, mersin/, adana/  # Eskişehir ile aynı TÜİK tabanlı şablon
+│       └── <diğer 68 şehir>/  # Eskişehir ile aynı TÜİK tabanlı şablon (liste: docs/turkiye-ilce-yas-verisi-taramasi.md)
 │           ├── config.yaml         #   şehre özel bbox/CRS/OSM bölge özütü
 │           ├── adapter.py          #   ince sarmalayıcı (core/ilce_table_adapter.py'yi çağırır)
-│           ├── ilce_nufus.csv      #   ilçe nüfusu + il düzeyi yaşlı/çocuk (0-14) oranı
+│           ├── ilce_nufus.csv      #   ilçe nüfusu + yaşlı/çocuk (0-14) oranı (çoğunda ilçe, bazılarında il düzeyi; bkz. kayıt sayfası)
 │           └── sege_2022_ilce.csv  #   ilçe SEGE-2022 skorları (resmi PDF'ten)
 ├── tests/                     # Saf/mantık fonksiyonları için birim testler (ağ gerektirmez)
 ├── docs/                      # GitHub Pages'in servis ettiği, küçük/fetch tabanlı harita sürümü
 │   ├── index.html             #   şehirler arası karşılaştırma sayfası (build_docs_index.py üretir)
+│   ├── turkiye-ilce-yas-verisi-taramasi.md  # 70 şehrin veri kaynağı ve ölçülen OSM kapsamı kaydı
 │   └── <sehir>/                #   index.html + GeoJSON veri dosyaları + manifest.json (bkz. Tekrar üretilebilirlik)
 ├── output/                    # pipeline.py tarafından üretilir, git'e dahil değil
 │   ├── <sehir>_hvi_map.html  #   tamamen çevrimdışı, tek dosyalık harita (çift tıklayıp açılabilir)
@@ -714,12 +722,16 @@ turkiye-heat-risk/
 ├── data/                      # pipeline.py tarafından üretilir, git'e dahil değil
 │   ├── raw/<sehir>/           #   indirilen Landsat bantları, OSM özütü, nüfus CSV'leri (şehir bazlı ayrılır)
 │   └── processed/<sehir>/     #   LST/NDVI mozaikleri, ara GeoJSON'lar (şehir bazlı ayrılır)
-├── CONTRIBUTING.md            # Yeni şehir ekleme adımları
+├── .github/                   # CI (tests.yml), issue ve PR şablonları
+├── CONTRIBUTING.md            # Yeni şehir ekleme adımları (İngilizcesi: CONTRIBUTING.en.md)
+├── CHANGELOG.md / CITATION.cff / CODE_OF_CONDUCT.md
 ├── requirements.txt
-├── requirements-dev.txt       # Test bağımlılıkları (pytest)
+├── constraints.txt            # Birebir tekrar üretim için sabitlenmiş sürümler
+├── requirements-dev.txt       # Geliştirme bağımlılıkları (pytest, ruff)
+├── ruff.toml                  # Lint ayarları (CI'da çalışır)
 ├── Dockerfile / .dockerignore # Tek komutla tekrar üretilebilir çalışma ortamı
 ├── LICENSE                    # MIT
-└── README.md
+└── README.md                  # (İngilizcesi: README.en.md)
 ```
 
 ## Bilinen sınırlamalar
