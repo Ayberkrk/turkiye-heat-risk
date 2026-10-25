@@ -6,6 +6,7 @@ import pytest
 import rasterio
 from rasterio.transform import from_origin
 from shapely.geometry import Polygon, box
+from types import SimpleNamespace
 
 import core.night_lst as night_lst
 from core.cache import write_cache_meta
@@ -133,22 +134,47 @@ def test_fetch_night_lst_cache_requires_current_version_and_respects_force(tmp_p
     out_path = output_dir / "night_lst_2026.tif"
     out_path.write_bytes(b"cached")
     monkeypatch.setattr("core.night_lst.city_data_proc", lambda city_id: output_dir)
-    monkeypatch.setattr(
-        night_lst.pystac_client.Client,
-        "open",
-        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("cache rebuild requested")),
+    item = SimpleNamespace(
+        id="MODIS_2026_001",
+        properties={"datetime": "2026-06-01T00:00:00Z"},
+        assets={"LST_Night_1km": SimpleNamespace(
+            href="https://example.test/night.tif?signature=ignored",
+            extra_fields={"file:checksum": "sha256:abc", "etag": "etag-1"},
+        )},
     )
 
-    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION)
+    class _Search:
+        def items(self):
+            return [item]
+
+    class _Catalog:
+        def search(self, **kwargs):
+            return _Search()
+
+    monkeypatch.setattr(
+        night_lst.pystac_client.Client, "open", lambda *args, **kwargs: _Catalog(),
+    )
+    monkeypatch.setattr(
+        night_lst.rasterio, "open",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("cache rebuild requested")),
+    )
+    fingerprint = night_lst._night_lst_fingerprint(_make_config(), "2026", [item])
+
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION, fingerprint=fingerprint)
     assert fetch_night_lst(_make_config(), "2026") == out_path
 
-    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION - 1)
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION - 1, fingerprint=fingerprint)
     with pytest.raises(RuntimeError, match="cache rebuild requested"):
         fetch_night_lst(_make_config(), "2026")
 
-    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION)
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION, fingerprint=fingerprint)
     with pytest.raises(RuntimeError, match="cache rebuild requested"):
         fetch_night_lst(_make_config(), "2026", force=True)
+
+    changed_config = _make_config()
+    changed_config.bbox = [0.1, 0.0, 1.0, 1.0]
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        fetch_night_lst(changed_config, "2026")
 
 
 def test_neighborhood_night_lst_cache_requires_current_version_and_respects_force(tmp_path, monkeypatch):
@@ -163,19 +189,24 @@ def test_neighborhood_night_lst_cache_requires_current_version_and_respects_forc
         lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("cache rebuild requested")),
     )
 
-    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION)
-    assert compute_neighborhood_night_lst(
-        _make_config(), Path("dummy.pbf"), Path("night_lst.tif"), "2026"
-    ) == out_path
+    config = _make_config()
+    pbf_path = tmp_path / "dummy.pbf"
+    raster_path = tmp_path / "night_lst.tif"
+    pbf_path.write_bytes(b"pbf source")
+    raster_path.write_bytes(b"raster source")
+    fingerprint = night_lst._neighborhood_night_lst_fingerprint(config, pbf_path, raster_path, "2026")
 
-    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION - 1)
-    with pytest.raises(RuntimeError, match="cache rebuild requested"):
-        compute_neighborhood_night_lst(
-            _make_config(), Path("dummy.pbf"), Path("night_lst.tif"), "2026"
-        )
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, fingerprint=fingerprint)
+    assert compute_neighborhood_night_lst(config, pbf_path, raster_path, "2026") == out_path
 
-    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION)
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION - 1, fingerprint=fingerprint)
     with pytest.raises(RuntimeError, match="cache rebuild requested"):
-        compute_neighborhood_night_lst(
-            _make_config(), Path("dummy.pbf"), Path("night_lst.tif"), "2026", force=True
-        )
+        compute_neighborhood_night_lst(config, pbf_path, raster_path, "2026")
+
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, fingerprint=fingerprint)
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        compute_neighborhood_night_lst(config, pbf_path, raster_path, "2026", force=True)
+
+    pbf_path.write_bytes(b"changed PBF source")
+    with pytest.raises(RuntimeError, match="cache rebuild requested"):
+        compute_neighborhood_night_lst(config, pbf_path, raster_path, "2026")

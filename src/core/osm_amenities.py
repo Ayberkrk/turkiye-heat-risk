@@ -19,6 +19,21 @@ import pandas as pd
 from core.city_config import CityConfig
 
 HEALTH_AMENITIES = {"hospital", "clinic", "pharmacy", "doctors"}
+# Keep the OSM facility classes distinct in output diagnostics. `doctors` is
+# not silently treated as a clinic, even though both are outpatient services.
+HEALTH_AMENITY_GROUPS = {
+    "hastane": {"hospital"},
+    "klinik": {"clinic"},
+    "doktor": {"doctors"},
+    "eczane": {"pharmacy"},
+}
+_HEALTHCARE_TO_AMENITY = {
+    "hospital": "hospital",
+    "clinic": "clinic",
+    "doctor": "doctors",
+    "doctors": "doctors",
+    "pharmacy": "pharmacy",
+}
 GREEN_LEISURE = {"park", "garden", "nature_reserve"}
 GREEN_LANDUSE = {"forest", "grass", "meadow", "recreation_ground"}
 
@@ -34,30 +49,57 @@ def _other_tags_get(other_tags: object, key: str) -> str | None:
     return None
 
 
+def _health_amenity(amenity: object, healthcare: object) -> str | None:
+    """Normalize supported amenity=* and healthcare=* tags to one class."""
+    if isinstance(amenity, str) and amenity in HEALTH_AMENITIES:
+        return amenity
+    if isinstance(healthcare, str):
+        return _HEALTHCARE_TO_AMENITY.get(healthcare)
+    return None
+
+
 def load_health_points(config: CityConfig, pbf_path) -> gpd.GeoDataFrame:
-    """Hastane/klinik/eczane/doktor noktalarını ve poligonlarını tek katmanda birleştirir."""
+    """Hastane/klinik/eczane/doktor noktalarını ve ayak izlerini birleştirir.
+
+    Point facilities stay points and mapped facility polygons stay polygons.
+    Nearest-distance queries can measure to either geometry; replacing a
+    polygon by its centroid overstates access distance for large facilities.
+    """
     west, south, east, north = config.bbox
     bbox = (west, south, east, north)
 
     points = gpd.read_file(pbf_path, layer="points", bbox=bbox)
-    if "other_tags" in points.columns:
-        points = points.copy()
-        points["amenity"] = points["other_tags"].apply(lambda t: _other_tags_get(t, "amenity"))
-    else:
-        points["amenity"] = None
+    points = points.copy()
+    amenity_tags = points["amenity"] if "amenity" in points.columns else pd.Series(None, index=points.index)
+    healthcare_tags = (
+        points["healthcare"] if "healthcare" in points.columns
+        else points.get("other_tags", pd.Series(None, index=points.index)).apply(
+            lambda tags: _other_tags_get(tags, "healthcare")
+        )
+    )
+    if "other_tags" in points.columns and "amenity" not in points.columns:
+        amenity_tags = points["other_tags"].apply(lambda tags: _other_tags_get(tags, "amenity"))
+    points["amenity"] = [
+        _health_amenity(amenity, healthcare)
+        for amenity, healthcare in zip(amenity_tags, healthcare_tags)
+    ]
     health_points = points[points["amenity"].isin(HEALTH_AMENITIES)][["geometry", "amenity"]]
 
-    polys = gpd.read_file(pbf_path, layer="multipolygons", bbox=bbox, columns=["amenity", "geometry"])
-    health_polys = polys[polys["amenity"].isin(HEALTH_AMENITIES)][["geometry", "amenity"]].copy()
-    # Centroid coğrafi CRS'te (derece) değil, önce projeksiyonlu config.crs'e
-    # geçilip orada hesaplanmalı - aksi halde büyük/dışbükey olmayan
-    # poligonlarda merkez sistematik olarak kayar (bkz. hvi.py'deki yol
-    # centroid'i, aynı desen). Sonda tekrar orijinal (coğrafi) CRS'e
-    # dönülüyor - _nearest_distance_m()'in beklediği targets_wgs84
-    # sözleşmesi bozulmasın diye.
-    original_crs = health_polys.crs
-    health_polys["geometry"] = health_polys.to_crs(config.crs).geometry.centroid.to_crs(original_crs)
-
+    polys = gpd.read_file(
+        pbf_path, layer="multipolygons", bbox=bbox, columns=["amenity", "other_tags", "geometry"]
+    ).copy()
+    amenity_tags = polys["amenity"] if "amenity" in polys.columns else pd.Series(None, index=polys.index)
+    healthcare_tags = (
+        polys["healthcare"] if "healthcare" in polys.columns
+        else polys.get("other_tags", pd.Series(None, index=polys.index)).apply(
+            lambda tags: _other_tags_get(tags, "healthcare")
+        )
+    )
+    polys["amenity"] = [
+        _health_amenity(amenity, healthcare)
+        for amenity, healthcare in zip(amenity_tags, healthcare_tags)
+    ]
+    health_polys = polys[polys["amenity"].isin(HEALTH_AMENITIES)][["geometry", "amenity"]]
     combined = pd.concat([health_points, health_polys], ignore_index=True)
     return gpd.GeoDataFrame(combined, geometry="geometry", crs=points.crs)
 

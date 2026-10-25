@@ -24,12 +24,13 @@ combined by geometric mean, so each group carries one third of the index
 regardless of how many components it holds. Categories use Jenks natural
 breaks shared across years. Live maps:
 <https://ayberkrk.github.io/turkiye-heat-risk/>. The index is a
-prioritisation tool; it has not been validated against health outcomes. The architecture is city-agnostic -
-`src/core/` never changes when a new city is added; 70 cities are supported
-today (Izmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana and 64 more, listed
-with their data sources and measured OSM coverage in
-[the register](docs/turkiye-ilce-yas-verisi-taramasi.md); see
-[CONTRIBUTING.md](CONTRIBUTING.md) to add another). Cities that cover a single
+prioritisation tool; it has not been validated against health outcomes. The
+architecture is city-agnostic: `src/core/` does not change when a city is
+added. City configurations are registered for 70 cities (including Izmir,
+Eskişehir, Şanlıurfa, Antalya, Mersin and Adana); measured OSM coverage and
+published maps vary by city, as documented in
+[the register](docs/turkiye-ilce-yas-verisi-taramasi.md). See
+[CONTRIBUTING.md](CONTRIBUTING.md) to add another city. Cities that cover a single
 district have constant demographic components, so their maps show heat and
 green cover, not demographic vulnerability.
 
@@ -50,9 +51,9 @@ Turkish original (this file) is the reference.
 Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
 Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
 birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; şu an 70 şehir destekleniyor (İzmir, Eskişehir, Şanlıurfa,
-Antalya, Mersin, Adana ve 64 şehir daha; kaynakları ve gerçek OSM ile ölçülen
-kapsamları [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
+mimariye sahiptir; 70 şehir kaydı tanımlıdır (İzmir, Eskişehir, Şanlıurfa,
+Antalya, Mersin, Adana ve 64 şehir daha; kaynakları, OSM kapsam ölçümleri ve
+yayın durumu [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
 Yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
 mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
 
@@ -159,6 +160,37 @@ python pipeline.py --city <sehir> --years <yıllar>
 geçerli olduğunu, `crs`'in metre cinsinden ve bbox merkezinin UTM dilimiyle
 uyumlu olduğunu, adapter'ın import edilebildiğini ve veri kaynağı
 URL'lerinin erişilebilir olduğunu indirmeden önce kontrol eder.
+Kaynak URL'lerine erişilemeyen ortamlarda `--offline` ile yalnızca yerel
+config/adapter denetimini yapabilir; mevcut bir OSM özütünü ağ isteği olmadan
+ölçmek için `python validate_city.py <şehir> --offline --osm-coverage`
+kullanabilirsin. CKAN adapter'ları bunun için `load_cached_population_data`
+kancasını sağlar; gerekli önbellek dosyaları yoksa komut ağ bağlantısı
+denemeden açık hata verir. `--min-coverage` eşiği 0 ile 1 arasında olmalıdır.
+
+OSM URL'i güncel bir PBF özütüne (ör. `*-latest.osm.pbf`) işaret edebilir;
+normal çalıştırma daha önce indirilen özütü yeniden kullanır. Kaynağı yenileyip
+yol/HVI katmanlarını yeniden hesaplamak için `pipeline.py` komutuna
+`--refresh-osm` ekle. Yeni dosya indirme tamamlanınca mevcut özütün yerini alır.
+CKAN gibi önbelleğe alınan demografi verisini yenilemek için `--refresh-population`
+kullan; bu seçenek `refresh_population_data(config)` kancasını sağlayan
+adapter'larda etkilidir (İzmir bunu destekler). Depodaki sabit CSV kullanan
+adapter'lar yerel tabloları kullanmaya devam eder.
+
+Depodaki 70 şehir kaydı, 70 şehrin de OSM kapsamının ölçüldüğü veya
+haritasının yayınlandığı anlamına gelmez. Tüm şehir config'lerini ve depoya
+ekli nüfus/SEGE tablolarının yapısını ağ isteği yapmadan denetlemek için:
+
+```bash
+python validate_city_data.py --all
+python validate_city_data.py izmir --json
+```
+
+Rapor; yapılandırma/adapter/tablo bütünlüğünü, Pages haritasının güncel,
+sürüm bilgisi olmayan veya henüz yayınlanmamış oluşunu ayrı ayrı gösterir.
+Bu offline denetim kaynak değerlerini asıl TÜİK/belediye/SEGE yayınıyla
+karşılaştırmaz ve OSM kapsamını ölçmez; rapor bu iki durumu açıkça
+"doğrulanmadı/ölçülmedi" olarak tutar. Gerçek yol kapsamı için
+`validate_city.py <şehir> --osm-coverage` ve yerel OSM özütü gerekir.
 
 **4. HVI bileşenlerini değiştir**
 `src/core/hvi.py` içindeki `COMPONENT_GROUPS` hangi bileşenin hangi gruba
@@ -255,9 +287,17 @@ HVI        = geometrik_ortalama(Tehlike, Maruziyet, Kırılganlık) × 100
 | Kırılganlık | Yaşlı oranı | 65+ nüfus oranı (ilçe) | Şehir adapter'ı |
 | Kırılganlık | Çocuk oranı | 0-14 nüfus oranı (ilçe) | Şehir adapter'ı |
 | Kırılganlık | Sosyoekonomik gelişmişlik | İlçe bazlı SEGE-2022 skorunun tersi | T.C. Sanayi ve Teknoloji Bakanlığı, resmi SEGE-2022 raporu |
-| Kırılganlık | Sağlık erişimi | En yakın hastane/klinik/eczaneye uzaklık | OSM (`amenity=hospital/clinic/pharmacy`) |
+| Kırılganlık | Sağlık erişimi | En yakın haritalı hastane/klinik/doktor/eczane geometrisine uzaklık | OSM ([`amenity=*` ve `healthcare=*`](https://wiki.openstreetmap.org/wiki/Healthcare); GDAL [`other_tags`](https://gdal.org/en/stable/drivers/vector/osm.html)) |
 | Kırılganlık | Yeşil alan erişimi | En yakın park/orman/çayır poligonuna uzaklık | OSM (`leisure=park`, `landuse=forest` vb.) |
 | Kırılganlık | Ağaç örtüsü | Yol tamponundaki ortalama NDVI'nin tersi | Landsat NDVI |
+
+Sağlık erişimi, OSM'de haritalanmış tesis noktası veya poligonuna olan
+projeksiyonlu düz çizgi mesafesidir. Tesis kapasitesini, çalışma saatini,
+erişilebilirliğini, girişini ya da yürüme ağı üzerindeki seyahat süresini
+ölçmez; dört tesis sınıfının mesafeleri harita açıklamasında ayrı gösterilir.
+Üretilen `docs/<şehir>/manifest.json`, bu ölçüm yöntemini ve sağlık sonucu,
+OSM kapsamı ya da kaynak değerleri doğrulamasının pipeline tarafından
+yapılmadığını da makinece okunabilir olarak kaydeder.
 
 **Neden gruplu?** v1.x'te dokuz bileşenin düz geometrik ortalaması
 alınıyordu. Orada bileşen sayısı gizli bir ağırlıktı: yedi kırılganlık
@@ -677,6 +717,7 @@ turkiye-heat-risk/
 ├── pipeline.py               # Tek üst seviye giriş noktası: python pipeline.py --city izmir
 ├── analyze_pipeline.py       # Çok yıllı hava/duyarlılık/what-if analiz paketi
 ├── validate_city.py           # Yeni bir şehir config.yaml'ını hızlıca doğrular
+├── validate_city_data.py      # Tüm şehir kayıtları için çevrimdışı kalite/kapsam raporu
 ├── build_docs_index.py        # docs/ altındaki şehirler için karşılaştırma sayfası üretir
 ├── tools/
 │   └── fit_city_bbox.py       # Yeni şehir için bbox'ı yoğun mahalle kümesinden çizer, OSM kapsamını ölçer

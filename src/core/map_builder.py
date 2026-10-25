@@ -19,14 +19,17 @@ riski neden yüksek?" sorusuna doğrudan haritadan cevap bulabilir.
 from __future__ import annotations
 
 import json
+import math
 import re
 from datetime import UTC, datetime
+from html import escape
 from pathlib import Path
 from typing import Any
 
 import folium
 import geopandas as gpd
 
+from core.cache import atomic_output_path
 from core.city_config import CityConfig
 from core.hvi import CATEGORY_COLORS_5, CATEGORY_ORDER_5, HVI_FORMULA_VERSION, bucket_5
 from core.paths import DOCS_DIR, OUTPUT_DIR, city_data_proc, year_paths
@@ -43,12 +46,30 @@ _COMPONENT_LABELS = [
     ("_label_cocuk", "Çocuk nüfus oranı"),
     ("_label_sosyoekonomik", "Sosyoekonomik gelişmişlik"),  # bazı şehirlerde yok - sütun yoksa atlanır
 ]
+_HEALTH_DISTANCE_COLUMNS = [
+    ("dist_saglik_hastane_m", "En yakın haritalı hastane"),
+    ("dist_saglik_klinik_m", "En yakın haritalı klinik"),
+    ("dist_saglik_doktor_m", "En yakın haritalı doktor"),
+    ("dist_saglik_eczane_m", "En yakın haritalı eczane"),
+]
 
 # GeoJSON'a yazılan koordinatların ondalık hassasiyeti. 5 basamak ~1.1 m'ye
 # denk gelir - yol ölçeğinde bir görselleştirme için gereğinden fazla bile;
 # ham Landsat/OSM verisi genelde 10+ basamak taşır, bu da dosya boyutunun
 # önemli bir kısmını gereksiz yere şişirir.
 COORD_PRECISION = 5
+
+
+def _write_text_atomic(path: Path, text: str) -> None:
+    with atomic_output_path(path) as temporary:
+        temporary.write_text(text, encoding="utf-8")
+
+
+def _escape_tooltip_text(value: Any) -> str:
+    """Escape external text before Folium inserts tooltip values as innerHTML."""
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return ""
+    return escape(str(value), quote=True)
 
 
 def swatch(hex_color: str) -> str:
@@ -82,12 +103,21 @@ def _build_explanation_column(roads: gpd.GeoDataFrame, year: str) -> None:
     # bir şehir) tooltip'te "Veri yok" satırı olarak görünmemeli, hiç
     # görünmemeli - mevcut sütunlar bir kez baştan belirlenir.
     present = [(col, label) for col, label in _COMPONENT_LABELS if col in roads.columns]
+    health_distances = [(col, label) for col, label in _HEALTH_DISTANCE_COLUMNS if col in roads.columns]
 
     def row_text(row) -> str:
-        pieces = [f"Sıcaklık: {row.get(f'_label_sicaklik_{year}', 'Veri yok')}",
-                  f"Ağaç örtüsü: {row.get(f'_label_agac_{year}', 'Veri yok')}"]
+        pieces = [f"Sıcaklık: {_escape_tooltip_text(row.get(f'_label_sicaklik_{year}', 'Veri yok'))}",
+                  f"Ağaç örtüsü: {_escape_tooltip_text(row.get(f'_label_agac_{year}', 'Veri yok'))}"]
         for col, label in present:
-            pieces.append(f"{label}: {row[col]}")
+            pieces.append(f"{label}: {_escape_tooltip_text(row[col])}")
+        for col, label in health_distances:
+            value = row[col]
+            try:
+                distance = float(value)
+            except (TypeError, ValueError):
+                distance = math.nan
+            display = f"{distance:,.0f} m" if math.isfinite(distance) else "OSM verisi yok"
+            pieces.append(f"{label}: {display}")
         # Tooltip hücresi innerHTML olarak basılıyor (bkz. folium'un ürettiği
         # `handleObject`), bu yüzden gerçek <br> satır sonu üretir - tek
         # satırlık " · " ile ayrılmış bir metin duvarı yerine her bileşen
@@ -125,7 +155,7 @@ def _write_city_stats(config: CityConfig, roads: gpd.GeoDataFrame, years: list[s
     }
     docs_dir = DOCS_DIR / config.city_id
     docs_dir.mkdir(parents=True, exist_ok=True)
-    (docs_dir / "stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=2))
+    _write_text_atomic(docs_dir / "stats.json", json.dumps(stats, ensure_ascii=False, indent=2))
 
 
 def _prepare_layers(roads: gpd.GeoDataFrame, years: list[str]):
@@ -135,15 +165,17 @@ def _prepare_layers(roads: gpd.GeoDataFrame, years: list[str]):
             lambda v: f"%{v:.0f}" if v == v else "Veri yok"
         )
         _build_explanation_column(roads, year)
-    roads["_mahalle_str"] = roads["mahalle_adi"].fillna("Bilinmiyor")
+    roads["_name_tooltip"] = roads["name"].map(_escape_tooltip_text)
+    roads["_mahalle_str"] = roads["mahalle_adi"].fillna("Bilinmiyor").map(_escape_tooltip_text)
 
     data_by_year: dict[str, dict[str, dict]] = {y: {} for y in years}
     for cat in CATEGORY_ORDER_5:
         for year in years:
             year_subset = roads[roads[f"hvi_category_{year}"] == cat]
-            year_cols = ["geometry", "name", "_mahalle_str", f"_hvi_str_{year}", f"_aciklama_str_{year}"]
+            year_cols = ["geometry", "_name_tooltip", "_mahalle_str", f"_hvi_str_{year}", f"_aciklama_str_{year}"]
             year_data = year_subset[year_cols].rename(
-                columns={f"_hvi_str_{year}": "_hvi_str", f"_aciklama_str_{year}": "_aciklama_str"}
+                columns={"_name_tooltip": "name", f"_hvi_str_{year}": "_hvi_str",
+                         f"_aciklama_str_{year}": "_aciklama_str"}
             )
             data_by_year[year][cat] = _round_coords(year_data.__geo_interface__)
     return data_by_year
@@ -204,9 +236,10 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
         # Katman haritaya show=False ile eklendiği için görünmez; sadece
         # GeoJsonTooltip'in boş veriyle patlamasını önlemek için 1 örnek
         # geometri ile başlatılıyor.
-        placeholder_cols = ["geometry", "name", "_mahalle_str", f"_hvi_str_{default_year}", f"_aciklama_str_{default_year}"]
+        placeholder_cols = ["geometry", "_name_tooltip", "_mahalle_str", f"_hvi_str_{default_year}", f"_aciklama_str_{default_year}"]
         placeholder = default_subset.iloc[:1][placeholder_cols].rename(
-            columns={f"_hvi_str_{default_year}": "_hvi_str", f"_aciklama_str_{default_year}": "_aciklama_str"}
+            columns={"_name_tooltip": "name", f"_hvi_str_{default_year}": "_hvi_str",
+                     f"_aciklama_str_{default_year}": "_aciklama_str"}
         )
 
         geo = folium.GeoJson(
@@ -232,7 +265,8 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
             color = NIGHT_LST_COLORS[label]
             temp_range = f"{subset['gece_lst_c'].min():.1f}-{subset['gece_lst_c'].max():.1f}°C"
             group = folium.FeatureGroup(name=swatch(color) + f"Gece: {label} ({temp_range})", show=False)
-            placeholder = subset.iloc[:1][["geometry", "mahalle_adi", "_gece_lst_str"]]
+            placeholder = subset.iloc[:1][["geometry", "mahalle_adi", "_gece_lst_str"]].copy()
+            placeholder["mahalle_adi"] = placeholder["mahalle_adi"].map(_escape_tooltip_text)
             geo = folium.GeoJson(
                 placeholder.__geo_interface__,
                 style_function=lambda feat, c=color: {"fillColor": c, "color": "#555", "weight": 0.5, "fillOpacity": 0.6},
@@ -281,12 +315,15 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
     # kaynağını hardcode etmemeli, config.yaml'daki `city.attribution`
     # anahtarından okunur (yoksa satır tamamen atlanır).
     attribution = config.raw.get("city", {}).get("attribution")
-    attribution_html = f"{attribution}<br>" if attribution else ""
+    attribution_html = f"{escape(str(attribution))}<br>" if attribution else ""
 
     legend_rows = "".join(
         f"{swatch(CATEGORY_COLORS_5[cat])}{category_labels[cat]}<br>" for cat in CATEGORY_ORDER_5
     )
-    year_options = "".join(f"<option value='{y}'>{y}</option>" for y in sorted(years, reverse=True))
+    year_options = "".join(
+        f"<option value='{escape(str(y), quote=True)}'>{escape(str(y))}</option>"
+        for y in sorted(years, reverse=True)
+    )
     control_html = f"""
     <div id='hviPanel' style='position: fixed; bottom: 30px; left: 30px; z-index: 1000;
         background: rgba(20,20,20,0.9); color: white; padding: 14px 18px;
@@ -315,7 +352,7 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
         <small>Bir yola tıklayınca/üzerine gelince skoru oluşturan tüm
         bileşenler görünür.<br>
         {attribution_html}
-        Alan: {config.name} (metro alanı)</small>
+        Alan: {escape(config.name)} (metro alanı)</small>
         </div>
     </div>
     """
@@ -338,9 +375,10 @@ def _prepare_night_data(night_gdf: gpd.GeoDataFrame | None) -> dict[str, dict]:
         return {}
     result = {}
     for label in NIGHT_LST_LABELS:
-        subset = night_gdf[night_gdf["_gece_bin"] == label][["geometry", "mahalle_adi", "_gece_lst_str"]]
+        subset = night_gdf[night_gdf["_gece_bin"] == label][["geometry", "mahalle_adi", "_gece_lst_str"]].copy()
         if len(subset) == 0:
             continue
+        subset["mahalle_adi"] = subset["mahalle_adi"].map(_escape_tooltip_text)
         result[label] = _round_coords(subset.__geo_interface__)
     return result
 
@@ -424,7 +462,8 @@ def _write_embedded(config: CityConfig, m: folium.Map, geojson_vars: dict, group
     m.get_root().html.add_child(folium.Element(lazy_load_html))
 
     OUTPUT_DIR.mkdir(exist_ok=True)
-    m.save(str(output_html))
+    with atomic_output_path(output_html) as temporary:
+        m.save(str(temporary))
     print(f"Kaydedildi (çevrimdışı, tek dosya): {output_html} ({output_html.stat().st_size / 1e6:.1f} MB)")
     return output_html
 
@@ -444,14 +483,14 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
     for year in years:
         for cat, geo in data_by_year[year].items():
             filename = f"{_slugify(cat)}_{year}.geojson"
-            (data_dir / filename).write_text(json.dumps(geo, ensure_ascii=False))
+            _write_text_atomic(data_dir / filename, json.dumps(geo, ensure_ascii=False))
             file_map[year][cat] = f"data/{filename}"
 
     # Gece LST katmanı yıl seçiciye bağlı değil - kendi küçük dosyaları var.
     night_file_map = {}
     for label, geo in night_data.items():
         filename = f"gece-{_slugify(label)}.geojson"
-        (data_dir / filename).write_text(json.dumps(geo, ensure_ascii=False))
+        _write_text_atomic(data_dir / filename, json.dumps(geo, ensure_ascii=False))
         night_file_map[label] = f"data/{filename}"
 
     output_html = docs_dir / "index.html"
@@ -550,7 +589,8 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
     </script>
     """
     m.get_root().html.add_child(folium.Element(fetch_load_html))
-    m.save(str(output_html))
+    with atomic_output_path(output_html) as temporary:
+        m.save(str(temporary))
     data_size = sum(f.stat().st_size for f in data_dir.glob("*.geojson"))
     print(f"Kaydedildi (barındırma için, fetch tabanlı): {output_html} "
           f"(sayfa {output_html.stat().st_size / 1e3:.0f} KB + veri {data_size / 1e6:.1f} MB, talep üzerine)")
@@ -618,6 +658,20 @@ def _build_manifest(config: CityConfig, years: list[str], default_year: str,
             "mosaic_version": MOSAIC_VERSION,
             "scene_fetch_version": SCENE_FETCH_VERSION,
         },
+        "health_access": {
+            "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+            "facility_classes": ["hospital", "clinic", "doctor", "pharmacy"],
+            "limitations": [
+                "osm_mapping_completeness_not_measured",
+                "facility_capacity_and_opening_hours_not_modeled",
+                "entrances_and_walking_network_travel_time_not_modeled",
+            ],
+        },
+        "validation": {
+            "source_values": "not_independently_verified_by_pipeline",
+            "osm_coverage": "not_measured_by_pipeline",
+            "health_outcomes": "not_validated",
+        },
         "night_lst_requested": night_lst_requested,
     }
 
@@ -627,11 +681,11 @@ def _write_manifest(config: CityConfig, manifest: dict) -> None:
     payload = json.dumps(manifest, ensure_ascii=False, indent=2)
 
     OUTPUT_DIR.mkdir(exist_ok=True)
-    (OUTPUT_DIR / f"{config.city_id}_hvi_manifest.json").write_text(payload)
+    _write_text_atomic(OUTPUT_DIR / f"{config.city_id}_hvi_manifest.json", payload)
 
     docs_dir = DOCS_DIR / config.city_id
     docs_dir.mkdir(parents=True, exist_ok=True)
-    (docs_dir / "manifest.json").write_text(payload)
+    _write_text_atomic(docs_dir / "manifest.json", payload)
 
 
 def build_hvi_map(config: CityConfig, years: list[str], default_year: str,

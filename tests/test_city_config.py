@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from core.city_config import CITIES_DIR, validate_config_dict
+from core.city_config import CITIES_DIR, load_city_config, validate_config_dict
 
 VALID_CONFIG = {
     "city": {"name": "Test Şehir", "bbox": [27.0, 38.0, 27.5, 38.5], "crs": "EPSG:32635"},
@@ -17,6 +17,12 @@ VALID_CONFIG = {
 
 def test_valid_config_has_no_errors():
     assert validate_config_dict(VALID_CONFIG) == []
+
+
+@pytest.mark.parametrize("city_id", ["../outside", "/tmp/outside", "izmir/../../outside", "", None])
+def test_load_city_config_rejects_path_traversal_and_invalid_ids(city_id):
+    with pytest.raises(ValueError, match="Geçersiz şehir kimliği"):
+        load_city_config(city_id)
 
 
 def test_missing_top_level_key_is_reported():
@@ -58,10 +64,17 @@ def test_invalid_crs_is_rejected(bad_crs):
     assert any("crs" in e for e in errors)
 
 
-def test_valid_utm_crs_is_accepted():
-    good_crs = "EPSG:32635"
+@pytest.mark.parametrize("good_crs", ["EPSG:32635", "EPSG:3857"])
+def test_valid_projected_crs_is_accepted(good_crs):
     cfg = {**VALID_CONFIG, "city": {**VALID_CONFIG["city"], "crs": good_crs}}
     assert validate_config_dict(cfg) == []
+
+
+@pytest.mark.parametrize("bad_crs", ["EPSG:4326", "EPSG:2263"])
+def test_geographic_or_non_metric_crs_is_rejected(bad_crs):
+    cfg = {**VALID_CONFIG, "city": {**VALID_CONFIG["city"], "crs": bad_crs}}
+    errors = validate_config_dict(cfg)
+    assert any("city.crs" in error and "metre" in error for error in errors)
 
 
 def test_geographic_crs_is_rejected():

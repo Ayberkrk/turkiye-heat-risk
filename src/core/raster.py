@@ -7,6 +7,7 @@ kalibrasyonu her yerde aynıdır.
 from __future__ import annotations
 
 import gc
+import hashlib
 import json
 import warnings
 from collections import defaultdict
@@ -19,7 +20,7 @@ from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling, calculate_default_transform, reproject, transform_bounds
 from rasterio.windows import from_bounds as window_from_bounds
 
-from core.cache import is_cache_valid, write_cache_meta
+from core.cache import atomic_output_path, file_signature, is_cache_valid, write_cache_meta
 from core.city_config import CityConfig
 from core.paths import year_paths
 
@@ -30,7 +31,7 @@ from core.paths import year_paths
 # sonraki `pipeline.py` çalıştırmasında yeniden indirilip hesaplanırlar.
 # 2: aynı karonun sahneleri kompozitlenmeden önce ortak ızgaraya hizalanıyor
 # ve yalnızca şehir bbox'ı okunuyor (bkz. tile_grid).
-MOSAIC_VERSION = 2
+MOSAIC_VERSION = 3
 
 # Karo ızgarası şehir bbox'ından bu kadar geniş tutulur: bbox kenarındaki
 # yolların tamponu (en fazla 50 m, bkz. core/impact_analysis.py) ve yeniden
@@ -224,8 +225,9 @@ def save_geotiff(array: np.ndarray, output_path: Path, profile: dict, nodata_val
     out_profile = profile.copy()
     out_profile.update({"dtype": "float32", "count": 1, "nodata": nodata_val, "compress": "lzw"})
     arr_to_save = np.where(np.isnan(array), nodata_val, array).astype(np.float32)
-    with rasterio.open(output_path, "w", **out_profile) as dst:
-        dst.write(arr_to_save, 1)
+    with atomic_output_path(output_path) as temporary:
+        with rasterio.open(temporary, "w", **out_profile) as dst:
+            dst.write(arr_to_save, 1)
     del arr_to_save
 
 
@@ -253,14 +255,15 @@ def reproject_to_crs(src_path: Path, dst_path: Path, dst_crs: str, nodata_val: f
         out_profile = src.profile.copy()
         out_profile.update({"crs": dst_crs, "transform": transform, "width": width,
                              "height": height, "nodata": nodata_val})
-        with rasterio.open(dst_path, "w", **out_profile) as dst:
-            reproject(
-                source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
-                src_transform=src.transform, src_crs=src.crs,
-                dst_transform=transform, dst_crs=dst_crs,
-                src_nodata=src.nodata, dst_nodata=nodata_val,
-                resampling=Resampling.bilinear,
-            )
+        with atomic_output_path(dst_path) as temporary:
+            with rasterio.open(temporary, "w", **out_profile) as dst:
+                reproject(
+                    source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
+                    src_transform=src.transform, src_crs=src.crs,
+                    dst_transform=transform, dst_crs=dst_crs,
+                    src_nodata=src.nodata, dst_nodata=nodata_val,
+                    resampling=Resampling.bilinear,
+                )
 
 
 def build_output_profile(temp_paths: list[Path]) -> dict:
@@ -300,23 +303,24 @@ def stream_mosaic(temp_paths: list[Path], out_path: Path, out_profile: dict) -> 
     """
     nodata_val = out_profile["nodata"]
 
-    with rasterio.open(out_path, "w", **out_profile) as dst:
-        fill_row = np.full(out_profile["width"], nodata_val, dtype=np.float32)
-        for row in range(out_profile["height"]):
-            dst.write(fill_row.reshape(1, -1), 1, window=((row, row + 1), (0, out_profile["width"])))
-        del fill_row
+    with atomic_output_path(out_path) as temporary:
+        with rasterio.open(temporary, "w", **out_profile) as dst:
+            fill_row = np.full(out_profile["width"], nodata_val, dtype=np.float32)
+            for row in range(out_profile["height"]):
+                dst.write(fill_row.reshape(1, -1), 1, window=((row, row + 1), (0, out_profile["width"])))
+            del fill_row
 
-    with rasterio.open(out_path, "r+") as dst:
-        for p in temp_paths:
-            with rasterio.open(p) as src:
-                data = src.read(1)
-                window = window_from_bounds(*src.bounds, transform=out_profile["transform"])
-                window = window.round_offsets().round_lengths()
-                existing = dst.read(1, window=window)
-                merged = np.where(data != nodata_val, data, existing)
-                dst.write(merged, 1, window=window)
-                del data, existing, merged
-            gc.collect()
+        with rasterio.open(temporary, "r+") as dst:
+            for p in temp_paths:
+                with rasterio.open(p) as src:
+                    data = src.read(1)
+                    window = window_from_bounds(*src.bounds, transform=out_profile["transform"])
+                    window = window.round_offsets().round_lengths()
+                    existing = dst.read(1, window=window)
+                    merged = np.where(data != nodata_val, data, existing)
+                    dst.write(merged, 1, window=window)
+                    del data, existing, merged
+                gc.collect()
 
 
 def build_lst_ndvi_mosaic(config: CityConfig, year: str, main_year: str, force: bool = False) -> tuple[Path, Path]:
@@ -335,7 +339,28 @@ def build_lst_ndvi_mosaic(config: CityConfig, year: str, main_year: str, force: 
     lst_path = data_proc / "lst_celsius.tif"
     ndvi_path = data_proc / "ndvi.tif"
 
-    if is_cache_valid(lst_path, MOSAIC_VERSION, force=force) and ndvi_path.exists():
+    metadata_path = data_raw / "scene_metadata.json"
+    if not metadata_path.exists():
+        raise FileNotFoundError(f"Landsat sahne metadata dosyası bulunamadı: {metadata_path}")
+    metadata_hash = hashlib.sha256(metadata_path.read_bytes()).hexdigest()
+    scene_records = json.loads(metadata_path.read_text(encoding="utf-8"))["scenes"]
+    source_bands = []
+    for scene in scene_records:
+        scene_dir = data_raw / scene["folder"]
+        for name in ("band10_thermal.tif", "band4_red.tif", "band5_nir.tif", "band_qa_pixel.tif"):
+            source_bands.append(file_signature(scene_dir / name))
+    fingerprint = {
+        "city_id": config.city_id,
+        "year": str(year),
+        "bbox": config.bbox,
+        "crs": config.crs,
+        "max_scenes_per_tile": config.max_scenes_per_tile,
+        "scene_metadata_sha256": metadata_hash,
+        "source_bands": source_bands,
+    }
+
+    if (is_cache_valid(lst_path, MOSAIC_VERSION, force=force, fingerprint=fingerprint)
+            and is_cache_valid(ndvi_path, MOSAIC_VERSION, force=force, fingerprint=fingerprint)):
         print(f"[{year}] mozaik zaten mevcut, atlanıyor")
         return lst_path, ndvi_path
 
@@ -406,6 +431,7 @@ def build_lst_ndvi_mosaic(config: CityConfig, year: str, main_year: str, force: 
     print(f"[{year}] mozaikleniyor: {out_profile['width']}x{out_profile['height']} piksel")
     stream_mosaic(lst_temp_paths, lst_path, out_profile)
     stream_mosaic(ndvi_temp_paths, ndvi_path, out_profile)
-    write_cache_meta(lst_path, MOSAIC_VERSION)
+    write_cache_meta(lst_path, MOSAIC_VERSION, fingerprint=fingerprint)
+    write_cache_meta(ndvi_path, MOSAIC_VERSION, fingerprint=fingerprint)
 
     return lst_path, ndvi_path

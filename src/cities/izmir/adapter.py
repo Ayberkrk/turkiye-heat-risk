@@ -32,12 +32,14 @@ Her yeni şehir bu arayüzü uygulamalıdır (bkz. CONTRIBUTING.md):
 from __future__ import annotations
 
 import re
+from io import BytesIO
 from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
 import requests
 
+from core.cache import atomic_output_path
 from core.city_config import CityConfig
 from core.paths import city_data_raw
 from core.text_utils import normalize_name
@@ -58,7 +60,8 @@ def ckan_csv_url(ckan_base: str, package_id: str) -> str:
     raise ValueError(f"{package_id} için CSV kaynağı bulunamadı")
 
 
-def fetch_population_data(config: CityConfig) -> dict[str, Path]:
+def fetch_population_data(config: CityConfig, refresh: bool = False) -> dict[str, Path]:
+    """Fetch cached CKAN CSVs, or replace them when ``refresh`` is true."""
     pop_cfg = config.raw["population"]
     ckan_base = pop_cfg["ckan_base"]
     datasets = pop_cfg["datasets"]
@@ -67,10 +70,11 @@ def fetch_population_data(config: CityConfig) -> dict[str, Path]:
     pop_dir.mkdir(parents=True, exist_ok=True)
 
     local_paths = {}
+    pending_contents: dict[str, bytes] = {}
     for key, package_id in datasets.items():
         local_path = pop_dir / f"{key}.csv"
         local_paths[key] = local_path
-        if local_path.exists():
+        if local_path.exists() and not refresh:
             continue
         url = ckan_csv_url(ckan_base, package_id)
         r = requests.get(url, timeout=CKAN_REQUEST_TIMEOUT_SECONDS)
@@ -81,8 +85,39 @@ def fetch_population_data(config: CityConfig) -> dict[str, Path]:
         head = r.content.lstrip()[:200].lower()
         if len(r.content) < 10 or head.startswith(b"<"):
             raise ValueError(f"{package_id} CSV kaynağı boş/şüpheli görünüyor (CSV değil, HTML olabilir): {url}")
-        local_path.write_bytes(r.content)
+        try:
+            preview = pd.read_csv(BytesIO(r.content), sep=";", encoding="utf-8", nrows=1)
+        except (UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError) as error:
+            raise ValueError(f"{package_id} yanıtı beklenen UTF-8 noktalı virgül CSV'si değil: {url}") from error
+        if len(preview.columns) < 2 or preview.empty:
+            raise ValueError(f"{package_id} CSV başlığı/satırları eksik veya ayraç biçimi yanlış: {url}")
+        pending_contents[key] = r.content
+
+    # Download and validate every dataset before replacing any cache file. A
+    # failed later request must not leave the city with mixed data vintages.
+    for key, content in pending_contents.items():
+        with atomic_output_path(local_paths[key]) as temporary:
+            temporary.write_bytes(content)
     return local_paths
+
+
+def refresh_population_data(config: CityConfig) -> dict[str, Path]:
+    """Refresh İzmir's cached CKAN CSVs while preserving old files on failure."""
+    return fetch_population_data(config, refresh=True)
+
+
+def load_cached_population_data(config: CityConfig) -> dict[str, Path]:
+    """Return cached CKAN tables without any network access."""
+    pop_dir = city_data_raw(config.city_id) / "population"
+    cached_paths = {key: pop_dir / f"{key}.csv" for key in config.raw["population"]["datasets"]}
+    missing = [path for path in cached_paths.values() if not path.is_file()]
+    if missing:
+        missing_names = ", ".join(path.name for path in missing)
+        raise FileNotFoundError(
+            f"Çevrimdışı doğrulama için İzmir nüfus önbelleği eksik ({missing_names}); "
+            "önce ağ erişimi olan bir ortamda pipeline.py --city izmir çalıştırın."
+        )
+    return cached_paths
 
 
 CHILD_AGE_GROUPS = {"0-4", "5-9", "10-14"}

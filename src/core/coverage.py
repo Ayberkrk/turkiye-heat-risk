@@ -46,13 +46,33 @@ def road_coverage(mahalle_gdf: gpd.GeoDataFrame, roads: gpd.GeoDataFrame, crs: s
     return float(joined["index_right"].notna().groupby(level=0).any().mean())
 
 
-def measure_city_coverage(config: CityConfig, pbf_path: Path) -> dict:
+def _population_inputs(adapter, config: CityConfig, offline: bool) -> dict[str, Path]:
+    if not offline:
+        return adapter.fetch_population_data(config)
+
+    cached_loader = getattr(adapter, "load_cached_population_data", None)
+    if callable(cached_loader):
+        return cached_loader(config)
+
+    population_config = config.raw.get("population", {})
+    if population_config.get("ckan_base"):
+        raise FileNotFoundError(
+            f"{config.city_id}: uzak nüfus kaynağını çevrimdışı kullanmak için adapter "
+            "load_cached_population_data(config) uygulamalı."
+        )
+    # Bundled/static adapters in the registry return checked-in data and do
+    # not fetch external resources from fetch_population_data.
+    return adapter.fetch_population_data(config)
+
+
+def measure_city_coverage(config: CityConfig, pbf_path: Path, offline: bool = False) -> dict:
     """Şehrin adapter'ını gerçek OSM özütüne karşı çalıştırıp kapsamı ölçer.
 
     Döner: mahalle/yol sayıları, ilçe adları ve `coverage` (0-1).
     """
     adapter = load_population_adapter(config)
-    mahalle = adapter.build_neighborhood_layer(pbf_path, adapter.fetch_population_data(config), config)
+    population_paths = _population_inputs(adapter, config, offline)
+    mahalle = adapter.build_neighborhood_layer(pbf_path, population_paths, config)
 
     roads = gpd.read_file(pbf_path, layer="lines", bbox=tuple(config.bbox), columns=["highway", "geometry"])
     roads = roads[roads["highway"].isin(config.drive_highway_types)]

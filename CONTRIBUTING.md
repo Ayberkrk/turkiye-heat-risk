@@ -97,6 +97,14 @@ def build_neighborhood_layer(pbf_path: Path, population_paths: dict[str, Path],
     """
 ```
 
+Bir adapter uzak kaynağı yerel olarak önbelleğe alıyorsa, isteğe bağlı olarak
+`refresh_population_data(config) -> dict[str, Path]` ve
+`load_cached_population_data(config) -> dict[str, Path]` fonksiyonlarını
+uygulayabilir. `pipeline.py --refresh-population` ilk kancayı kullanır;
+`validate_city.py --offline --osm-coverage` ikincisini çağırarak önbellek
+eksikken bile ağ erişimi yapmaz. Yalnızca depodaki sabit tabloları kullanan
+adapter'ların bu kancalara ihtiyacı yoktur.
+
 İki referans örnek mevcut, farklı veri kaynağı biçimleri için:
 
 - `src/cities/izmir/adapter.py`: belediyenin kendi CKAN açık veri
@@ -170,20 +178,29 @@ yapmana gerek yok, `src/core/paths.py` bunu senin için halleder.
 ```bash
 python validate_city.py <sehir>
 python validate_city.py <sehir> --osm-coverage --pbf <bolge>.osm.pbf   # gerçek OSM ile kapsam
+python validate_city.py <sehir> --offline --osm-coverage --pbf <bolge>.osm.pbf  # ağsız, yerel özütle
 ```
 
-Bu, hiçbir veri indirmeden/işlemeden şunları kontrol eder (`--osm-coverage`
-hariç, o indirilmiş bir OSM özütü ister):
+Bu, veri indirmeden/işlemeden şunları kontrol eder (`--osm-coverage`
+indirilmiş bir OSM özütünü yerelde okur):
 - `config.yaml`'ın gerekli tüm alanları içerdiğini
 - `bbox`'ın geçerli bir koordinat aralığı olduğunu
 - Adapter modülünün import edilebildiğini ve iki fonksiyonu da
   uyguladığını
-- OSM pbf URL'inin ve (varsa) CKAN tabanlı nüfus kaynağının gerçekten
-  erişilebilir olduğunu
+- varsayılan olarak OSM pbf URL'inin ve (varsa) CKAN tabanlı nüfus kaynağının
+  gerçekten erişilebilir olduğunu (`--offline` bu URL denetimlerini atlar)
 - (`--osm-coverage` ile) bbox'taki yolların yeterli payının demografisi
   eşlenmiş bir mahalleye düştüğünü
 
 Hata varsa script bunları listeleyip çıkış kodu 1 ile sonlanır.
+
+Şehirlerin config ve depodaki referans tablolarını birlikte çevrimdışı
+denetlemek için ayrıca `python validate_city_data.py --all` çalıştır. Bu
+komut bütün ilçe anahtarlarını, nüfus/yaş oranlarını ve kaynak künye
+alanlarını kontrol eder; kaynak değerlerini birincil yayına karşı
+doğruladığını veya OSM yol kapsamını ölçtüğünü iddia etmez. Şehir kaynağının
+değeri ve dönemi için katkıda primary-source bağlantı/atıf ve doğrulama
+kanıtı ekle.
 
 ### 5. Uçtan uca çalıştır
 

@@ -125,6 +125,18 @@ def test_build_explanation_column_omits_missing_optional_component():
     assert "Sosyoekonomik" not in text
 
 
+def test_build_explanation_column_shows_health_facility_type_distances():
+    roads = _make_roads()
+    roads["dist_saglik_hastane_m"] = [1250.0, 800.0]
+    roads["dist_saglik_klinik_m"] = [float("nan"), 300.0]
+    _build_explanation_column(roads, "2020")
+
+    text = roads.loc[0, "_aciklama_str_2020"]
+    assert "En yakın haritalı hastane: 1,250 m" in text
+    assert "En yakın haritalı klinik: OSM verisi yok" in text
+    assert "En yakın haritalı eczane" not in text
+
+
 def test_write_city_stats_computes_top_risk_mahalle(tmp_path, monkeypatch):
     roads = _make_roads()
     monkeypatch.setattr("core.map_builder.DOCS_DIR", tmp_path)
@@ -168,6 +180,20 @@ def test_prepare_layers_marks_missing_percentage_as_no_data():
     assert props["_hvi_str"] == "Veri yok"
 
 
+def test_prepare_layers_escapes_external_strings_used_in_tooltips():
+    roads = _make_roads()
+    roads.loc[0, "name"] = '<img src=x onerror="alert(1)">'
+    roads.loc[0, "mahalle_adi"] = '<svg onload="alert(2)">'
+    roads.loc[0, "_label_saglik"] = '<script>alert("component")</script>'
+
+    props = _prepare_layers(roads, ["2020"])["2020"]["Düşük"]["features"][0]["properties"]
+
+    assert props["name"] == "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;"
+    assert props["_mahalle_str"] == "&lt;svg onload=&quot;alert(2)&quot;&gt;"
+    assert '&lt;script&gt;alert(&quot;component&quot;)&lt;/script&gt;' in props["_aciklama_str"]
+    assert "<script>alert(\"component\")</script>" not in props["_aciklama_str"]
+
+
 def test_prepare_night_data_filters_by_bin_and_drops_empty_bins():
     night_gdf = gpd.GeoDataFrame({
         "mahalle_adi": ["M1", "M2"],
@@ -190,6 +216,20 @@ def test_prepare_night_data_filters_by_bin_and_drops_empty_bins():
 
 def test_prepare_night_data_returns_empty_dict_when_no_night_layer():
     assert _prepare_night_data(None) == {}
+
+
+def test_prepare_night_data_escapes_external_neighborhood_names():
+    night_gdf = gpd.GeoDataFrame({
+        "mahalle_adi": ['<img src=x onerror="alert(1)">'],
+        "gece_lst_c": [18.0],
+        "_gece_bin": ["Serin"],
+        "_gece_lst_str": ["18.0°C"],
+        "geometry": [Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])],
+    }, crs="EPSG:4326")
+
+    props = _prepare_night_data(night_gdf)["Serin"]["features"][0]["properties"]
+
+    assert props["mahalle_adi"] == "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;"
 
 
 def test_load_night_lst_returns_none_when_file_missing(tmp_path, monkeypatch):
@@ -315,6 +355,24 @@ def test_base_map_category_label_includes_min_max_range():
     assert "Düşük (15.0-15.0)" in html
 
 
+def test_base_map_escapes_city_name_and_attribution_html():
+    roads = _prepared_roads(["2020", "2026"])
+    config = _make_config()
+    config.name = '<img src=x onerror="alert(1)">'
+    config.raw["city"] = {"attribution": '<script>alert("source")</script>'}
+    malicious_year = '2028</option><script>alert("year")</script>'
+
+    m, *_ = _base_map(config, roads, ["2020", "2026", malicious_year], "2026", None)
+    html = m.get_root().render()
+
+    assert '<img src=x onerror="alert(1)">' not in html
+    assert '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;' in html
+    assert '<script>alert("source")</script>' not in html
+    assert '&lt;script&gt;alert(&quot;source&quot;)&lt;/script&gt;' in html
+    assert malicious_year not in html
+    assert "2028&lt;/option&gt;&lt;script&gt;" in html
+
+
 def test_base_map_without_night_gdf_returns_empty_night_vars():
     roads = _prepared_roads(["2020", "2026"])
     _, _, _, night_geojson_vars, night_group_vars = _base_map(
@@ -437,6 +495,14 @@ def test_build_manifest_includes_config_and_versions():
         "risk_timeseries_version": RISK_TIMESERIES_VERSION,
         "mosaic_version": MOSAIC_VERSION,
         "scene_fetch_version": SCENE_FETCH_VERSION,
+    }
+    assert manifest["health_access"]["metric"] == "road_centroid_to_nearest_osm_facility_euclidean_distance_m"
+    assert manifest["health_access"]["facility_classes"] == ["hospital", "clinic", "doctor", "pharmacy"]
+    assert "entrances_and_walking_network_travel_time_not_modeled" in manifest["health_access"]["limitations"]
+    assert manifest["validation"] == {
+        "source_values": "not_independently_verified_by_pipeline",
+        "osm_coverage": "not_measured_by_pipeline",
+        "health_outcomes": "not_validated",
     }
 
 

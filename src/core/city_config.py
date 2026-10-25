@@ -8,6 +8,7 @@ sağlar - pipeline'ın geri kalanı hiçbir yerde şehir adını hardcode etmez.
 from __future__ import annotations
 
 import importlib
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -18,6 +19,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CITIES_DIR = PROJECT_ROOT / "src" / "cities"
+_CITY_ID_RE = re.compile(r"^[a-z0-9_]+$")
 
 # `landsat` isteğe bağlıdır - tek alanı (`max_cloud_cover`) makul bir
 # varsayılana sahip, bu yüzden zorunlu listede yer almaz.
@@ -254,6 +256,8 @@ def validate_config_dict(cfg: Any) -> list[str]:
 
 
 def load_city_config(city_id: str) -> CityConfig:
+    if not isinstance(city_id, str) or not _CITY_ID_RE.fullmatch(city_id):
+        raise ValueError(f"Geçersiz şehir kimliği: {city_id!r}; yalnızca küçük harf, rakam ve '_' kullanılabilir")
     config_path = CITIES_DIR / city_id / "config.yaml"
     if not config_path.exists():
         available = [p.name for p in CITIES_DIR.iterdir() if (p / "config.yaml").exists()] if CITIES_DIR.exists() else []

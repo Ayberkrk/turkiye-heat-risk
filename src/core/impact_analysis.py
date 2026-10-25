@@ -11,7 +11,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from datetime import date, timedelta
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +24,7 @@ import rasterio
 import rasterstats
 import requests
 
+from core.cache import atomic_output_path
 from core.city_config import CityConfig
 
 # Keep COMPONENT_FLOOR available through this module for existing callers.
@@ -106,7 +109,8 @@ def _load_weather(config: CityConfig, years: list[str]) -> tuple[list[dict[str, 
         raise ValueError(
             f"ERA5-Land {len(grid)} konum istedi, {len(locations)} sonuç döndürdü."
         )
-    cache_path.write_text(json.dumps(locations, ensure_ascii=False), encoding="utf-8")
+    with atomic_output_path(cache_path) as temporary:
+        temporary.write_text(json.dumps(locations, ensure_ascii=False), encoding="utf-8")
     return locations, grid
 
 
@@ -352,7 +356,8 @@ def _health_convergence(
             "indicator": "İlçe 65+ yaş nüfus oranı",
             "interpretation": "Yakınsaklık kontrolü; 65+ oranı HVI içinde de bulunduğundan bağımsız doğruluk ölçümü değildir.",
         })
-    result.to_csv(output_dir / "heat_health_convergence.csv", index=False)
+    with atomic_output_path(output_dir / "heat_health_convergence.csv") as temporary:
+        result.to_csv(temporary, index=False)
     return result, {"available": True, "unit": "district", "correlations": correlations,
                     "caveat": "İlçe düzeyindeki yaş oranı HVI bileşenidir; bu karşılaştırma ısı-only LST ile eşleşmeyi gösterir, bağımsız doğruluk kanıtı değildir."}
 
@@ -362,7 +367,9 @@ def _write_map(
     target_share: float, cooling_c: float, ndvi_delta: float, weather_beta: float,
     map_center: list[float],
 ) -> None:
-    year_options = "".join(f'<option value="{year}">{year}</option>' for year in years)
+    year_options = "".join(
+        f'<option value="{escape(str(year), quote=True)}">{escape(str(year))}</option>' for year in years
+    )
     template = """<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>__CITY__ çok yıllı ısı ve müdahale senaryoları</title>
@@ -384,26 +391,37 @@ function metric(feature){const p=feature.properties,y=document.getElementById('y
  if(v==='weather')return p['hvi_weather_'+y];if(v==='trees')return y===referenceYear?p.hvi_trees:null;
  if(v==='shade')return y===referenceYear?p.hvi_shade:null;if(v==='combined')return y===referenceYear?p.hvi_combined:null;return p['hvi_base_'+y];}
 function color(value,breaks){if(value===null||value===undefined||!Number.isFinite(Number(value)))return '#aaa';let i=breaks.findIndex(b=>Number(value)<=b);return ['#3182bd','#74add1','#fed976','#fd8d3c','#a50026'][i<0?4:i];}
+function escapeHtml(value){return String(value).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));}
 function draw(){if(layer)map.removeLayer(layer);const vals=features.map(f=>metric(f)).filter(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))).map(Number).sort((a,b)=>a-b);
  if(!vals.length){document.getElementById('legend').textContent='Müdahale senaryoları yalnızca son analiz yılı için gösterilir.';return;}
  const breaks=[.2,.4,.6,.8].map(q=>vals[Math.min(vals.length-1,Math.floor(q*(vals.length-1)))]).concat([Infinity]);
  layer=L.geoJSON(features,{style:f=>({color:color(metric(f),breaks),weight:2,opacity:.82}),onEachFeature:(f,l)=>{const p=f.properties,y=document.getElementById('year').value,v=metric(f),base=p['hvi_base_'+y];
- l.bindPopup(`<b>${p.name||'Yol segmenti'}</b><br>${p.mahalle_adi||''} · ${p.ilce_adi||''}<br>65+ oranı: ${p.yasli_oran==null?'veri yok':(100*p.yasli_oran).toFixed(1)+'%'}<br>Nüfus yoğunluğu: ${p.nufus_yogunlugu==null?'veri yok':Number(p.nufus_yogunlugu).toFixed(0)+' kişi/km²'}<br>Gösterilen HVI: ${v==null?'uygulanamaz':Number(v).toFixed(1)}<br>Temel HVI: ${base==null?'veri yok':Number(base).toFixed(1)}<br>Fark: ${v==null||base==null?'-':(Number(v)-Number(base)).toFixed(1)}`)}}).addTo(map);
+ l.bindPopup(`<b>${escapeHtml(p.name||'Yol segmenti')}</b><br>${escapeHtml(p.mahalle_adi||'')} · ${escapeHtml(p.ilce_adi||'')}<br>65+ oranı: ${p.yasli_oran==null?'veri yok':(100*p.yasli_oran).toFixed(1)+'%'}<br>Nüfus yoğunluğu: ${p.nufus_yogunlugu==null?'veri yok':Number(p.nufus_yogunlugu).toFixed(0)+' kişi/km²'}<br>Gösterilen HVI: ${v==null?'uygulanamaz':Number(v).toFixed(1)}<br>Temel HVI: ${base==null?'veri yok':Number(base).toFixed(1)}<br>Fark: ${v==null||base==null?'-':(Number(v)-Number(base)).toFixed(1)}`)}}).addTo(map);
  document.getElementById('legend').innerHTML=`Skorun şehir içindeki sıralaması:<br>${['Düşük','Orta-düşük','Orta-yüksek','Yüksek','En yüksek'].map((n,i)=>`<span style="color:${['#3182bd','#74add1','#fed976','#fd8d3c','#a50026'][i]}">■</span> ${n}`).join('<br>')}`;}
 Promise.all([fetch('./impact_scenarios.geojson').then(r=>{if(!r.ok)throw Error('GeoJSON yüklenemedi');return r.json()}),fetch('./analysis_summary.json').then(r=>r.json())]).then(([data,summary])=>{features=data.features;const center=summary.map_center;if(center)map.setView(center,12);draw()}).catch(e=>{document.getElementById('legend').textContent=e.message+' - analiz klasörünü HTTP üzerinden açın.'});
 document.getElementById('year').addEventListener('change',draw);document.getElementById('view').addEventListener('change',draw);
 </script></body></html>"""
-    html = (template.replace("__CITY__", city_name)
-            .replace("__YEAR_OPTIONS__", year_options)
-            .replace("__REFERENCE_YEAR__", str(reference_year))
-            .replace("__REFERENCE_YEAR_JSON__", json.dumps(reference_year))
-            .replace("__TARGET_SHARE__", f"{target_share * 100:g}")
-            .replace("__COOLING__", f"{cooling_c:g}")
-            .replace("__NDVI__", f"{ndvi_delta:g}")
-            .replace("__BETA__", f"{weather_beta:g}")
-            .replace("__YEARS__", json.dumps(years))
-            .replace("__CENTER__", json.dumps(map_center)))
-    output_path.write_text(html, encoding="utf-8")
+    def json_for_script(value: Any) -> str:
+        # Keep untrusted string values from closing the surrounding script tag.
+        return (json.dumps(value, ensure_ascii=False).replace("&", "\\u0026")
+                .replace("<", "\\u003c").replace(">", "\\u003e"))
+
+    replacements = {
+        "__CITY__": escape(city_name),
+        "__YEAR_OPTIONS__": year_options,
+        "__REFERENCE_YEAR__": escape(str(reference_year)),
+        "__REFERENCE_YEAR_JSON__": json_for_script(reference_year),
+        "__TARGET_SHARE__": f"{target_share * 100:g}",
+        "__COOLING__": f"{cooling_c:g}",
+        "__NDVI__": f"{ndvi_delta:g}",
+        "__BETA__": f"{weather_beta:g}",
+        "__YEARS__": json_for_script(years),
+        "__CENTER__": json_for_script(map_center),
+    }
+    placeholders = re.compile("|".join(re.escape(key) for key in replacements))
+    html = placeholders.sub(lambda match: replacements[match.group(0)], template)
+    with atomic_output_path(output_path) as temporary:
+        temporary.write_text(html, encoding="utf-8")
 
 def _make_impact_geodata(
     roads: gpd.GeoDataFrame, years: list[str], base_scores: dict[str, pd.Series],
@@ -519,7 +537,8 @@ def run_impact_analysis(
         for cached in city_data_raw(config.city_id).glob("era5land_daily_*.json"):
             cached.unlink()
     anomalies, grid, weather_detail = _temperature_anomalies(config, years, main_year)
-    weather_detail.to_csv(output_dir / "weather_grid.csv", index=False)
+    with atomic_output_path(output_dir / "weather_grid.csv") as temporary:
+        weather_detail.to_csv(temporary, index=False)
     nearest = _nearest_grid_for_roads(roads, grid, config.crs)
     weather_anomaly_by_year = {year: values[nearest] for year, values in anomalies.items()}
 
@@ -550,7 +569,8 @@ def run_impact_analysis(
             "beta_1_mean_lst_c": round(float((raw_lst[year][valid] - pd.Series(weather_anomaly_by_year[year], index=roads.index)[valid]).mean()), 3),
         })
     annual_df = pd.DataFrame(annual)
-    annual_df.to_csv(output_dir / "annual_weather_adjusted.csv", index=False)
+    with atomic_output_path(output_dir / "annual_weather_adjusted.csv") as temporary:
+        annual_df.to_csv(temporary, index=False)
     if len(annual_df) >= 2:
         trend_raw = float(np.polyfit(annual_df["year"], annual_df["mean_lst_c"], 1)[0])
         trend_adjusted = float(np.polyfit(annual_df["year"], annual_df["mean_weather_adjusted_lst_c"], 1)[0])
@@ -568,7 +588,8 @@ def run_impact_analysis(
                 roads, years, scores, profile, buffer_m, baseline,
             ))
     robustness = pd.DataFrame(robustness_rows)
-    robustness.to_csv(output_dir / "robustness.csv", index=False)
+    with atomic_output_path(output_dir / "robustness.csv") as temporary:
+        robustness.to_csv(temporary, index=False)
 
     # Harita skorları tüm yıllar için tek ortak bileşen ölçeği kullanır. HVI,
     # ana ürünle aynı eşit ağırlıklı geometrik ortalamayla yeniden hesaplanır.
@@ -598,8 +619,10 @@ def run_impact_analysis(
         bounds, target_share, cooling_c, ndvi_delta,
     )
     if not interventions.empty:
-        interventions.to_csv(output_dir / "intervention_scenarios.csv", index=False)
-    impact.to_file(output_dir / "impact_scenarios.geojson", driver="GeoJSON")
+        with atomic_output_path(output_dir / "intervention_scenarios.csv") as temporary:
+            interventions.to_csv(temporary, index=False)
+    with atomic_output_path(output_dir / "impact_scenarios.geojson") as temporary:
+        impact.to_file(temporary, driver="GeoJSON")
 
     _, health_summary = _health_convergence(roads, years, output_dir)
     summary = {
@@ -643,7 +666,8 @@ def run_impact_analysis(
             "impact_scenarios.geojson", "analysis_map.html",
         ],
     }
-    (output_dir / "analysis_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    with atomic_output_path(output_dir / "analysis_summary.json") as temporary:
+        temporary.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_map(
         output_dir / "analysis_map.html", config.name, years, years[-1],
         target_share, cooling_c, ndvi_delta, weather_beta, center,

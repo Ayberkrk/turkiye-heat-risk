@@ -26,6 +26,26 @@ def _make_config() -> CityConfig:
     )
 
 
+def test_impact_map_escapes_osm_popup_text_and_script_template_inputs(tmp_path):
+    output = tmp_path / "analysis_map.html"
+    injected = '</script><script>alert("xss")</script>'
+
+    ia._write_map(
+        output, f'<img src=x onerror="{injected}">__YEAR_OPTIONS__', [injected], injected,
+        0.2, 2.0, 0.1, 0.5, [38.4, 27.0],
+    )
+
+    html = output.read_text(encoding="utf-8")
+
+    assert '<img src=x onerror="' not in html
+    assert '&lt;img src=x onerror=&quot;' in html
+    assert '&gt;__YEAR_OPTIONS__ | Isı riski' in html
+    assert "function escapeHtml(value)" in html
+    assert "${escapeHtml(p.name||'Yol segmenti')}" in html
+    assert injected not in html
+    assert "\\u003c/script\\u003e" in html
+
+
 # --- saf yardımcılar ---
 
 def test_normalize_scales_to_unit_interval_and_clips_to_given_bounds():
