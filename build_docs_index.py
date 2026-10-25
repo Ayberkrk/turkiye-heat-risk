@@ -23,8 +23,8 @@ SRC_DIR = Path(__file__).resolve().parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from core.hvi import HVI_FORMULA_VERSION  # noqa: E402
 from core.cache import atomic_output_path  # noqa: E402
+from core.hvi import HVI_FORMULA_VERSION  # noqa: E402
 from core.paths import DOCS_DIR  # noqa: E402
 
 _INVALID_FORMULA_VERSION = "invalid"

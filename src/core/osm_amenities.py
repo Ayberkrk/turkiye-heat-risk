@@ -81,7 +81,7 @@ def load_health_points(config: CityConfig, pbf_path) -> gpd.GeoDataFrame:
         amenity_tags = points["other_tags"].apply(lambda tags: _other_tags_get(tags, "amenity"))
     points["amenity"] = [
         _health_amenity(amenity, healthcare)
-        for amenity, healthcare in zip(amenity_tags, healthcare_tags)
+        for amenity, healthcare in zip(amenity_tags, healthcare_tags, strict=True)
     ]
     health_points = points[points["amenity"].isin(HEALTH_AMENITIES)][["geometry", "amenity"]]
 
@@ -97,7 +97,7 @@ def load_health_points(config: CityConfig, pbf_path) -> gpd.GeoDataFrame:
     )
     polys["amenity"] = [
         _health_amenity(amenity, healthcare)
-        for amenity, healthcare in zip(amenity_tags, healthcare_tags)
+        for amenity, healthcare in zip(amenity_tags, healthcare_tags, strict=True)
     ]
     health_polys = polys[polys["amenity"].isin(HEALTH_AMENITIES)][["geometry", "amenity"]]
     combined = pd.concat([health_points, health_polys], ignore_index=True)

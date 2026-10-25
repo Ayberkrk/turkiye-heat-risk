@@ -1,4 +1,4 @@
-from pathlib import Path
+from types import SimpleNamespace
 
 import geopandas as gpd
 import numpy as np
@@ -6,7 +6,6 @@ import pytest
 import rasterio
 from rasterio.transform import from_origin
 from shapely.geometry import Polygon, box
-from types import SimpleNamespace
 
 import core.night_lst as night_lst
 from core.cache import write_cache_meta

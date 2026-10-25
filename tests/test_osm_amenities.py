@@ -6,8 +6,8 @@ from core.city_config import CityConfig
 from core.osm_amenities import (
     GREEN_LANDUSE,
     GREEN_LEISURE,
-    HEALTH_AMENITY_GROUPS,
     HEALTH_AMENITIES,
+    HEALTH_AMENITY_GROUPS,
     _other_tags_get,
     load_building_centroids,
     load_green_space_polygons,

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import planetary_computer
@@ -228,7 +228,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
         "catalog": CATALOG_URL,
         "collection": "landsat-c2-l2",
         "platforms": ["landsat-8", "landsat-9"],
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "scenes": scenes_meta,
     }
     temporary = metadata_path.with_name(metadata_path.name + ".part")
