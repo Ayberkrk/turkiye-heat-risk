@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import inspect
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -45,6 +46,7 @@ CKAN_CHECK_TIMEOUT_SECONDS = 15
 # (aşağıya bkz. _coverage_errors); komşu ilçelerin mahalleleri bbox'ın
 # kenarlarına her zaman biraz taşar, o yüzden %100 beklenmez.
 DEFAULT_MIN_COVERAGE = 0.6
+_CITY_ID_RE = re.compile(r"^[a-z0-9_]+$")
 
 # Gerçek çağrı yerlerindeki (hvi.py) pozisyonel argüman sayısı - isim değil
 # sayı karşılaştırılıyor, çünkü adapter yazarları parametrelere farklı isim
@@ -107,6 +109,8 @@ def _signature_param_count_error(fn, fn_name: str, expected: int) -> str | None:
 
 def validate(city_id: str, check_sources: bool = True) -> list[str]:
     errors: list[str] = []
+    if not isinstance(city_id, str) or not _CITY_ID_RE.fullmatch(city_id):
+        return [f"Geçersiz şehir kimliği: {city_id!r}; yalnızca küçük harf, rakam ve '_' kullanılabilir"]
     config_path = CITIES_DIR / city_id / "config.yaml"
 
     if not config_path.exists():

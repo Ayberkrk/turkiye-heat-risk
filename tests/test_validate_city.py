@@ -200,6 +200,14 @@ def test_validate_offline_skips_source_requests(tmp_path, monkeypatch):
     assert validate("testcity", check_sources=False) == []
 
 
+@pytest.mark.parametrize("city_id", ["../outside", "/tmp/outside", "izmir/../../outside"])
+def test_validate_rejects_unsafe_city_ids_before_reading_config(city_id):
+    errors = validate(city_id, check_sources=False)
+
+    assert len(errors) == 1
+    assert "Geçersiz şehir kimliği" in errors[0]
+
+
 @pytest.mark.parametrize("coverage", ["-0.1", "1.1", "nan", "inf"])
 def test_cli_rejects_invalid_coverage_threshold(monkeypatch, coverage):
     monkeypatch.setattr(sys, "argv", ["validate_city.py", "izmir", "--osm-coverage", "--min-coverage", coverage])
