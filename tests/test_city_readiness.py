@@ -73,7 +73,22 @@ def test_city_static_checks_validate_adapter_call_signatures(monkeypatch):
 
     errors = _city_static_errors("sample", _minimal_config())
 
-    assert any("fetch_population_data() 1 pozisyonel argüman" in error for error in errors)
+    assert any("'fetch_population_data' 1 pozisyonel argümanla çağrılıyor" in error for error in errors)
+
+
+def test_city_static_checks_reject_required_keyword_only_adapter_parameter(monkeypatch):
+    fake_adapter = types.ModuleType("cities.sample.adapter")
+
+    def fetch_population_data(config, *, token):
+        return {}
+
+    fake_adapter.fetch_population_data = fetch_population_data
+    fake_adapter.build_neighborhood_layer = lambda pbf_path, population_paths, config: None
+    monkeypatch.setitem(sys.modules, "cities.sample.adapter", fake_adapter)
+
+    errors = _city_static_errors("sample", _minimal_config())
+
+    assert any("zorunlu keyword-only parametreleri var: token" in error for error in errors)
 
 
 def test_csv_quality_checks_reject_age_share_over_one(tmp_path):

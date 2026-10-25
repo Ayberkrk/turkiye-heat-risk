@@ -32,7 +32,7 @@ import rasterio
 import rasterstats
 from rasterio.warp import Resampling, calculate_default_transform, reproject
 
-from core.cache import file_signature, is_cache_valid, write_cache_meta
+from core.cache import atomic_output_path, file_signature, is_cache_valid, write_cache_meta
 from core.city_config import CityConfig
 from core.paths import city_data_proc
 
@@ -157,10 +157,9 @@ def fetch_night_lst(config: CityConfig, year: str, force: bool = False) -> Path:
         "nodata": -9999.0, "compress": "lzw",
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    partial_path = out_path.with_name(out_path.stem + ".part" + out_path.suffix)
-    with rasterio.open(partial_path, "w", **out_profile) as dst:
-        dst.write(np.where(np.isnan(mean_c), -9999.0, mean_c).astype(np.float32), 1)
-    partial_path.replace(out_path)
+    with atomic_output_path(out_path) as temporary:
+        with rasterio.open(temporary, "w", **out_profile) as dst:
+            dst.write(np.where(np.isnan(mean_c), -9999.0, mean_c).astype(np.float32), 1)
     write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION, fingerprint=fingerprint,
                      details={"item_count": len(items), "valid_pixel_fraction": float((count > 0).mean())})
 
@@ -197,9 +196,8 @@ def compute_neighborhood_night_lst(
     mahalle_gdf = mahalle_gdf.dropna(subset=["gece_lst_c"])
     mahalle_gdf["gece_lst_c"] = mahalle_gdf["gece_lst_c"].round(1)
 
-    partial_path = out_path.with_name(out_path.stem + ".part" + out_path.suffix)
-    mahalle_gdf.to_file(partial_path, driver="GeoJSON")
-    partial_path.replace(out_path)
+    with atomic_output_path(out_path) as temporary:
+        mahalle_gdf.to_file(temporary, driver="GeoJSON")
     write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, fingerprint=fingerprint)
     print(f"[{year}] kaydedildi: {out_path.name} ({len(mahalle_gdf):,} mahalle)")
     return out_path
