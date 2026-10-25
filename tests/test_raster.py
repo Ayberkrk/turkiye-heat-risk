@@ -83,7 +83,7 @@ def test_stream_mosaic_failure_preserves_previous_output(tmp_path, monkeypatch):
     original_open = rasterio.open
 
     def fail_while_merging(path, mode="r", **kwargs):
-        if Path(path).name == "mosaic.part.tif" and mode == "r+":
+        if Path(path).name.startswith(".mosaic.") and Path(path).name.endswith(".part.tif") and mode == "r+":
             raise RuntimeError("simulated interrupted mosaic")
         return original_open(path, mode, **kwargs)
 

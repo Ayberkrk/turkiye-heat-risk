@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 
 from core.cache import atomic_output_path, is_cache_valid, write_cache_meta
@@ -9,12 +11,12 @@ def test_atomic_output_path_replaces_only_after_success(tmp_path):
 
     with pytest.raises(RuntimeError, match="interrupted"):
         with atomic_output_path(output) as temporary:
-            assert temporary.name == "result.part.geojson"
+            assert temporary.name.endswith(".part.geojson")
             temporary.write_text("partial result")
             raise RuntimeError("interrupted")
 
     assert output.read_text() == "old result"
-    assert not (tmp_path / "result.part.geojson").exists()
+    assert not list(tmp_path.glob("*.part.geojson"))
 
 
 def test_atomic_output_path_publishes_completed_file(tmp_path):
@@ -23,7 +25,21 @@ def test_atomic_output_path_publishes_completed_file(tmp_path):
         temporary.write_bytes(b"complete")
 
     assert output.read_bytes() == b"complete"
-    assert not (tmp_path / "result.part.tif").exists()
+    assert not list(tmp_path.glob("*.part.tif"))
+
+
+def test_concurrent_atomic_outputs_use_distinct_temporary_files(tmp_path):
+    output = tmp_path / "result.geojson"
+    with atomic_output_path(output) as first:
+        with atomic_output_path(output) as second:
+            assert first != second
+            assert first.name.endswith(".part.geojson")
+            assert second.name.endswith(".part.geojson")
+            first.write_text("first complete result")
+            second.write_text("second complete result")
+
+    assert output.read_text() in {"first complete result", "second complete result"}
+    assert not list(tmp_path.glob("*.part.geojson"))
 
 
 def test_missing_file_is_invalid(tmp_path):
@@ -104,3 +120,22 @@ def test_cache_details_are_written_with_fingerprinted_metadata(tmp_path):
     assert meta["details"]["coverage_fraction"] == 0.75
     assert len(meta["fingerprint_sha256"]) == 64
     assert not (tmp_path / "roads_timeseries.geojson.meta.json.part").exists()
+
+
+def test_concurrent_metadata_writes_leave_valid_json_and_no_temporary_files(tmp_path):
+    import json
+
+    output_path = tmp_path / "roads_timeseries.geojson"
+    output_path.write_text("{}")
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        list(executor.map(
+            lambda value: write_cache_meta(output_path, version=3, fingerprint={"run": value}),
+            range(32),
+        ))
+
+    metadata = json.loads((tmp_path / "roads_timeseries.geojson.meta.json").read_text())
+    assert metadata["version"] == 3
+    assert len(metadata["fingerprint_sha256"]) == 64
+    assert is_cache_valid(output_path, version=3)
+    assert not list(tmp_path.glob(".roads_timeseries.geojson.meta.json.*.part"))

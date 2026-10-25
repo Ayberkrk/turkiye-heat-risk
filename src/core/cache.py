@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -21,6 +23,15 @@ from typing import Any
 
 def _meta_path(output_path: Path) -> Path:
     return output_path.with_name(output_path.name + ".meta.json")
+
+
+def _temporary_sibling(path: Path, suffix: str) -> Path:
+    """Reserve a unique same-directory temporary name, then leave it absent for the writer."""
+    fd, name = tempfile.mkstemp(prefix=f".{path.stem}.", suffix=suffix, dir=path.parent)
+    os.close(fd)
+    temporary = Path(name)
+    temporary.unlink()
+    return temporary
 
 
 @contextmanager
@@ -32,7 +43,7 @@ def atomic_output_path(output_path: Path) -> Iterator[Path]:
     geospatial writers can still infer the output driver from the filename.
     """
     output_path = Path(output_path)
-    temporary = output_path.with_name(f"{output_path.stem}.part{output_path.suffix}")
+    temporary = _temporary_sibling(output_path, f".part{output_path.suffix}")
     try:
         yield temporary
         temporary.replace(output_path)
@@ -108,6 +119,10 @@ def write_cache_meta(output_path: Path, version: int, fingerprint: Any | None = 
     if details:
         payload["details"] = details
     meta_path = _meta_path(output_path)
-    temporary = meta_path.with_name(meta_path.name + ".part")
-    temporary.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True))
-    temporary.replace(meta_path)
+    temporary = _temporary_sibling(meta_path, ".part")
+    try:
+        temporary.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+        temporary.replace(meta_path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
