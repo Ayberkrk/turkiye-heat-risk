@@ -4,70 +4,70 @@ import types
 import pytest
 
 import validate_city
-from validate_city import (
+from core.adapter_contract import (
     OPTIONAL_ADAPTER_PARAM_COUNTS,
     REQUIRED_ADAPTER_PARAM_COUNTS,
-    _signature_param_count_error,
-    validate,
+    signature_param_count_error,
 )
+from validate_city import validate
 
-# --- _signature_param_count_error: saf, adapter imzasını gerçek çağrı yerindeki
+# --- signature_param_count_error: saf, adapter imzasını gerçek çağrı yerindeki
 # (hvi.py) argüman sayısıyla karşılaştırır - isim değil sayı, çünkü adapter
 # yazarları parametrelere farklı isim verebilir. ---
 
-def test_signature_param_count_error_accepts_matching_signature():
+def testsignature_param_count_error_accepts_matching_signature():
     def fetch_population_data(config):
         pass
-    assert _signature_param_count_error(fetch_population_data, "fetch_population_data", 1) is None
+    assert signature_param_count_error(fetch_population_data, "fetch_population_data", 1) is None
 
 
-def test_signature_param_count_error_rejects_too_few_parameters():
+def testsignature_param_count_error_rejects_too_few_parameters():
     def fetch_population_data():
         pass
-    err = _signature_param_count_error(fetch_population_data, "fetch_population_data", 1)
+    err = signature_param_count_error(fetch_population_data, "fetch_population_data", 1)
     assert err is not None
     assert "fetch_population_data" in err
 
 
-def test_signature_param_count_error_rejects_too_many_required_parameters():
+def testsignature_param_count_error_rejects_too_many_required_parameters():
     # Çağrı yerinde tek argümanla çağrılacak ama fonksiyon 2 zorunlu
     # parametre istiyor - gerçek çağrıda TypeError ile patlar.
     def build_neighborhood_layer(pbf_path, population_paths):
         pass
-    err = _signature_param_count_error(build_neighborhood_layer, "build_neighborhood_layer", 1)
+    err = signature_param_count_error(build_neighborhood_layer, "build_neighborhood_layer", 1)
     assert err is not None
 
 
-def test_signature_param_count_error_rejects_required_keyword_only_parameter():
+def testsignature_param_count_error_rejects_required_keyword_only_parameter():
     def fetch_population_data(config, *, api_key):
         pass
 
-    err = _signature_param_count_error(fetch_population_data, "fetch_population_data", 1)
+    err = signature_param_count_error(fetch_population_data, "fetch_population_data", 1)
 
     assert err is not None
     assert "api_key" in err
 
 
-def test_signature_param_count_error_rejects_non_callable_adapter_attribute():
-    err = _signature_param_count_error("not callable", "fetch_population_data", 1)
+def testsignature_param_count_error_rejects_non_callable_adapter_attribute():
+    err = signature_param_count_error("not callable", "fetch_population_data", 1)
 
     assert err is not None
     assert "çağrılabilir değil" in err
 
 
-def test_signature_param_count_error_allows_extra_optional_parameters():
+def testsignature_param_count_error_allows_extra_optional_parameters():
     # Fazladan opsiyonel (varsayılan değerli) bir parametre - gerçek
     # çağrıda sorun çıkarmaz, hata verilmemeli.
     def fetch_population_data(config, cache_dir=None):
         pass
-    assert _signature_param_count_error(fetch_population_data, "fetch_population_data", 1) is None
+    assert signature_param_count_error(fetch_population_data, "fetch_population_data", 1) is None
 
 
-def test_signature_param_count_error_allows_var_positional():
+def testsignature_param_count_error_allows_var_positional():
     # *args kabul eden esnek bir imza her zaman geçerli sayılmalı.
     def build_neighborhood_layer(*args):
         pass
-    assert _signature_param_count_error(build_neighborhood_layer, "build_neighborhood_layer", 3) is None
+    assert signature_param_count_error(build_neighborhood_layer, "build_neighborhood_layer", 3) is None
 
 
 def test_required_adapter_param_counts_matches_real_call_sites():

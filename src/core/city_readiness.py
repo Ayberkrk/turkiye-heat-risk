@@ -9,7 +9,6 @@ for OSM coverage, the city's extract.
 from __future__ import annotations
 
 import importlib
-import inspect
 import json
 import math
 import re
@@ -22,6 +21,7 @@ import pandas as pd
 import pyproj
 import yaml
 
+from core.adapter_contract import REQUIRED_ADAPTER_PARAM_COUNTS, signature_param_count_error
 from core.city_config import CITIES_DIR, validate_config_dict
 from core.hvi import HVI_FORMULA_VERSION
 from core.text_utils import normalize_name
@@ -166,25 +166,14 @@ def _city_static_errors(city_id: str, config: dict[str, Any]) -> list[str]:
     else:
         try:
             adapter = importlib.import_module(adapter_path)
-            expected_parameters = {"fetch_population_data": 1, "build_neighborhood_layer": 3}
-            for function_name, expected in expected_parameters.items():
+            for function_name, expected in REQUIRED_ADAPTER_PARAM_COUNTS.items():
                 function = getattr(adapter, function_name, None)
-                if not callable(function):
+                if function is None:
                     errors.append(f"{city_id}: adapter {function_name}() sağlamıyor")
                     continue
-                try:
-                    signature = inspect.signature(function)
-                    positional = [parameter for parameter in signature.parameters.values()
-                                  if parameter.kind in (inspect.Parameter.POSITIONAL_ONLY,
-                                                        inspect.Parameter.POSITIONAL_OR_KEYWORD)]
-                    required = [parameter for parameter in positional
-                                if parameter.default is inspect.Parameter.empty]
-                    has_varargs = any(parameter.kind is inspect.Parameter.VAR_POSITIONAL
-                                      for parameter in signature.parameters.values())
-                    if not has_varargs and (len(required) > expected or len(positional) < expected):
-                        errors.append(f"{city_id}: adapter {function_name}() {expected} pozisyonel argüman kabul etmeli")
-                except (TypeError, ValueError):
-                    errors.append(f"{city_id}: adapter {function_name}() imzası incelenemedi")
+                signature_error = signature_param_count_error(function, function_name, expected)
+                if signature_error:
+                    errors.append(f"{city_id}: {signature_error}")
         except (ImportError, AttributeError) as error:
             errors.append(f"{city_id}: adapter import edilemiyor: {error}")
 
