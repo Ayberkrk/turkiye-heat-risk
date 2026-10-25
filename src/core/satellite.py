@@ -17,7 +17,7 @@ import pystac_client
 import rasterio
 import requests
 
-from core.cache import is_cache_valid, write_cache_meta
+from core.cache import atomic_output_path, is_cache_valid, write_cache_meta
 from core.city_config import CityConfig
 from core.paths import year_paths
 
@@ -113,7 +113,6 @@ def download_band(item, asset_name: str, save_path: Path) -> None:
     düşürmemeli. Veri önce `.part` dosyasına yazılır ve ancak tamamlanınca
     yerine taşınır; yarım kalmış bir dosya geçerli bant sanılmaz.
     """
-    partial_path = save_path.with_name(save_path.name + ".part")
     for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
         # Adres her denemeden hemen önce yeniden imzalanır. Arama sırasında
         # alınan imza yaklaşık 45 dakika geçerlidir; yavaş bağlantıda ya da çok
@@ -122,19 +121,18 @@ def download_band(item, asset_name: str, save_path: Path) -> None:
         # için eski imza önce atılır.
         url = planetary_computer.sign(item.assets[asset_name].href.split("?")[0])
         try:
-            response = requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT_SECONDS)
-            response.raise_for_status()
-            with open(partial_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+            with atomic_output_path(save_path) as partial_path:
+                with requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response:
+                    response.raise_for_status()
+                    with open(partial_path, "wb") as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
         except requests.RequestException as error:
-            partial_path.unlink(missing_ok=True)
             if attempt == DOWNLOAD_ATTEMPTS:
                 raise
             print(f"  indirme hatası ({type(error).__name__}), yeniden deneniyor ({attempt}/{DOWNLOAD_ATTEMPTS - 1})")
             time.sleep(DOWNLOAD_RETRY_WAIT_SECONDS * attempt)
             continue
-        partial_path.replace(save_path)
         return
 
 
@@ -231,9 +229,8 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "scenes": scenes_meta,
     }
-    temporary = metadata_path.with_name(metadata_path.name + ".part")
-    temporary.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(metadata_path)
+    with atomic_output_path(metadata_path) as temporary:
+        temporary.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
     write_cache_meta(metadata_path, SCENE_FETCH_VERSION, fingerprint=fingerprint)
 
     print(f"[{year}] {len(scenes_meta)} sahne indirildi")

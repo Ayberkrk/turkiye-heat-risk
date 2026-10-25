@@ -213,6 +213,12 @@ def test_download_band_resigns_url_instead_of_reusing_search_time_token(monkeypa
         return url + "?sig=taze"
 
     class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
+
         def raise_for_status(self):
             pass
 
@@ -244,6 +250,12 @@ def _download_fakes(monkeypatch, responses):
     class _Response:
         def __init__(self, chunks):
             self._chunks = chunks
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
 
         def raise_for_status(self):
             pass
@@ -282,7 +294,7 @@ def test_download_band_retries_after_read_timeout_and_leaves_no_partial_file(mon
 
     assert len(calls) == 2
     assert target.read_bytes() == b"tamveri"
-    assert not (tmp_path / "b4.tif.part").exists()
+    assert not list(tmp_path.glob(".b4.*.part.tif"))
 
 
 def test_download_band_gives_up_after_all_attempts_without_writing_target(monkeypatch, tmp_path):
@@ -296,10 +308,12 @@ def test_download_band_gives_up_after_all_attempts_without_writing_target(monkey
     satellite, _, calls = _download_fakes(monkeypatch, failing)
     item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF")})
     target = tmp_path / "b4.tif"
+    target.write_bytes(b"previous complete band")
 
     with pytest.raises(requests.ConnectionError):
         satellite.download_band(item, "red", target)
 
     assert len(calls) == sat.DOWNLOAD_ATTEMPTS
-    # Yarım dosya hedefe yazılmamalı: var olan dosya "indirildi" sayılırdı.
-    assert not target.exists() and not (tmp_path / "b4.tif.part").exists()
+    # Başarısız yenileme önceki tam dosyayı korumalı; yarım dosyalar sızmamalı.
+    assert target.read_bytes() == b"previous complete band"
+    assert not list(tmp_path.glob(".b4.*.part.tif"))
