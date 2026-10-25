@@ -1,6 +1,7 @@
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pytest
 from shapely.geometry import LineString, Point, box
 
 import core.hvi as hvi
@@ -38,6 +39,70 @@ def test_normalize_0_1_preserves_index():
     s = pd.Series([1, 2, 3], index=[10, 20, 30])
     result = normalize_0_1(s)
     assert result.index.tolist() == [10, 20, 30]
+
+
+def test_hvi_fingerprint_changes_when_road_metrics_change(monkeypatch, tmp_path):
+    roads = gpd.GeoDataFrame(
+        {
+            "risk_score_2020": [10.0, 20.0],
+            "ndvi_mean_2020": [0.2, 0.4],
+            "geometry": [LineString([(27.0, 38.0), (27.01, 38.0)]),
+                         LineString([(27.01, 38.0), (27.02, 38.0)])],
+        },
+        crs="EPSG:4326",
+    )
+    adapter = type("Adapter", (), {})
+    config = _make_config()
+    monkeypatch.setattr("core.hvi.city_data_proc", lambda city_id: tmp_path)
+
+    first = hvi._hvi_input_fingerprint(config, ["2020"], roads, adapter, {}, tmp_path / "osm.pbf")
+    roads.loc[0, "risk_score_2020"] = 11.0
+    changed = hvi._hvi_input_fingerprint(config, ["2020"], roads, adapter, {}, tmp_path / "osm.pbf")
+
+    assert first != changed
+
+
+def test_health_access_reports_each_amenity_type_and_uses_polygon_footprint():
+    # The nearest hospital is a large mapped polygon. The access distance
+    # should terminate at its boundary, not at its centroid; other amenity
+    # classes remain independently inspectable.
+    road_point_wgs84 = gpd.GeoSeries([Point(27.005, 38.02)], crs="EPSG:4326")
+    road_point_utm = road_point_wgs84.to_crs(CRS)
+    hospital = box(27.01, 38.0, 27.05, 38.04)
+    facilities = gpd.GeoDataFrame(
+        {
+            "amenity": ["hospital", "clinic", "pharmacy"],
+            "geometry": [hospital, Point(27.1, 38.02), Point(27.2, 38.02)],
+        },
+        crs="EPSG:4326",
+    )
+
+    distances = hvi._nearest_health_distances_m(road_point_utm, facilities, CRS)
+    hospital_utm = gpd.GeoSeries([hospital], crs="EPSG:4326").to_crs(CRS).iloc[0]
+    expected_boundary_distance = road_point_utm.iloc[0].distance(hospital_utm)
+    centroid_distance = road_point_utm.iloc[0].distance(hospital_utm.centroid)
+
+    assert set(distances) == {
+        "dist_saglik_hastane_m", "dist_saglik_klinik_m",
+        "dist_saglik_doktor_m", "dist_saglik_eczane_m",
+    }
+    assert distances["dist_saglik_hastane_m"].iloc[0] == pytest.approx(expected_boundary_distance, abs=0.1)
+    assert distances["dist_saglik_hastane_m"].iloc[0] < centroid_distance
+    assert distances["dist_saglik_klinik_m"].iloc[0] > distances["dist_saglik_hastane_m"].iloc[0]
+    assert np.isnan(distances["dist_saglik_doktor_m"].iloc[0])
+    assert distances["dist_saglik_eczane_m"].iloc[0] > distances["dist_saglik_klinik_m"].iloc[0]
+
+
+def test_nearest_distance_to_green_polygon_uses_boundary_not_centroid():
+    road_point = gpd.GeoSeries([Point(27.005, 38.02)], crs="EPSG:4326").to_crs(CRS)
+    park = box(27.01, 38.0, 27.05, 38.04)
+    green = gpd.GeoDataFrame(geometry=[park], crs="EPSG:4326")
+
+    distance = hvi._nearest_distance_m(road_point, green, CRS).iloc[0]
+    park_utm = gpd.GeoSeries([park], crs="EPSG:4326").to_crs(CRS).iloc[0]
+
+    assert distance == pytest.approx(road_point.iloc[0].distance(park_utm), abs=0.1)
+    assert distance < road_point.iloc[0].distance(park_utm.centroid)
 
 
 def test_bucket_5_produces_five_labels_for_skewed_data():
@@ -220,7 +285,9 @@ def _run_hvi(monkeypatch, tmp_path, mahalle: gpd.GeoDataFrame, road_x: list[floa
         def build_neighborhood_layer(pbf_path, population_paths, config):
             return mahalle
 
-    points = gpd.GeoDataFrame(geometry=[Point(27.0, 38.10)], crs="EPSG:4326")
+    points = gpd.GeoDataFrame(
+        {"amenity": ["hospital"], "geometry": [Point(27.0, 38.10)]}, crs="EPSG:4326",
+    )
     monkeypatch.setattr("core.hvi.load_population_adapter", lambda config: _Adapter)
     monkeypatch.setattr("core.hvi.resolve_pbf_path", lambda city_id: tmp_path / "x.osm.pbf")
     monkeypatch.setattr("core.hvi.city_data_proc", lambda city_id: tmp_path)
@@ -253,6 +320,10 @@ def test_single_district_city_still_gets_a_spread_of_scores(monkeypatch, tmp_pat
     assert out["hvi_score_2020"].nunique() > 5
     assert out["hvi_score_2020"].iloc[-1] > out["hvi_score_2020"].iloc[0]
     assert {"group_hazard_2020", "group_exposure_2020", "group_vulnerability_2020"} <= set(out.columns)
+    assert {"dist_saglik_hastane_m", "dist_saglik_klinik_m", "dist_saglik_doktor_m",
+            "dist_saglik_eczane_m"} <= set(out.columns)
+    assert out["dist_saglik_hastane_m"].notna().all()
+    assert out[["dist_saglik_klinik_m", "dist_saglik_doktor_m", "dist_saglik_eczane_m"]].isna().all().all()
 
 
 def test_road_without_demographics_stays_nan_even_when_demographics_are_constant(monkeypatch, tmp_path):
@@ -267,3 +338,30 @@ def test_road_without_demographics_stays_nan_even_when_demographics_are_constant
 
     assert out["hvi_score_2020"].notna().tolist() == [True] * (N_ROADS - 1) + [False]
     assert pd.isna(out["group_vulnerability_2020"].iloc[-1])
+
+
+def test_population_refresh_uses_adapter_hook_only_when_requested(capsys):
+    class Adapter:
+        @staticmethod
+        def fetch_population_data(config):
+            return {"source": "cached"}
+
+        @staticmethod
+        def refresh_population_data(config):
+            return {"source": "refreshed"}
+
+    config = _make_config()
+    assert hvi._fetch_population_inputs(Adapter, config) == {"source": "cached"}
+    assert hvi._fetch_population_inputs(Adapter, config, refresh=True) == {"source": "refreshed"}
+
+
+def test_population_refresh_falls_back_for_static_adapters(capsys):
+    class StaticAdapter:
+        @staticmethod
+        def fetch_population_data(config):
+            return {"source": "bundled"}
+
+    result = hvi._fetch_population_inputs(StaticAdapter, _make_config(), refresh=True)
+
+    assert result == {"source": "bundled"}
+    assert "yenileme kancası sunmuyor" in capsys.readouterr().out

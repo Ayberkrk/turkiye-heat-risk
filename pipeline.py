@@ -51,7 +51,8 @@ from core.satellite import fetch_landsat_scenes  # noqa: E402
 
 
 def run(city_id: str, years: list[str], main_year: str, open_browser: bool,
-        force: bool = False, night_lst: bool = False) -> Path:
+        force: bool = False, night_lst: bool = False, refresh_osm: bool = False,
+        refresh_population: bool = False) -> Path:
     config = load_city_config(city_id)
     print(f"Şehir: {config.name} ({city_id}) | bbox={config.bbox} | yıllar={years}")
 
@@ -59,8 +60,12 @@ def run(city_id: str, years: list[str], main_year: str, open_browser: bool,
         fetch_landsat_scenes(config, year, main_year, force=force)
         build_lst_ndvi_mosaic(config, year, main_year, force=force)
 
-    roads = compute_road_risk_timeseries(config, years, main_year, force=force)
-    compute_heat_vulnerability_index(config, years, roads, force=force)
+    roads = compute_road_risk_timeseries(
+        config, years, main_year, force=force, refresh_osm=refresh_osm,
+    )
+    compute_heat_vulnerability_index(
+        config, years, roads, force=force, refresh_population=refresh_population,
+    )
 
     if night_lst:
         # Ayrı, isteğe bağlı bir adım - MODIS gece LST'si yol bazlı HVI'nin
@@ -89,9 +94,15 @@ def main() -> None:
                          help="Sahne/mozaik/yol risk skoru/HVI/gece LST önbelleğini yok say, yeniden hesapla")
     parser.add_argument("--night-lst", action="store_true",
                          help="Mahalle ölçeğinde MODIS gece ısı adası katmanını da üret (isteğe bağlı, ek indirme)")
+    parser.add_argument("--refresh-osm", action="store_true",
+                        help="Yol analizinden önce mevcut OSM PBF özütünü URL'den yeniden indir")
+    parser.add_argument("--refresh-population", action="store_true",
+                        help="Adapter destekliyorsa önbelleğe alınmış nüfus/demografi tablolarını yenile")
     args = parser.parse_args()
 
-    run(args.city, args.years, args.main_year, args.open, force=args.force, night_lst=args.night_lst)
+    run(args.city, args.years, args.main_year, args.open, force=args.force,
+        night_lst=args.night_lst, refresh_osm=args.refresh_osm,
+        refresh_population=args.refresh_population)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -14,6 +15,7 @@ from core.raster import (
     compute_ndvi,
     qa_invalid_mask,
     reproject_to_crs,
+    stream_mosaic,
 )
 
 
@@ -64,6 +66,34 @@ def test_reproject_to_crs_preserves_valid_data(tmp_path):
         data = dst.read(1)
         assert (data != -9999.0).any()
         assert np.isclose(data[data != -9999.0][0], 25.5, atol=0.5)
+
+
+def test_stream_mosaic_failure_preserves_previous_output(tmp_path, monkeypatch):
+    output = tmp_path / "mosaic.tif"
+    profile = {
+        "driver": "GTiff", "height": 2, "width": 2, "count": 1,
+        "dtype": "float32", "crs": "EPSG:32635",
+        "transform": from_origin(500000.0, 4400000.0, 30.0, 30.0),
+        "nodata": -9999.0,
+    }
+    previous = np.full((2, 2), 42.0, dtype=np.float32)
+    with rasterio.open(output, "w", **profile) as dst:
+        dst.write(previous, 1)
+
+    original_open = rasterio.open
+
+    def fail_while_merging(path, mode="r", **kwargs):
+        if Path(path).name.startswith(".mosaic.") and Path(path).name.endswith(".part.tif") and mode == "r+":
+            raise RuntimeError("simulated interrupted mosaic")
+        return original_open(path, mode, **kwargs)
+
+    monkeypatch.setattr("core.raster.rasterio.open", fail_while_merging)
+    with pytest.raises(RuntimeError, match="interrupted mosaic"):
+        stream_mosaic([], output, profile)
+
+    with original_open(output) as src:
+        assert np.array_equal(src.read(1), previous)
+    assert not (tmp_path / "mosaic.part.tif").exists()
 
 
 # --- QA_PIXEL bulut maskesi -------------------------------------------------

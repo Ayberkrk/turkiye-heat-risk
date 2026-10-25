@@ -129,6 +129,74 @@ def test_fetch_landsat_scenes_searches_configured_season(monkeypatch, tmp_path):
     assert captured["datetime"] == "2024-06-01/2024-09-15"
 
 
+def test_scene_cache_invalidates_when_query_settings_change(monkeypatch, tmp_path):
+    import json
+    from types import SimpleNamespace
+
+    from core import satellite
+    from core.city_config import CityConfig
+
+    config = CityConfig(
+        city_id="test", name="Test", bbox=[27.0, 38.0, 27.5, 38.5], crs="EPSG:32635", max_cloud_cover=30,
+        osm_pbf_url="", drive_highway_types=["residential"], admin_level_ilce="6",
+        admin_level_mahalle="8", population_adapter_path="unused",
+        season_start="06-01", season_end="09-15", max_scenes_per_tile=2,
+    )
+    item = _FakeItem("LC08_test", {
+        "landsat:wrs_path": 180, "landsat:wrs_row": 33, "eo:cloud_cover": 5.0,
+        "datetime": "2024-07-10T08:00:00Z", "platform": "landsat-8",
+    })
+    item.assets = {asset: SimpleNamespace(href=f"https://example/{asset}") for asset in satellite.BANDS_TO_DOWNLOAD}
+    search_calls = []
+
+    class _Search:
+        def items(self):
+            return [item]
+
+    class _Catalog:
+        def search(self, **kwargs):
+            search_calls.append(kwargs)
+            return _Search()
+
+    monkeypatch.setattr("core.satellite.pystac_client.Client.open", lambda *args, **kwargs: _Catalog())
+    monkeypatch.setattr("core.satellite.year_paths", lambda city_id, year, main_year: (tmp_path, tmp_path))
+
+    downloaded = []
+
+    def _write_test_band(item, asset, path):
+        downloaded.append(asset)
+        with satellite.rasterio.open(
+            path, "w", driver="GTiff", height=1, width=1, count=1,
+            dtype="uint16", crs="EPSG:32635",
+            transform=from_origin(500000, 4400000, 30, 30),
+        ) as dst:
+            dst.write(np.array([[1]], dtype="uint16"), 1)
+
+    monkeypatch.setattr("core.satellite.download_band", _write_test_band)
+
+    satellite.fetch_landsat_scenes(config, "2024", "2024")
+    metadata_path = tmp_path / "scene_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    satellite.fetch_landsat_scenes(config, "2024", "2024")
+    assert len(search_calls) == 1
+    assert metadata["generated_at_utc"].endswith("+00:00")
+    assert metadata["scenes"][0]["platform"] == "landsat-8"
+
+    # Metadata remains current, but a removed band must invalidate the scene
+    # cache and be fetched again instead of failing later during mosaicking.
+    missing_band = tmp_path / "LC08_test" / "band10_thermal.tif"
+    missing_band.unlink()
+    satellite.fetch_landsat_scenes(config, "2024", "2024")
+    assert len(search_calls) == 2
+    assert downloaded.count("lwir11") == 2
+
+    config.season_start = "07-01"
+    satellite.fetch_landsat_scenes(config, "2024", "2024")
+
+    assert len(search_calls) == 3
+    assert search_calls[-1]["datetime"] == "2024-07-01/2024-09-15"
+
+
 # --- download_band: süresi dolmuş imzayla indirmeye çalışmamalı --------------
 
 def test_download_band_resigns_url_instead_of_reusing_search_time_token(monkeypatch, tmp_path):
@@ -145,6 +213,12 @@ def test_download_band_resigns_url_instead_of_reusing_search_time_token(monkeypa
         return url + "?sig=taze"
 
     class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
+
         def raise_for_status(self):
             pass
 
@@ -176,6 +250,12 @@ def _download_fakes(monkeypatch, responses):
     class _Response:
         def __init__(self, chunks):
             self._chunks = chunks
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
 
         def raise_for_status(self):
             pass
@@ -214,7 +294,7 @@ def test_download_band_retries_after_read_timeout_and_leaves_no_partial_file(mon
 
     assert len(calls) == 2
     assert target.read_bytes() == b"tamveri"
-    assert not (tmp_path / "b4.tif.part").exists()
+    assert not list(tmp_path.glob(".b4.*.part.tif"))
 
 
 def test_download_band_gives_up_after_all_attempts_without_writing_target(monkeypatch, tmp_path):
@@ -228,10 +308,12 @@ def test_download_band_gives_up_after_all_attempts_without_writing_target(monkey
     satellite, _, calls = _download_fakes(monkeypatch, failing)
     item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF")})
     target = tmp_path / "b4.tif"
+    target.write_bytes(b"previous complete band")
 
     with pytest.raises(requests.ConnectionError):
         satellite.download_band(item, "red", target)
 
     assert len(calls) == sat.DOWNLOAD_ATTEMPTS
-    # Yarım dosya hedefe yazılmamalı: var olan dosya "indirildi" sayılırdı.
-    assert not target.exists() and not (tmp_path / "b4.tif.part").exists()
+    # Başarısız yenileme önceki tam dosyayı korumalı; yarım dosyalar sızmamalı.
+    assert target.read_bytes() == b"previous complete band"
+    assert not list(tmp_path.glob(".b4.*.part.tif"))

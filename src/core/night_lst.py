@@ -32,7 +32,7 @@ import rasterio
 import rasterstats
 from rasterio.warp import Resampling, calculate_default_transform, reproject
 
-from core.cache import is_cache_valid, write_cache_meta
+from core.cache import file_signature, is_cache_valid, write_cache_meta
 from core.city_config import CityConfig
 from core.paths import city_data_proc
 
@@ -42,8 +42,8 @@ NIGHT_LST_ASSET = "LST_Night_1km"
 KELVIN_SCALE = 0.02  # ham piksel × 0.02 = Kelvin (bkz. koleksiyon raster:bands şeması)
 DOWNLOAD_TIMEOUT_SECONDS = 120
 OUT_PIXEL_DEGREES = 0.01  # ~1 km - MODIS'in kendi çözünürlüğüyle uyumlu
-NIGHT_LST_RASTER_VERSION = 1
-NEIGHBORHOOD_NIGHT_LST_VERSION = 1
+NIGHT_LST_RASTER_VERSION = 2
+NEIGHBORHOOD_NIGHT_LST_VERSION = 2
 
 
 def _raw_to_celsius(raw: np.ndarray) -> np.ndarray:
@@ -55,15 +55,49 @@ def _raw_to_celsius(raw: np.ndarray) -> np.ndarray:
     return np.where(raw == 0, np.nan, raw * KELVIN_SCALE - 273.15).astype(np.float32)
 
 
+def _night_lst_fingerprint(config: CityConfig, year: str, items) -> dict:
+    """Stable identity for a MODIS query and its selected source assets."""
+    return {
+        "city_id": config.city_id,
+        "year": str(year),
+        "bbox": config.bbox,
+        "collection": COLLECTION,
+        "asset": NIGHT_LST_ASSET,
+        "date_range": [f"{year}-06-01", f"{year}-08-31"],
+        "pixel_degrees": OUT_PIXEL_DEGREES,
+        "items": [
+            {
+                "id": item.id,
+                "datetime": item.properties.get("datetime"),
+                "asset_href": item.assets[NIGHT_LST_ASSET].href.split("?")[0],
+                "checksum": item.assets[NIGHT_LST_ASSET].extra_fields.get("file:checksum"),
+                "etag": item.assets[NIGHT_LST_ASSET].extra_fields.get("etag"),
+            }
+            for item in sorted(items, key=lambda candidate: candidate.id)
+        ],
+    }
+
+
+def _neighborhood_night_lst_fingerprint(
+    config: CityConfig, pbf_path: Path, night_lst_tif_path: Path, year: str,
+) -> dict:
+    """Stable identity for the OSM boundaries and raster zonal summary."""
+    return {
+        "city_id": config.city_id,
+        "year": str(year),
+        "bbox": config.bbox,
+        "crs": config.crs,
+        "admin_level_mahalle": config.admin_level_mahalle,
+        "pbf": file_signature(pbf_path),
+        "night_lst_raster": file_signature(night_lst_tif_path),
+    }
+
+
 def fetch_night_lst(config: CityConfig, year: str, force: bool = False) -> Path:
     """Yazın tüm 8-günlük MODIS gece LST kompozitlerinin ortalamasını,
     şehrin bbox'ına kırpılmış tek bir GeoTIFF (°C, EPSG:4326) olarak yazar.
     """
     out_path = city_data_proc(config.city_id) / f"night_lst_{year}.tif"
-    if is_cache_valid(out_path, NIGHT_LST_RASTER_VERSION, force=force):
-        print(f"[{year}] night_lst_{year}.tif zaten mevcut ve güncel, atlanıyor")
-        return out_path
-
     catalog = pystac_client.Client.open(CATALOG_URL, modifier=planetary_computer.sign_inplace)
     search = catalog.search(
         collections=[COLLECTION],
@@ -76,6 +110,12 @@ def fetch_night_lst(config: CityConfig, year: str, force: bool = False) -> Path:
             f"[{year}] {config.name} için bbox={config.bbox} kapsayan MODIS gece LST "
             f"({COLLECTION}) bulunamadı - tarih aralığını genişletmeyi deneyin."
         )
+
+    fingerprint = _night_lst_fingerprint(config, year, items)
+    if is_cache_valid(out_path, NIGHT_LST_RASTER_VERSION, force=force, fingerprint=fingerprint):
+        print(f"[{year}] night_lst_{year}.tif zaten mevcut ve güncel, atlanıyor")
+        return out_path
+
     print(f"[{year}] {len(items)} MODIS 8-günlük kompozit bulundu (gece LST)")
 
     west, south, east, north = config.bbox
@@ -117,9 +157,12 @@ def fetch_night_lst(config: CityConfig, year: str, force: bool = False) -> Path:
         "nodata": -9999.0, "compress": "lzw",
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with rasterio.open(out_path, "w", **out_profile) as dst:
+    partial_path = out_path.with_name(out_path.stem + ".part" + out_path.suffix)
+    with rasterio.open(partial_path, "w", **out_profile) as dst:
         dst.write(np.where(np.isnan(mean_c), -9999.0, mean_c).astype(np.float32), 1)
-    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION)
+    partial_path.replace(out_path)
+    write_cache_meta(out_path, NIGHT_LST_RASTER_VERSION, fingerprint=fingerprint,
+                     details={"item_count": len(items), "valid_pixel_fraction": float((count > 0).mean())})
 
     valid_ratio = (count > 0).mean()
     print(f"[{year}] gece LST kaydedildi: {out_path.name} "
@@ -138,7 +181,8 @@ def compute_neighborhood_night_lst(
     (bkz. modül docstring'i).
     """
     out_path = city_data_proc(config.city_id) / f"night_lst_by_mahalle_{year}.geojson"
-    if is_cache_valid(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, force=force):
+    fingerprint = _neighborhood_night_lst_fingerprint(config, pbf_path, night_lst_tif_path, year)
+    if is_cache_valid(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, force=force, fingerprint=fingerprint):
         print(f"[{year}] night_lst_by_mahalle_{year}.geojson zaten mevcut ve güncel, atlanıyor")
         return out_path
 
@@ -153,7 +197,9 @@ def compute_neighborhood_night_lst(
     mahalle_gdf = mahalle_gdf.dropna(subset=["gece_lst_c"])
     mahalle_gdf["gece_lst_c"] = mahalle_gdf["gece_lst_c"].round(1)
 
-    mahalle_gdf.to_file(out_path, driver="GeoJSON")
-    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION)
+    partial_path = out_path.with_name(out_path.stem + ".part" + out_path.suffix)
+    mahalle_gdf.to_file(partial_path, driver="GeoJSON")
+    partial_path.replace(out_path)
+    write_cache_meta(out_path, NEIGHBORHOOD_NIGHT_LST_VERSION, fingerprint=fingerprint)
     print(f"[{year}] kaydedildi: {out_path.name} ({len(mahalle_gdf):,} mahalle)")
     return out_path

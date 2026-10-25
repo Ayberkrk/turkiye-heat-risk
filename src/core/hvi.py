@@ -14,7 +14,9 @@ Bileşenler:
   - sensitivity_cocuk     : 0-14 nüfus oranı (yeni - aynı CSV'den, ek maliyetsiz)
   - sensitivity_agac      : yol tamponundaki ortalama NDVI'nin tersi (yeni -
                              zaten hesaplanan NDVI mozaiğinden, ağaç örtüsü/gölge proxysi)
-  - sensitivity_saglik    : en yakın hastane/klinik/eczaneye uzaklık (yeni - OSM'den)
+  - sensitivity_saglik    : en yakın haritalı sağlık tesisine uzaklık (OSM);
+                             hastane, klinik, doktor ve eczane mesafeleri ayrıca
+                             tanı sütunlarında saklanır, kapasite ölçülmez
   - sensitivity_yesil     : en yakın park/orman/çayır poligonuna uzaklık (yeni - OSM'den)
   - sensitivity_yapilasma : yol tamponu çevresindeki bina yoğunluğu (yeni - OSM'den)
   - sensitivity_sosyoekonomik : ilçe bazlı sosyoekonomik gelişmişlik skorunun
@@ -63,15 +65,22 @@ uygulanan ortak ölçek mantığının aynısı burada da geçerlidir.
 from __future__ import annotations
 
 import gc
+import hashlib
+from pathlib import Path
 
 import geopandas as gpd
 import jenkspy
 import numpy as np
 import pandas as pd
 
-from core.cache import is_cache_valid, write_cache_meta
+from core.cache import atomic_output_path, file_signature, is_cache_valid, write_cache_meta
 from core.city_config import CityConfig, load_population_adapter
-from core.osm_amenities import load_building_centroids, load_green_space_polygons, load_health_points
+from core.osm_amenities import (
+    HEALTH_AMENITY_GROUPS,
+    load_building_centroids,
+    load_green_space_polygons,
+    load_health_points,
+)
 from core.paths import city_data_proc, resolve_pbf_path
 
 CATEGORY_COLORS_5 = {
@@ -101,7 +110,7 @@ COMPONENT_FLOOR = 0.05
 # Çıktı sürümü - bileşen sayısı/formülü, yapılaşma tamponu veya
 # `roads_with_hvi.geojson` sütun şeması değiştiğinde artırılır; eski önbellek
 # güncel çıktı gibi kullanılmamalıdır (bkz. core/cache.py).
-HVI_FORMULA_VERSION = 4
+HVI_FORMULA_VERSION = 6
 
 
 # Sağlam (aykırı değere dayanıklı) ölçeklemede kullanılan alt/üst yüzdelikler.
@@ -271,6 +280,23 @@ def _nearest_distance_m(points_utm: gpd.GeoSeries, targets_wgs84: gpd.GeoDataFra
     return pd.Series(values, index=points_utm.index)
 
 
+def _nearest_health_distances_m(
+    points_utm: gpd.GeoSeries, facilities_wgs84: gpd.GeoDataFrame, crs: str,
+) -> dict[str, pd.Series]:
+    """Return nearest distance per mapped health-facility class.
+
+    The index retains a single nearest-any-health-amenity score for continuity,
+    while these separate diagnostics expose whether that proximity comes from
+    a hospital, clinic, doctor, or pharmacy. Missing OSM classes remain NaN
+    rather than being presented as zero-distance access.
+    """
+    distances = {}
+    for label, amenity_values in HEALTH_AMENITY_GROUPS.items():
+        targets = facilities_wgs84[facilities_wgs84["amenity"].isin(amenity_values)]
+        distances[f"dist_saglik_{label}_m"] = _nearest_distance_m(points_utm, targets, crs)
+    return distances
+
+
 def _building_density_per_km2(building_centroids_utm: gpd.GeoDataFrame, roads_utm: gpd.GeoDataFrame,
                                buffer_m: int = BUILDING_DENSITY_BUFFER_M, chunk_size: int = 4000) -> pd.Series:
     """Her yolun çevresindeki bina yoğunluğunu (bina/km²) döndürür.
@@ -308,19 +334,82 @@ def _building_density_per_km2(building_centroids_utm: gpd.GeoDataFrame, roads_ut
     return pd.concat(parts)
 
 
+def _hvi_input_fingerprint(
+    config: CityConfig,
+    years: list[str],
+    roads: gpd.GeoDataFrame,
+    adapter,
+    population_paths: dict[str, Path],
+    pbf_path: Path,
+) -> dict:
+    """Describe local inputs that can change the HVI output.
+
+    File signatures catch refreshed local sources without reading large PBFs.
+    A content digest of the road attributes/geometries also covers callers
+    that pass an in-memory road table which differs from its cached file.
+    """
+    road_attributes = pd.DataFrame(roads.drop(columns=[roads.geometry.name])).copy()
+    attribute_bytes = pd.util.hash_pandas_object(road_attributes, index=True).values.tobytes()
+    geometry_bytes = b"\0".join(
+        (geom.wkb if geom is not None and not geom.is_empty else b"")
+        for geom in roads.geometry
+    )
+    road_digest = hashlib.sha256(attribute_bytes + geometry_bytes).hexdigest()
+
+    city_files = []
+    if config.config_dir.exists():
+        for path in sorted(config.config_dir.rglob("*")):
+            if path.is_file() and path.suffix.lower() in {".yaml", ".yml", ".csv", ".py"}:
+                city_files.append(file_signature(path))
+
+    population_files = {
+        key: file_signature(Path(path)) for key, path in sorted(population_paths.items())
+    }
+    adapter_path = getattr(adapter, "__file__", None)
+    return {
+        "city_id": config.city_id,
+        "config": config.raw,
+        "years": list(years),
+        "formula_version": HVI_FORMULA_VERSION,
+        "roads_file": file_signature(city_data_proc(config.city_id) / "roads_timeseries.geojson"),
+        "roads_content_sha256": road_digest,
+        "osm_pbf": file_signature(pbf_path),
+        "population_files": population_files,
+        "city_source_files": city_files,
+        "adapter_source": file_signature(Path(adapter_path)) if adapter_path else None,
+    }
+
+
+def _fetch_population_inputs(adapter, config: CityConfig, refresh: bool = False) -> dict[str, Path]:
+    """Load adapter inputs, using its explicit refresh hook when available."""
+    refresh_hook = getattr(adapter, "refresh_population_data", None)
+    if refresh and callable(refresh_hook):
+        return refresh_hook(config)
+    if refresh:
+        print(f"{config.name}: adapter yenileme kancası sunmuyor; yerel kaynaklar yeniden kullanılıyor")
+    return adapter.fetch_population_data(config)
+
+
 def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
-                                      roads: gpd.GeoDataFrame, force: bool = False) -> gpd.GeoDataFrame:
+                                      roads: gpd.GeoDataFrame, force: bool = False,
+                                      refresh_population: bool = False) -> gpd.GeoDataFrame:
     """Çok bileşenli HVI'yi hesaplar; her bileşenin normalize değerini ve nihai
     skoru/kategoriyi GeoJSON'a yazacak sütunlar olarak ekler.
+
+    `dist_saglik_m` mevcut endeksteki en yakın haritalı sağlık amenity'sine
+    mesafedir. Dört ayrı `dist_saglik_*_m` sütunu tesis türünü denetlemek için
+    eklenir. Bunlar hizmet kapasitesi, uygunluk, giriş konumu veya yürüme
+    süresini ölçmez; OSM geometrilerinin doğrudan Öklid mesafesidir.
     """
     output_path = city_data_proc(config.city_id) / "roads_with_hvi.geojson"
-    if is_cache_valid(output_path, HVI_FORMULA_VERSION, force=force):
+    adapter = load_population_adapter(config)
+    population_paths = _fetch_population_inputs(adapter, config, refresh=refresh_population)
+    pbf_path = resolve_pbf_path(config.city_id)
+    fingerprint = _hvi_input_fingerprint(config, years, roads, adapter, population_paths, pbf_path)
+    if is_cache_valid(output_path, HVI_FORMULA_VERSION, force=force, fingerprint=fingerprint):
         print("roads_with_hvi.geojson güncel, atlanıyor")
         return gpd.read_file(output_path)
 
-    adapter = load_population_adapter(config)
-    population_paths = adapter.fetch_population_data(config)
-    pbf_path = resolve_pbf_path(config.city_id)
     mahalle_gdf = adapter.build_neighborhood_layer(pbf_path, population_paths, config)
 
     roads = roads.copy()
@@ -350,7 +439,7 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
     # --- Sağlığa/yeşil alana uzaklık ve bina yoğunluğu: OSM'den, statik (yıldan bağımsız) ---
     print("Sağlık hizmeti noktaları yükleniyor...")
     health_points = load_health_points(config, pbf_path)
-    print(f"  {len(health_points):,} sağlık noktası bulundu")
+    print(f"  {len(health_points):,} sağlık tesisi/noktası bulundu")
     print("Yeşil alan poligonları yükleniyor...")
     green_polys = load_green_space_polygons(config, pbf_path)
     print(f"  {len(green_polys):,} yeşil alan poligonu bulundu")
@@ -360,6 +449,8 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
 
     centroid_utm = roads_utm.geometry.centroid
     roads["dist_saglik_m"] = _nearest_distance_m(centroid_utm, health_points, config.crs).round(1)
+    for column, distances in _nearest_health_distances_m(centroid_utm, health_points, config.crs).items():
+        roads[column] = distances.round(1)
     roads["dist_yesil_m"] = _nearest_distance_m(centroid_utm, green_polys, config.crs).round(1)
 
     building_centroids_utm = building_centroids.to_crs(config.crs)
@@ -490,7 +581,8 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
     for year in years:
         roads[f"hvi_category_{year}"] = roads[f"hvi_category_{year}"].astype(str)
 
-    roads.to_file(output_path, driver="GeoJSON")
-    write_cache_meta(output_path, HVI_FORMULA_VERSION)
+    with atomic_output_path(output_path) as temporary:
+        roads.to_file(temporary, driver="GeoJSON")
+    write_cache_meta(output_path, HVI_FORMULA_VERSION, fingerprint=fingerprint)
     print(f"Kaydedildi: {output_path.name} ({len(roads):,} yol segmenti)")
     return roads

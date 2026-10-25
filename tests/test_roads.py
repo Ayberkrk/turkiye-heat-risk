@@ -1,11 +1,12 @@
 import geopandas as gpd
 import numpy as np
+import pytest
 import rasterio
 from rasterio.transform import from_origin
 from shapely.geometry import box
 
 from core.city_config import CityConfig
-from core.roads import compute_road_risk_timeseries
+from core.roads import compute_road_risk_timeseries, fetch_road_network
 
 CRS = "EPSG:32635"
 
@@ -37,7 +38,67 @@ def _make_config() -> CityConfig:
     )
 
 
-def _setup_two_roads(tmp_path, monkeypatch):
+def test_refresh_osm_replaces_existing_extract_after_complete_download(tmp_path, monkeypatch):
+    raw_dir = tmp_path / "raw"
+    pbf_path = raw_dir / "testcity.osm.pbf"
+    pbf_path.parent.mkdir()
+    pbf_path.write_bytes(b"old extract")
+    monkeypatch.setattr("core.roads.city_data_raw", lambda city_id: raw_dir)
+    monkeypatch.setattr("core.roads.resolve_pbf_path", lambda city_id: pbf_path)
+
+    class _Response:
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            yield b"new "
+            yield b"extract"
+
+    requests_seen = []
+    monkeypatch.setattr("core.roads.requests.get", lambda *a, **kw: (requests_seen.append((a, kw)) or _Response()))
+    monkeypatch.setattr(
+        "core.roads.gpd.read_file",
+        lambda *a, **kw: gpd.GeoDataFrame(
+            {"name": ["A"], "highway": ["primary"]},
+            geometry=[box(27, 38, 27.001, 38.001)], crs="EPSG:4326",
+        ),
+    )
+
+    roads = fetch_road_network(_make_config(), refresh=True)
+
+    assert len(requests_seen) == 1
+    assert requests_seen[0][1]["stream"] is True
+    assert pbf_path.read_bytes() == b"new extract"
+    assert not (raw_dir / "testcity.osm.part.pbf").exists()
+    assert len(roads) == 1
+
+
+def test_failed_osm_refresh_preserves_existing_extract(tmp_path, monkeypatch):
+    raw_dir = tmp_path / "raw"
+    pbf_path = raw_dir / "testcity.osm.pbf"
+    pbf_path.parent.mkdir()
+    pbf_path.write_bytes(b"known-good extract")
+    monkeypatch.setattr("core.roads.city_data_raw", lambda city_id: raw_dir)
+    monkeypatch.setattr("core.roads.resolve_pbf_path", lambda city_id: pbf_path)
+
+    class _Response:
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            yield b"incomplete"
+            raise RuntimeError("simulated connection interruption")
+
+    monkeypatch.setattr("core.roads.requests.get", lambda *a, **kw: _Response())
+
+    with pytest.raises(RuntimeError, match="connection interruption"):
+        fetch_road_network(_make_config(), refresh=True)
+
+    assert pbf_path.read_bytes() == b"known-good extract"
+    assert not (raw_dir / "testcity.osm.part.pbf").exists()
+
+
+def _setup_two_roads(tmp_path, monkeypatch, constant=False):
     """Ortak ölçek ve `delta_lst` mantığını, gerçek OSM/uydu indirmesi
     olmadan doğrulamak için iki sahte yolu ve iki yıllık LST rasterini
     kurar (bkz. compute_road_risk_timeseries docstring'i).
@@ -53,8 +114,10 @@ def _setup_two_roads(tmp_path, monkeypatch):
     # alttaki bölgeyi (satır 16-18, sütun 16-18) kapsayacak şekilde konumlandı.
     region_a = (slice(1, 4), slice(1, 4))
     region_b = (slice(16, 19), slice(16, 19))
-    _write_lst_tif(proc_2020 / "lst_celsius.tif", [(*region_a, 30.0), (*region_b, 20.0)])
-    _write_lst_tif(proc_2026 / "lst_celsius.tif", [(*region_a, 32.0), (*region_b, 19.0)])
+    year_2020 = [(*region_a, 25.0), (*region_b, 25.0)] if constant else [(*region_a, 30.0), (*region_b, 20.0)]
+    year_2026 = [(*region_a, 25.0), (*region_b, 25.0)] if constant else [(*region_a, 32.0), (*region_b, 19.0)]
+    _write_lst_tif(proc_2020 / "lst_celsius.tif", year_2020)
+    _write_lst_tif(proc_2026 / "lst_celsius.tif", year_2026)
     # NDVI de zonal_stats ile aynı çağrıda örneklenir; değeri bu testler
     # için önemsiz, tüm rasteri kaplayan sabit bir değer yeterli.
     _write_lst_tif(proc_2020 / "ndvi.tif", [(slice(0, 20), slice(0, 20), 0.3)])
@@ -73,7 +136,7 @@ def _setup_two_roads(tmp_path, monkeypatch):
     output_proc = tmp_path / "outproc"
     output_proc.mkdir()
 
-    monkeypatch.setattr("core.roads.fetch_road_network", lambda config: roads_gdf.copy())
+    monkeypatch.setattr("core.roads.fetch_road_network", lambda config, refresh=False: roads_gdf.copy())
     monkeypatch.setattr(
         "core.roads.year_paths",
         lambda city_id, year, main_year: (tmp_path / "raw", proc_2020 if year == "2020" else proc_2026),
@@ -128,9 +191,34 @@ def test_road_with_no_valid_lst_in_any_year_is_dropped(tmp_path, monkeypatch):
         "geometry": [box(10, 160, 40, 190), box(160, 10, 190, 40), box(500, 500, 530, 530)],
         "geometry_buffer": [box(10, 160, 40, 190), box(160, 10, 190, 40), box(500, 500, 530, 530)],
     }, crs=CRS)
-    monkeypatch.setattr("core.roads.fetch_road_network", lambda config: roads_with_gap.copy())
+    monkeypatch.setattr("core.roads.fetch_road_network", lambda config, refresh=False: roads_with_gap.copy())
 
     result = compute_road_risk_timeseries(config, ["2020", "2026"], "2026")
 
     assert "Road C (no data)" not in result["name"].tolist()
     assert len(result) == 2
+
+
+def test_unsorted_years_are_compared_chronologically(tmp_path, monkeypatch):
+    _setup_two_roads(tmp_path, monkeypatch)
+
+    result = compute_road_risk_timeseries(_make_config(), ["2026", "2020"], "2026")
+    road_a = result.set_index("name").loc["Road A"]
+
+    assert road_a["delta_lst"] == 2.0
+
+
+def test_single_year_is_rejected_for_timeseries(tmp_path, monkeypatch):
+    import pytest
+
+    with pytest.raises(ValueError, match="en az iki farklı yıl"):
+        compute_road_risk_timeseries(_make_config(), ["2026"], "2026")
+
+
+def test_constant_lst_range_returns_finite_neutral_risk_scores(tmp_path, monkeypatch):
+    _setup_two_roads(tmp_path, monkeypatch, constant=True)
+
+    result = compute_road_risk_timeseries(_make_config(), ["2020", "2026"], "2026")
+
+    assert np.isfinite(result[["risk_score_2020", "risk_score_2026"]].to_numpy()).all()
+    assert (result[["risk_score_2020", "risk_score_2026"]] == 0).all().all()

@@ -30,6 +30,9 @@ jobs:
           PYTHONPATH: src
         run: python -m pytest tests/ -v
 
+      - name: Şehir config ve veri tablolarını çevrimdışı doğrula
+        run: python validate_city_data.py --all
+
   docker:
     runs-on: ubuntu-latest
     steps:

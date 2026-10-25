@@ -1,10 +1,55 @@
+from types import SimpleNamespace
+
 import geopandas as gpd
 import numpy as np
+import pytest
 from shapely.geometry import LineString, box
 
-from core.coverage import road_coverage
+from core.coverage import _population_inputs, road_coverage
 
 CRS = "EPSG:32636"
+
+
+def test_offline_population_inputs_use_cache_hook_without_fetching():
+    class Adapter:
+        @staticmethod
+        def fetch_population_data(config):
+            raise AssertionError("offline mode must not fetch remote population data")
+
+        @staticmethod
+        def load_cached_population_data(config):
+            return {"source": "cached"}
+
+    config = SimpleNamespace(city_id="sample", raw={"population": {"ckan_base": "https://example.test"}})
+
+    assert _population_inputs(Adapter, config, offline=True) == {"source": "cached"}
+
+
+def test_offline_population_inputs_fail_closed_for_remote_adapter_without_cache_hook():
+    class Adapter:
+        @staticmethod
+        def fetch_population_data(config):
+            raise AssertionError("remote CKAN inputs must not be fetched in offline mode")
+
+    config = SimpleNamespace(city_id="sample", raw={"population": {"ckan_base": "https://example.test"}})
+
+    with pytest.raises(FileNotFoundError, match="load_cached_population_data"):
+        _population_inputs(Adapter, config, offline=True)
+
+
+def test_online_population_inputs_keep_existing_adapter_fetch_behavior():
+    class Adapter:
+        @staticmethod
+        def fetch_population_data(config):
+            return {"source": "online"}
+
+        @staticmethod
+        def load_cached_population_data(config):
+            raise AssertionError("online mode uses the regular adapter fetch")
+
+    config = SimpleNamespace(city_id="sample", raw={"population": {"ckan_base": "https://example.test"}})
+
+    assert _population_inputs(Adapter, config, offline=False) == {"source": "online"}
 
 
 def _mahalle(values: list[float | None]) -> gpd.GeoDataFrame:

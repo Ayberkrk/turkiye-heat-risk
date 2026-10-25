@@ -7,6 +7,7 @@ from core.osm_amenities import (
     GREEN_LANDUSE,
     GREEN_LEISURE,
     HEALTH_AMENITIES,
+    HEALTH_AMENITY_GROUPS,
     _other_tags_get,
     load_building_centroids,
     load_green_space_polygons,
@@ -44,6 +45,12 @@ def test_health_and_green_amenity_sets_match_module_constants():
     # burada donuyor ki bir modül içi yazım hatası (ör. "hospitals") test
     # olmadan fark edilmeden kalmasın.
     assert HEALTH_AMENITIES == {"hospital", "clinic", "pharmacy", "doctors"}
+    assert HEALTH_AMENITY_GROUPS == {
+        "hastane": {"hospital"},
+        "klinik": {"clinic"},
+        "doktor": {"doctors"},
+        "eczane": {"pharmacy"},
+    }
     assert GREEN_LEISURE == {"park", "garden", "nature_reserve"}
     assert GREEN_LANDUSE == {"forest", "grass", "meadow", "recreation_ground"}
 
@@ -81,11 +88,13 @@ def test_load_green_space_polygons_keeps_leisure_or_landuse_match_and_drops_empt
 
 def test_load_health_points_combines_point_and_polygon_layers(monkeypatch):
     points = gpd.GeoDataFrame({
-        "other_tags": ['"amenity"=>"pharmacy"', '"shop"=>"bakery"', None],
-        "geometry": [Point(0, 0), Point(1, 1), Point(2, 2)],
+        "other_tags": ['"amenity"=>"pharmacy"', '"shop"=>"bakery"',
+                       '"healthcare"=>"doctor"', None],
+        "geometry": [Point(0, 0), Point(1, 1), Point(2, 2), Point(3, 3)],
     }, crs="EPSG:4326")
     polys = gpd.GeoDataFrame({
-        "amenity": ["hospital", "school"],
+        "amenity": ["hospital", None],
+        "other_tags": [None, '"healthcare"=>"clinic"'],
         "geometry": [Polygon([(0, 0), (1, 0), (1, 1)]), Polygon([(2, 2), (3, 2), (3, 3)])],
     }, crs="EPSG:4326")
 
@@ -96,12 +105,13 @@ def test_load_health_points_combines_point_and_polygon_layers(monkeypatch):
 
     health = load_health_points(_make_config(), "dummy.pbf")
 
-    # Eczane (nokta) + hastane (poligon, merkez noktasına indirgenmiş) - bakkal
-    # ve okul dışarıda kalmalı.
-    assert len(health) == 2
-    assert set(health["amenity"]) == {"pharmacy", "hospital"}
-    # Poligon merkez noktası, orijinal poligon geometrisi değil, bir Point olmalı.
-    assert all(geom.geom_type == "Point" for geom in health.geometry)
+    # Amenity ve healthcare etiketleri iki geometri türünde de tanınmalı;
+    # eczane, doktor, hastane ve klinik gelirken bakkal dışarıda kalmalı.
+    assert len(health) == 4
+    assert set(health["amenity"]) == {"pharmacy", "doctors", "hospital", "clinic"}
+    hospital = health.loc[health["amenity"] == "hospital", "geometry"].iloc[0]
+    assert hospital.geom_type == "Polygon"
+    assert hospital.equals(polys.loc[polys["amenity"] == "hospital", "geometry"].iloc[0])
 
 
 # --- Centroid CRS doğruluğu: önce config.crs'e geçilip merkez orada
@@ -131,7 +141,7 @@ def test_skewed_polygon_fixture_actually_distinguishes_the_two_methods():
     assert correct.distance(naive) > 0.01  # ~1 km'den fazla fark
 
 
-def test_load_health_points_polygon_centroid_uses_projected_crs(monkeypatch):
+def test_load_health_points_preserves_large_health_polygon_for_distance(monkeypatch):
     points = gpd.GeoDataFrame({"other_tags": [None], "geometry": [Point(0, 0)]}, crs="EPSG:4326")
     polys = gpd.GeoDataFrame({"amenity": ["hospital"], "geometry": [_SKEWED_POLYGON]}, crs="EPSG:4326")
 
@@ -143,11 +153,9 @@ def test_load_health_points_polygon_centroid_uses_projected_crs(monkeypatch):
 
     health = load_health_points(config, "dummy.pbf")
 
-    result_point = health.loc[health["amenity"] == "hospital", "geometry"].iloc[0]
-    expected = _expected_projected_centroid(_SKEWED_POLYGON, config.crs)
-    naive = _naive_geographic_centroid(_SKEWED_POLYGON)
-    assert result_point.distance(expected) < 1e-6
-    assert result_point.distance(naive) > 0.01
+    result_polygon = health.loc[health["amenity"] == "hospital", "geometry"].iloc[0]
+    assert result_polygon.geom_type == "Polygon"
+    assert result_polygon.equals(_SKEWED_POLYGON)
 
 
 def test_load_building_centroids_keeps_only_tagged_buildings(monkeypatch):
