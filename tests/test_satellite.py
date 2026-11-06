@@ -380,3 +380,43 @@ def test_window_read_retries_on_io_error(monkeypatch, tmp_path):
 
     # Her deneme taze imzayla yapılır.
     assert calls == ["https://blob.example/B4.TIF?sig=taze"] * 2
+
+
+# --- yerel STAC sahne listesi (çevrimdışı örnek şehir) -------------------------
+
+def test_local_catalog_filters_like_the_remote_search(tmp_path):
+    import json as _json
+
+    from core import satellite
+
+    def item(item_id, date, cloud, platform="landsat-8", bbox=(27.0, 38.0, 27.5, 38.5)):
+        return {"type": "Feature", "stac_version": "1.0.0", "id": item_id, "bbox": list(bbox),
+                "geometry": {"type": "Point", "coordinates": [27.2, 38.2]}, "links": [],
+                "properties": {"datetime": f"{date}T08:40:00Z", "eo:cloud_cover": cloud, "platform": platform,
+                               "landsat:wrs_path": 180, "landsat:wrs_row": 33},
+                "assets": {"lwir11": {"href": f"bantlar/{item_id}.tif"}}}
+
+    catalog = tmp_path / "sahneler.json"
+    catalog.write_text(_json.dumps({"type": "FeatureCollection", "features": [
+        item("ok", "2026-07-10", 5),
+        item("bulutlu", "2026-07-11", 80),
+        item("mevsim_disi", "2026-05-01", 5),
+        item("landsat7", "2026-07-12", 5, platform="landsat-7"),
+        item("uzak", "2026-07-13", 5, bbox=(30.0, 40.0, 30.5, 40.5)),
+    ]}), encoding="utf-8")
+    items = satellite.load_local_catalog(catalog, [27.1, 38.1, 27.2, 38.2], "2026-07-01", "2026-08-31", 30)
+    assert [i.id for i in items] == ["ok"]
+    # Göreli varlık yolu katalog klasörüne göre çözülür; yerel yol imzalanmaz.
+    href = items[0].assets["lwir11"].href
+    assert href == str((tmp_path / "bantlar" / "ok.tif").resolve())
+    assert satellite._sign(href) == href
+
+
+def test_catalog_config_value_must_be_a_path():
+    from core.city_config import validate_config_dict
+
+    base = {"city": {"name": "X", "bbox": [27.0, 38.0, 27.2, 38.2], "crs": "EPSG:32635"},
+            "osm": {"pbf_url": "u", "highway_types": ["residential"], "admin_level_ilce": 6,
+                    "admin_level_mahalle": 8}, "population": {"adapter": "a"}}
+    assert validate_config_dict({**base, "landsat": {"catalog": "sahneler.json"}}) == []
+    assert any("catalog" in e for e in validate_config_dict({**base, "landsat": {"catalog": 5}}))

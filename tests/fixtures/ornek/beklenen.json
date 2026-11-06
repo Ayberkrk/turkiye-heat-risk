@@ -1,0 +1,14 @@
+{
+  "road_count": 604,
+  "scored_roads": 604,
+  "mean_lst_2020": 48.148,
+  "mean_lst_2026": 43.817,
+  "mean_hvi_score_2026": 39.176,
+  "category_counts_2026": {
+    "Düşük": 214,
+    "Orta": 174,
+    "Yüksek": 168,
+    "Kritik": 48
+  },
+  "top_mahalle_2026": "Doğanay Mahallesi"
+}

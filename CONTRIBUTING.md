@@ -7,7 +7,24 @@ tamamen şehirden bağımsızdır, her şehrin kendi parametreleri ve nüfus ver
 mantığı `src/cities/<sehir>/` altında izole edilir. Yeni bir şehir eklemek
 `src/core/` içindeki hiçbir dosyayı değiştirmeyi gerektirmemelidir.
 
-## Adımlar
+## Geliştirme ortamı ve hızlı kontrol
+
+```bash
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]" -c constraints.txt
+python tools/run_demo.py      # internetsiz, ~10 sn: örnek şehirde tüm hat
+pytest                        # birim testleri + aynı örnek şehirle uçtan uca regresyon testi
+python -m ruff check .
+```
+
+`tests/test_e2e.py`, gerçek İzmir verisinden kesilmiş küçük bir şehirle
+(`tests/fixtures/ornek`) `pipeline.py`'yi ağ bağlantısı olmadan baştan sona
+çalıştırır ve sonuçları `tests/fixtures/ornek/beklenen.json` ile karşılaştırır.
+HVI formülünü bilerek değiştirdiysen beklenen değerleri yenile ve farkı PR'da
+açıkla: `REGENERATE_E2E=1 pytest tests/test_e2e.py`. Örnek şehri yeniden
+üretmek için: `python tools/build_e2e_fixture.py` (önce İzmir pipeline'ı).
+
+## Yeni şehir ekleme adımları
 
 ### 1. `src/cities/<sehir>/` dizinini oluştur
 

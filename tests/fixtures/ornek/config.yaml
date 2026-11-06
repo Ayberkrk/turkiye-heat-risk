@@ -1,0 +1,33 @@
+# Uçtan uca test ve demo için örnek şehir (tools/build_e2e_fixture.py üretir).
+# İzmir'in Karabağlar/Konak sınırında ~1,7 x 1,7 km. Ağ gerektirmez: Landsat
+# sahneleri sahneler.json'dan, OSM ve nüfus raw/ altından, nüfus ızgarası
+# nufus_izgarasi.tif'ten okunur.
+city:
+  name: "Örnek (İzmir, Karabağlar)"
+  bbox: [27.1, 38.39, 27.12, 38.405]
+  crs: "EPSG:32635"
+  attribution: "Nüfus: İzmir B.Ş.B. Açık Veri Portalı, TÜİK."
+
+landsat:
+  max_cloud_cover: 30
+  max_scenes_per_tile: 1
+  catalog: "sahneler.json"
+
+osm:
+  pbf_url: "https://download.openstreetmap.fr/extracts/europe/turkey/aegean-latest.osm.pbf"
+  admin_level_ilce: 6
+  admin_level_mahalle: 8
+  highway_types: [primary, secondary, tertiary, residential, living_street, unclassified]
+
+roads:
+  buffer_meters: 10
+
+population_grid:
+  url: "src/cities/ornek/nufus_izgarasi.tif"
+
+population:
+  adapter: "cities.izmir.adapter"
+  ckan_base: "https://acikveri.bizizmir.com"
+  datasets:
+    yas_grubu: "izmir-ilceleri-yas-grubuna-gore-nufus-bilgileri"
+    mahalle_nufus: "cinsiyete-gore-mahalle-nufus-bilgileri"

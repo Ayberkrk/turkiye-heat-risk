@@ -1,0 +1,133 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "stac_version": "1.0.0",
+   "id": "LC08_L2SP_180033_20200701_02_T1",
+   "bbox": [
+    27.07103015744788,
+    38.36753069669174,
+    27.148421551366702,
+    38.42762476130844
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       27.07103015744788,
+       38.36753069669174
+      ],
+      [
+       27.148421551366702,
+       38.36753069669174
+      ],
+      [
+       27.148421551366702,
+       38.42762476130844
+      ],
+      [
+       27.07103015744788,
+       38.42762476130844
+      ],
+      [
+       27.07103015744788,
+       38.36753069669174
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "datetime": "2020-07-01T08:40:00Z",
+    "eo:cloud_cover": 0.0,
+    "platform": "landsat-8",
+    "landsat:wrs_path": 180,
+    "landsat:wrs_row": 33
+   },
+   "assets": {
+    "red": {
+     "href": "landsat/LC08_L2SP_180033_20200701_02_T1/band4_red.tif",
+     "type": "image/tiff; application=geotiff"
+    },
+    "nir08": {
+     "href": "landsat/LC08_L2SP_180033_20200701_02_T1/band5_nir.tif",
+     "type": "image/tiff; application=geotiff"
+    },
+    "lwir11": {
+     "href": "landsat/LC08_L2SP_180033_20200701_02_T1/band10_thermal.tif",
+     "type": "image/tiff; application=geotiff"
+    },
+    "qa_pixel": {
+     "href": "landsat/LC08_L2SP_180033_20200701_02_T1/band_qa_pixel.tif",
+     "type": "image/tiff; application=geotiff"
+    }
+   },
+   "links": []
+  },
+  {
+   "type": "Feature",
+   "stac_version": "1.0.0",
+   "id": "LC09_L2SP_180033_20260827_02_T1",
+   "bbox": [
+    27.07103015744788,
+    38.36753069669174,
+    27.148421551366702,
+    38.42762476130844
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       27.07103015744788,
+       38.36753069669174
+      ],
+      [
+       27.148421551366702,
+       38.36753069669174
+      ],
+      [
+       27.148421551366702,
+       38.42762476130844
+      ],
+      [
+       27.07103015744788,
+       38.42762476130844
+      ],
+      [
+       27.07103015744788,
+       38.36753069669174
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "datetime": "2026-08-27T08:40:00Z",
+    "eo:cloud_cover": 0.02,
+    "platform": "landsat-9",
+    "landsat:wrs_path": 180,
+    "landsat:wrs_row": 33
+   },
+   "assets": {
+    "red": {
+     "href": "landsat/LC09_L2SP_180033_20260827_02_T1/band4_red.tif",
+     "type": "image/tiff; application=geotiff"
+    },
+    "nir08": {
+     "href": "landsat/LC09_L2SP_180033_20260827_02_T1/band5_nir.tif",
+     "type": "image/tiff; application=geotiff"
+    },
+    "lwir11": {
+     "href": "landsat/LC09_L2SP_180033_20260827_02_T1/band10_thermal.tif",
+     "type": "image/tiff; application=geotiff"
+    },
+    "qa_pixel": {
+     "href": "landsat/LC09_L2SP_180033_20260827_02_T1/band_qa_pixel.tif",
+     "type": "image/tiff; application=geotiff"
+    }
+   },
+   "links": []
+  }
+ ]
+}

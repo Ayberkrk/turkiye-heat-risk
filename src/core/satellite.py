@@ -103,6 +103,44 @@ def _cached_scene_bands_valid(metadata_path: Path) -> bool:
     return True
 
 
+def load_local_catalog(path: Path, bbox: list[float], start: str, end: str,
+                       max_cloud_cover: float) -> list:
+    """Yerel bir STAC ItemCollection dosyasından aramayla aynı süzgeçle sahne döndürür.
+
+    Çevrimdışı örnek şehir (bkz. tests/fixtures/ornek) ve sabitlenmiş bir sahne
+    kümesiyle yeniden üretim içindir. Göreli varlık yolları dosyanın klasörüne
+    göre çözülür.
+    """
+    import pystac
+
+    collection = pystac.ItemCollection.from_file(str(path))
+    west, south, east, north = bbox
+    items = []
+    for item in collection:
+        day = item.properties["datetime"][:10]
+        if not (start <= day <= end):
+            continue
+        if item.properties.get("eo:cloud_cover", 0) >= max_cloud_cover:
+            continue
+        if item.properties.get("platform") not in ("landsat-8", "landsat-9"):
+            continue
+        if item.bbox and (item.bbox[0] > east or item.bbox[2] < west or item.bbox[1] > north or item.bbox[3] < south):
+            continue
+        for asset in item.assets.values():
+            href = asset.href
+            if "://" not in href and not Path(href).is_absolute():
+                asset.href = str((path.parent / href).resolve())
+        items.append(item)
+    return items
+
+
+def _sign(href: str) -> str:
+    """Planetary Computer adresini imzalar; yerel dosya yolunu olduğu gibi bırakır."""
+    if not href.startswith(("http://", "https://")):
+        return href
+    return planetary_computer.sign(href.split("?")[0])
+
+
 def select_best_scenes_per_tile(items, max_per_tile: int = 1) -> dict[tuple[int, int], list]:
     """Sahneleri karoya (path/row) göre gruplayıp her karo için en az bulutlu
     `max_per_tile` kadarını döner (bulut oranına göre artan sırada).
@@ -171,7 +209,7 @@ def download_band(item, asset_name: str, save_path: Path, bbox: list[float] | No
         # karolu şehirlerde indirme bundan uzun sürer ve kalan dosyalar 403
         # döndürür. Kütüphane zaten imzalı bir adresi yeniden imzalamadığı
         # için eski imza önce atılır.
-        url = planetary_computer.sign(item.assets[asset_name].href.split("?")[0])
+        url = _sign(item.assets[asset_name].href)
         if bbox is not None:
             try:
                 _write_band_window(url, save_path, bbox)
@@ -196,6 +234,12 @@ def download_band(item, asset_name: str, save_path: Path, bbox: list[float] | No
             time.sleep(DOWNLOAD_RETRY_WAIT_SECONDS * attempt)
             continue
         return
+
+
+def _local_catalog_path(config: CityConfig) -> Path | None:
+    """config.yaml'daki `landsat.catalog` (şehir klasörüne göre) ya da None."""
+    value = (config.raw.get("landsat") or {}).get("catalog")
+    return (config.config_dir / value).resolve() if value else None
 
 
 def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: bool = False) -> Path:
@@ -223,6 +267,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
         "platforms": ["landsat-8", "landsat-9"],
         "bands": BANDS_TO_DOWNLOAD,
         "read_mode": "window",
+        "local_catalog": str(_local_catalog_path(config)) if _local_catalog_path(config) else None,
         "window_margin_m": WINDOW_MARGIN_M,
     }
 
@@ -231,19 +276,24 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
         print(f"[{year}] scene_metadata.json zaten var, indirme atlanıyor")
         return metadata_path
 
-    catalog = pystac_client.Client.open(CATALOG_URL, modifier=planetary_computer.sign_inplace)
-    search = catalog.search(
-        collections=["landsat-c2-l2"],
-        bbox=config.bbox,
-        datetime=f"{year}-{config.season_start}/{year}-{config.season_end}",
-        query={
-            "eo:cloud_cover": {"lt": config.max_cloud_cover},
-            # Landsat 7'nin SLC-off veri boşlukları ve farklı bant
-            # isimlendirmesi yüzünden sadece L8/L9 sahneleri kullanılır.
-            "platform": {"in": ["landsat-8", "landsat-9"]},
-        },
-    )
-    items = list(search.items())
+    local_catalog = _local_catalog_path(config)
+    if local_catalog is not None:
+        items = load_local_catalog(local_catalog, config.bbox, f"{year}-{config.season_start}",
+                                   f"{year}-{config.season_end}", config.max_cloud_cover)
+    else:
+        catalog = pystac_client.Client.open(CATALOG_URL, modifier=planetary_computer.sign_inplace)
+        search = catalog.search(
+            collections=["landsat-c2-l2"],
+            bbox=config.bbox,
+            datetime=f"{year}-{config.season_start}/{year}-{config.season_end}",
+            query={
+                "eo:cloud_cover": {"lt": config.max_cloud_cover},
+                # Landsat 7'nin SLC-off veri boşlukları ve farklı bant
+                # isimlendirmesi yüzünden sadece L8/L9 sahneleri kullanılır.
+                "platform": {"in": ["landsat-8", "landsat-9"]},
+            },
+        )
+        items = list(search.items())
     print(f"[{year}] {len(items)} aday sahne bulundu")
 
     best_items = select_best_scenes_per_tile(items, max_per_tile=config.max_scenes_per_tile)

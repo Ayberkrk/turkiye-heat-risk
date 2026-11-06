@@ -7,7 +7,24 @@ entirely city-agnostic, each city's own parameters and population data
 logic are isolated under `src/cities/<city>/`. Adding a new city should
 not require changing any file in `src/core/`.
 
-## Steps
+## Development setup and quick check
+
+```bash
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]" -c constraints.txt
+python tools/run_demo.py      # offline, ~10 s: the whole pipeline on a sample city
+pytest                        # unit tests + an end-to-end regression test on the same sample city
+python -m ruff check .
+```
+
+`tests/test_e2e.py` runs `pipeline.py` end to end without network access on a small
+city cut from real İzmir data (`tests/fixtures/ornek`) and compares the result with
+`tests/fixtures/ornek/beklenen.json`. If you changed the HVI formula on purpose,
+refresh the expected values and explain the difference in the PR:
+`REGENERATE_E2E=1 pytest tests/test_e2e.py`. To rebuild the sample city:
+`python tools/build_e2e_fixture.py` (run the İzmir pipeline first).
+
+## Steps for adding a new city
 
 ### 1. Create the `src/cities/<city>/` directory
 
