@@ -259,3 +259,23 @@ def test_shipped_city_kademe_matches_sege_score_thresholds(city_id):
     # (ornegin 0,466 skorlu bir ilceye 3. kademe) kaynaga guveni zedeler.
     for row in _read_semicolon_csv(CITIES_DIR / city_id / "sege_2022_ilce.csv"):
         assert _expected_kademe(float(row["SKOR"])) == int(row["KADEME"]), (city_id, row)
+
+
+def test_layer_declares_whole_districts_as_population_units(tmp_path, monkeypatch):
+    # Nüfus ızgarası kalibrasyonu resmi sayının ait olduğu birimi (ilçenin
+    # tamamı) bilmeli; bbox'taki mahallelerin alanı değil.
+    osm = _osm_frame(ILCE, [("Bir Mahallesi", (30.62, 36.82, 30.64, 36.84)),
+                             ("Iki Mahallesi", (30.72, 36.82, 30.74, 36.84))])
+    monkeypatch.setattr("core.ilce_table_adapter.gpd.read_file", lambda *a, **k: osm)
+    nufus, sege = _write_tables(tmp_path,
+                                [("Muratpaşa", 100000, 0.1, 0.2), ("Kepez", 300000, 0.1, 0.2), ("Yok", 5, 0.1, 0.2)],
+                                [("Muratpaşa", 1.0), ("Kepez", 1.0)])
+
+    result = build_neighborhood_layer_from_ilce_tables(Path("dummy.pbf"), _make_config(), nufus, sege)
+
+    units = result.attrs["nufus_birimleri"]
+    assert sorted(units["resmi_nufus"]) == [100000.0, 300000.0]  # OSM'de olmayan ilçe birim değil
+    # Birim, mahallelerin değil ilçenin tamamının poligonu.
+    by_population = units.set_index("resmi_nufus").geometry
+    assert by_population[100000.0].equals(box(*ILCE["Muratpaşa"]))
+    assert by_population[300000.0].equals(box(*ILCE["Kepez"]))

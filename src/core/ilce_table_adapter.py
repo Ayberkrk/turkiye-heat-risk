@@ -123,4 +123,16 @@ def build_neighborhood_layer_from_ilce_tables(
     if eksik:
         print(f"UYARI: {config.name} - ilce_nufus.csv'de olmayan ilçeler (verileri NaN kalır): {eksik}")
 
+    # Nüfus ızgarası kalibrasyonu (core/population_grid.py) için resmi sayının
+    # gerçekte ait olduğu birim: ilçenin TAMAMI. Yoğunluk ilçe nüfusunun tüm ilçe
+    # alanına bölümüdür; kırsal hinterlandı geniş ilçelerde bu, bbox içindeki
+    # kentsel mahallelerin nüfusunu çok düşük gösterir. Izgara bu yüzden ilçenin
+    # tamamında resmi nüfusa ölçeklenir, bbox'taki kısım ızgaradaki payını alır.
+    birimler = ilce_gdf[["ilce_norm", "geometry"]].merge(
+        nufus[["NUFUS"]], left_on="ilce_norm", right_index=True, how="inner",
+    ).dissolve(by="ilce_norm", aggfunc={"NUFUS": "first"}, as_index=False)
+    mahalle_gdf.attrs["nufus_birimleri"] = gpd.GeoDataFrame(
+        {"birim": birimler["ilce_norm"], "resmi_nufus": birimler["NUFUS"].astype(float)},
+        geometry=birimler.geometry, crs=ilce_gdf.crs,
+    )
     return mahalle_gdf

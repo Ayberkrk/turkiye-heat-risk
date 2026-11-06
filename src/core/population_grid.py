@@ -18,12 +18,15 @@ düzeyindedir. Her birimin hücreleri, birim toplamı resmi nüfusa eşit
 olacak şekilde ölçeklenir: birim toplamı resmi kaynaktan, birim içi
 dağılım ızgaradan gelir.
 
-Kalibrasyon birimi verinin GERÇEK çözünürlüğüdür: adapter yoğunluğu
-mahalle düzeyinde veriyorsa (İzmir) birim mahalledir; ilçe yoğunluğunu
-mahallelere kopyalıyorsa (TÜİK şablonu) aynı ilçede aynı yoğunluğu taşıyan
-mahalleler tek birimdir. Mahalle düzeyinde kalibre etmek ikinci durumda
-mahalle toplamlarını alanla orantılı yapar ve ızgaranın ilçe içi bilgisini
-silerdi.
+Kalibrasyon birimi, resmi sayının gerçekte ait olduğu alandır. Adapter
+bunları `mahalle_gdf.attrs["nufus_birimleri"]` olarak verirse (TÜİK şablonlu
+şehirler: ilçe poligonunun TAMAMI ve ilçe nüfusu) onlar kullanılır: ızgara
+ilçenin tamamında resmi nüfusa ölçeklenir, bbox içindeki kentsel mahalleler
+ızgaradaki paylarını alır. İlçe yoğunluğu tüm ilçe alanına (kırsal hinterland
+dahil) bölündüğü için, yoğunluk × bbox'taki mahalle alanı kentsel nüfusu
+ilçeden ilçeye farklı oranda (Eskişehir'de 2-8 kat) eksik gösterirdi.
+Verilmezse (İzmir: mahalle düzeyi nüfus) birim mahallenin kendisidir ve
+resmi nüfus yoğunluk × mahalle alanıyla geri kazanılır.
 
 HRSL'nin yaş katmanları (60+, 0-5) kullanılmaz: İzmir bbox'ında 282 bin
 dolu hücrede 60+/toplam oranı yalnızca 19 farklı değer alıyor, yani yaş
@@ -120,12 +123,17 @@ def fetch_population_grid(config: CityConfig, bounds: tuple[float, float, float,
 
 
 def calibration_units(mahalle_gdf: gpd.GeoDataFrame, crs: str) -> gpd.GeoDataFrame:
-    """Mahalle katmanını, nüfusun gerçekte bilindiği birimlere indirger.
+    """Nüfusun gerçekte bilindiği birimler (gerekçesi modül docstring'inde).
 
-    Aynı ilçede aynı yoğunluğu taşıyan mahalleler tek birimdir (gerekçesi
-    modül docstring'inde). Birimin resmi nüfusu yoğunluk × alan ile geri
+    Adapter `attrs["nufus_birimleri"]` verdiyse (birim, resmi_nufus, geometry)
+    doğrudan onlar döner. Verilmediyse aynı ilçede aynı yoğunluğu taşıyan
+    mahalleler tek birimdir ve birimin resmi nüfusu yoğunluk × alan ile geri
     kazanılır; adapter sözleşmesi nüfus sayısını değil yoğunluğu taşır.
     """
+    declared = mahalle_gdf.attrs.get("nufus_birimleri")
+    if declared is not None and len(declared):
+        units = declared[declared["resmi_nufus"].notna()]
+        return units[["birim", "resmi_nufus", "geometry"]].reset_index(drop=True)
     valid = mahalle_gdf[mahalle_gdf["nufus_yogunlugu"].notna()][["ilce_adi", "nufus_yogunlugu", "geometry"]]
     valid = valid.to_crs(crs)
     valid = valid.assign(_alan_km2=valid.geometry.area / 1e6)
