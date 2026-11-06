@@ -55,8 +55,10 @@ POPULATION_GRID_ATTRIBUTION = (
     "Nüfus ızgarası: Meta & CIESIN, High Resolution Settlement Layer (CC BY 4.0)."
 )
 
-# Pencere okuma ya da kalibrasyon mantığı değişince artırılır (bkz. core/cache.py).
-POPULATION_GRID_VERSION = 1
+# Pencere okuma ya da kalibrasyon mantığı değişince artırılır (bkz. core/cache.py);
+# HVI önbelleği de bu sürümü parmak izinde taşır. 2: TÜİK şablonlu şehirlerde
+# kalibrasyon birimi ilçenin tamamı.
+POPULATION_GRID_VERSION = 2
 
 # Birim sınırındaki yolların tamponu pencerenin dışına taşmasın diye bbox'a
 # eklenen pay (derece, ~2 km).
