@@ -16,6 +16,10 @@ import planetary_computer
 import pystac_client
 import rasterio
 import requests
+from rasterio.errors import RasterioIOError
+from rasterio.warp import transform_bounds
+from rasterio.windows import Window
+from rasterio.windows import from_bounds as window_from_bounds
 
 from core.cache import atomic_output_path, is_cache_valid, write_cache_meta
 from core.city_config import CityConfig
@@ -25,7 +29,9 @@ from core.paths import year_paths
 # fonksiyon düz `.exists()` kontrolü kullanıyordu; versiyonlu önbelleğe
 # geçişin kendisi, sürüm dosyası taşımayan eski (karo başına tek sahne
 # varsayan) metadata'yı otomatik geçersiz sayar.
-SCENE_FETCH_VERSION = 2
+# 3: bantlar tam sahne yerine şehir penceresi olarak okunuyor (bkz.
+# download_band). Eski tam sahne dosyaları geçerli kalır ve yeniden indirilmez.
+SCENE_FETCH_VERSION = 3
 
 CATALOG_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
 BANDS_TO_DOWNLOAD = {
@@ -41,6 +47,21 @@ BANDS_TO_DOWNLOAD = {
 DOWNLOAD_TIMEOUT_SECONDS = 300
 DOWNLOAD_ATTEMPTS = 4
 DOWNLOAD_RETRY_WAIT_SECONDS = 5
+
+# Pencere okumada bbox'a eklenen pay. core/raster.py ızgarayı bbox'tan 1 km
+# geniş kurar (TILE_GRID_MARGIN_M); pencere bundan geniş olmalı, yoksa ızgara
+# kenarı dosyanın dışında kalıp nodata ile dolar.
+WINDOW_MARGIN_M = 2000.0
+
+# Landsat bantları Planetary Computer'da Cloud Optimized GeoTIFF olarak
+# duruyor: GDAL yalnızca pencereye düşen iç karoları HTTP Range ile ister.
+_GDAL_HTTP_ENV = {
+    "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+    "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif,.TIF,.tiff",
+    "GDAL_HTTP_MAX_RETRY": "3",
+    "GDAL_HTTP_RETRY_DELAY": "2",
+    "GDAL_HTTP_TIMEOUT": str(DOWNLOAD_TIMEOUT_SECONDS),
+}
 
 
 def is_valid_geotiff(path: Path) -> bool:
@@ -106,8 +127,39 @@ def select_best_scenes_per_tile(items, max_per_tile: int = 1) -> dict[tuple[int,
     }
 
 
-def download_band(item, asset_name: str, save_path: Path) -> None:
+def _write_band_window(url: str, save_path: Path, bbox: list[float]) -> None:
+    """Uzak bandın yalnızca `bbox` (+ WINDOW_MARGIN_M) penceresini yerel GeoTIFF'e yazar.
+
+    Pencere tam sayı piksel ofsetine yuvarlanır: çıktı sahnenin kendi piksel
+    kafesinde kalır, böylece core/raster.py'nin aynı karonun sahnelerini
+    hizalama mantığı (tile_grid) tam sahne dosyalarıyla birebir aynı çalışır.
+    """
+    source = f"/vsicurl/{url}" if url.startswith(("http://", "https://")) else url
+    with rasterio.Env(**_GDAL_HTTP_ENV), rasterio.open(source) as src:
+        west, south, east, north = transform_bounds("EPSG:4326", src.crs, *bbox)
+        window = window_from_bounds(west - WINDOW_MARGIN_M, south - WINDOW_MARGIN_M,
+                                    east + WINDOW_MARGIN_M, north + WINDOW_MARGIN_M, src.transform)
+        window = window.round_offsets(op="floor").round_lengths(op="ceil")
+        window = window.intersection(Window(0, 0, src.width, src.height))
+        data = src.read(1, window=window)
+        profile = src.profile.copy()
+        profile.update(
+            driver="GTiff", width=window.width, height=window.height, transform=src.window_transform(window),
+            compress="deflate", tiled=True, blockxsize=256, blockysize=256,
+        )
+        for key in ("photometric", "interleave"):
+            profile.pop(key, None)
+    with atomic_output_path(save_path) as partial_path, rasterio.open(partial_path, "w", **profile) as dst:
+        dst.write(data, 1)
+
+
+def download_band(item, asset_name: str, save_path: Path, bbox: list[float] | None = None) -> None:
     """Bir bandı indirir; geçici ağ hatalarında baştan dener.
+
+    `bbox` verilirse (EPSG:4326) tam sahne değil yalnızca şehrin penceresi
+    okunur (bkz. _write_band_window). Tam sahne yaklaşık 7800x7700 pikseldir
+    ve bir şehir için iki yılda ~6 GB indirme demektir; şehrin penceresi
+    bunun küçük bir kısmıdır.
 
     Onlarca bantlık bir indirmede tek bir okuma zaman aşımı tüm pipeline'ı
     düşürmemeli. Veri önce `.part` dosyasına yazılır ve ancak tamamlanınca
@@ -120,6 +172,16 @@ def download_band(item, asset_name: str, save_path: Path) -> None:
         # döndürür. Kütüphane zaten imzalı bir adresi yeniden imzalamadığı
         # için eski imza önce atılır.
         url = planetary_computer.sign(item.assets[asset_name].href.split("?")[0])
+        if bbox is not None:
+            try:
+                _write_band_window(url, save_path, bbox)
+            except RasterioIOError as error:
+                if attempt == DOWNLOAD_ATTEMPTS:
+                    raise
+                print(f"  pencere okuma hatası ({error}), yeniden deneniyor ({attempt}/{DOWNLOAD_ATTEMPTS - 1})")
+                time.sleep(DOWNLOAD_RETRY_WAIT_SECONDS * attempt)
+                continue
+            return
         try:
             with atomic_output_path(save_path) as partial_path:
                 with requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response:
@@ -160,6 +222,8 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
         "collection": "landsat-c2-l2",
         "platforms": ["landsat-8", "landsat-9"],
         "bands": BANDS_TO_DOWNLOAD,
+        "read_mode": "window",
+        "window_margin_m": WINDOW_MARGIN_M,
     }
 
     if (is_cache_valid(metadata_path, SCENE_FETCH_VERSION, force=force, fingerprint=fingerprint)
@@ -204,7 +268,7 @@ def fetch_landsat_scenes(config: CityConfig, year: str, main_year: str, force: b
                 if save_path.exists():
                     save_path.unlink()
                 print(f"[{year}] indiriliyor: {item.id}/{filename}")
-                download_band(item, asset_name, save_path)
+                download_band(item, asset_name, save_path, bbox=config.bbox)
 
             scenes_meta.append({
                 "tile": f"{tile_id[0]}_{tile_id[1]}",

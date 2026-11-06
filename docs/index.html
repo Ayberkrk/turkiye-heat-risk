@@ -2,17 +2,21 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kentsel Isı Hassasiyeti - Şehirler</title>
 <style>
   body { font-family: Arial, sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 40px 20px; }
   h1 { text-align: center; font-weight: 600; }
   p.aciklama { text-align: center; color: #aaa; max-width: 640px; margin: 0 auto 40px; }
   .kartlar { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 900px; margin: 0 auto; }
-  .kart { display: block; width: 260px; background: #262626; border-radius: 10px; padding: 20px;
-           text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  .kart { display: block; width: 260px; max-width: 100%; box-sizing: border-box; background: #262626;
+           border-radius: 10px; padding: 20px; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
            transition: transform 0.15s; }
   .kart:hover { transform: translateY(-4px); }
   .kart h2 { margin: 0 0 12px; font-size: 18px; }
+  .kart h2 a { color: inherit; text-decoration: none; }
+  .kart p.baglantilar { margin-top: 12px; }
+  .kart p.baglantilar a, p.aciklama a { color: #fdae6b; }
   .istatistik { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
   .istatistik b { font-size: 28px; color: #fd8d3c; }
   .istatistik span { font-size: 12px; color: #aaa; }
@@ -28,21 +32,27 @@ erişimini (kırılganlık) birleştiren bir önceliklendirme endeksi. Bir şehr
 tıklayarak yol bazlı interaktif haritayı açabilirsiniz.</p>
 <p class="aciklama">Skorlar her şehrin kendi içinde ölçeklenir: yüzdeler bir
 şehrin içindeki yolları sıralar, şehirleri birbiriyle karşılaştırmaz.</p>
+<p class="aciklama">Her şehir için Excel tablosu, CSV, GeoPackage, görseller
+ve yazdırılabilir bir özet indirilebilir. Veri ODbL 1.0 (OpenStreetMap
+türevi), kod MIT lisanslıdır. Yöntem, sınırlamalar ve kod:
+<a href="https://github.com/Ayberkrk/turkiye-heat-risk">GitHub</a>.</p>
 <div class="kartlar">
-<a class="kart" href="./eskisehir/index.html">
-        <h2>Eskişehir</h2>
+<div class="kart">
+        <h2><a href="./izmir/index.html">İzmir</a></h2>
+        
+        <div class="istatistik"><b>43.6</b><span>ortalama HVI yüzdesi</span></div>
+        <p>43,210 yol segmenti · 2020, 2026</p>
+        <p>En riskli mahalle: <b>Sarıyer Mahallesi</b></p>
+        <p class="baglantilar"><a href="./izmir/index.html">Harita</a> · <a href="./izmir/indir/ozet.html">Özet rapor</a> · <a href="./izmir/indir/izmir_isi_riski.xlsx">Excel</a> · <a href="https://github.com/Ayberkrk/turkiye-heat-risk/releases/latest/download/izmir_veri_paketi.zip">Tam paket (zip)</a></p>
+    </div>
+<div class="kart">
+        <h2><a href="./eskisehir/index.html">Eskişehir</a></h2>
         <p class="eski">Formül sürümü kayıtlı değil; güncelliği bilinmiyor</p>
         <div class="istatistik"><b>39.4</b><span>ortalama HVI yüzdesi</span></div>
         <p>7,287 yol segmenti · 2020, 2026</p>
         <p>En riskli mahalle: <b>Gökçekısık Mahallesi</b></p>
-    </a>
-<a class="kart" href="./izmir/index.html">
-        <h2>İzmir</h2>
-        <p class="eski">Eski formülle üretildi, yenilenecek</p>
-        <div class="istatistik"><b>43.5</b><span>ortalama HVI yüzdesi</span></div>
-        <p>43,183 yol segmenti · 2020, 2026</p>
-        <p>En riskli mahalle: <b>Umut Mahallesi</b></p>
-    </a>
+        <p class="baglantilar"><a href="./eskisehir/index.html">Harita</a></p>
+    </div>
 </div>
 </body>
 </html>

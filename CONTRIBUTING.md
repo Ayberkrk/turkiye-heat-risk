@@ -50,6 +50,12 @@ population:
   adapter: "cities.<sehir>.adapter"   # aşağıdaki adım 3
   # Adapter'ının ihtiyaç duyduğu ek anahtarları buraya ekleyebilirsin
   # (CKAN dataset ID'leri, dosya yolları, API anahtarları vb.)
+
+# İsteğe bağlı. Yazılmazsa maruziyet, adapter'ın resmi nüfusuna kalibre
+# edilen dünya geneli 30 m HRSL ızgarasından gelir (bkz. core/population_grid.py).
+# population_grid: false              # birim (mahalle/ilçe) yoğunluğunu kullan
+# population_grid:
+#   url: "https://.../baska-izgara.vrt" # kişi sayısı taşıyan EPSG:4326 raster
 ```
 
 `validate_city.py` bu CRS kuralını otomatik olarak denetler: CRS projeksiyonlu

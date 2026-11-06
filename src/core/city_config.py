@@ -34,6 +34,14 @@ REQUIRED_POPULATION_KEYS = ["adapter"]
 # şehirleri gereksiz yere reddetmeyecek kadar geniş bir toleranstır.
 UTM_ZONE_BOUNDARY_TOLERANCE_DEGREES = 0.5
 
+# Meta & CIESIN High Resolution Settlement Layer, dünya geneli 30 m (CC BY 4.0).
+# v1.5.69, 2023-04-06'da yayımlanan ve bugün "latest" adının gösterdiği
+# sürümdür; "latest" sabitlenmez, çünkü değişirse aynı komut farklı nüfus
+# üretir. Gerekçe ve yöntem: core/population_grid.py.
+DEFAULT_POPULATION_GRID_URL = (
+    "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+)
+
 
 def _utm_zone_from_longitude(longitude: float) -> int:
     """Boylamı 1-60 arasındaki UTM dilim numarasına çevirir."""
@@ -129,6 +137,11 @@ class CityConfig:
     season_start: str = "07-01"
     season_end: str = "08-31"
     raw: dict[str, Any] = field(default_factory=dict)
+    # Maruziyet bileşeninin dasimetrik dağıtımında kullanılan nüfus ızgarası
+    # (bkz. core/population_grid.py). `load_city_config` config.yaml'da
+    # `population_grid: false` yoksa varsayılan HRSL adresini verir; doğrudan
+    # kurulan nesnede (testler) None, yani maruziyet adapter yoğunluğundan gelir.
+    population_grid_url: str | None = None
 
     @property
     def config_dir(self) -> Path:
@@ -252,7 +265,25 @@ def validate_config_dict(cfg: Any) -> list[str]:
             if start is not None and end is not None and start > end:
                 errors.append("'landsat.season_start', 'landsat.season_end' tarihinden sonra olamaz")
 
+    # `population_grid` isteğe bağlı: yoksa varsayılan ızgara, `false` ise
+    # maruziyet adapter'ın birim yoğunluğundan gelir, sözlükse `url` taşımalı.
+    population_grid = cfg.get("population_grid")
+    if population_grid is not None and population_grid is not False:
+        if not isinstance(population_grid, dict):
+            errors.append("'population_grid' false ya da 'url' alanı olan bir sözlük olmalı")
+        elif not isinstance(population_grid.get("url"), str) or not population_grid["url"].strip():
+            errors.append("'population_grid.url' boş olmayan bir metin olmalı")
+
     return errors
+
+
+def _population_grid_url(cfg: dict) -> str | None:
+    population_grid = cfg.get("population_grid")
+    if population_grid is False:
+        return None
+    if isinstance(population_grid, dict):
+        return population_grid["url"].strip()
+    return DEFAULT_POPULATION_GRID_URL
 
 
 def load_city_config(city_id: str) -> CityConfig:
@@ -291,6 +322,7 @@ def load_city_config(city_id: str) -> CityConfig:
         population_adapter_path=population["adapter"],
         buffer_meters=cfg.get("roads", {}).get("buffer_meters", 10),
         raw=cfg,
+        population_grid_url=_population_grid_url(cfg),
     )
 
 

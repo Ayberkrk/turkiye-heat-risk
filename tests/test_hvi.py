@@ -258,15 +258,17 @@ CRS = "EPSG:32635"
 N_ROADS = 40
 
 
-def _make_config() -> CityConfig:
+def _make_config(population_grid_url: str | None = None) -> CityConfig:
     return CityConfig(
         city_id="test", name="Test", bbox=[27.0, 38.0, 27.2, 38.2], crs=CRS, max_cloud_cover=30,
         osm_pbf_url="", drive_highway_types=["residential"], admin_level_ilce="6",
         admin_level_mahalle="8", population_adapter_path="unused",
+        population_grid_url=population_grid_url,
     )
 
 
-def _run_hvi(monkeypatch, tmp_path, mahalle: gpd.GeoDataFrame, road_x: list[float], risk: list[float]):
+def _run_hvi(monkeypatch, tmp_path, mahalle: gpd.GeoDataFrame, road_x: list[float], risk: list[float],
+             config: CityConfig | None = None):
     roads = gpd.GeoDataFrame(
         {
             "risk_score_2020": risk,
@@ -298,7 +300,7 @@ def _run_hvi(monkeypatch, tmp_path, mahalle: gpd.GeoDataFrame, road_x: list[floa
     buildings = [Point(x + 0.0002 * k, 38.1002) for i, x in enumerate(road_x) for k in range(i % 4 + 1)]
     monkeypatch.setattr("core.hvi.load_building_centroids",
                         lambda config, pbf: gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326"))
-    return hvi.compute_heat_vulnerability_index(_make_config(), ["2020"], roads)
+    return hvi.compute_heat_vulnerability_index(config or _make_config(), ["2020"], roads)
 
 
 def _mahalle(rows: list[dict]) -> gpd.GeoDataFrame:
@@ -338,6 +340,40 @@ def test_road_without_demographics_stays_nan_even_when_demographics_are_constant
 
     assert out["hvi_score_2020"].notna().tolist() == [True] * (N_ROADS - 1) + [False]
     assert pd.isna(out["group_vulnerability_2020"].iloc[-1])
+
+
+def test_population_grid_gives_exposure_spread_inside_one_neighbourhood(monkeypatch, tmp_path):
+    # Tek mahalle: birim yoğunluğu sabit olduğu için maruziyet eskiden endekse
+    # hiç girmiyordu. Izgara doğuya doğru kalabalıklaşınca yollar ayrışmalı,
+    # resmi birim yoğunluğu da tanı sütununda kalmalı.
+    import rasterio
+    from rasterio.transform import from_origin
+
+    pixel = 0.0003
+    transform = from_origin(26.95, 38.25, pixel, pixel)
+    width, height = int(0.3 / pixel), int(0.3 / pixel)
+    grid = np.tile(np.linspace(0.1, 10, width, dtype="float32"), (height, 1))
+    source = tmp_path / "grid.tif"
+    with rasterio.open(source, "w", driver="GTiff", height=height, width=width, count=1, dtype="float32",
+                       crs="EPSG:4326", transform=transform, nodata=np.nan) as dst:
+        dst.write(grid, 1)
+    monkeypatch.setattr("core.population_grid.city_data_raw", lambda city_id: tmp_path / "raw")
+
+    mahalle = _mahalle([{
+        "mahalle_adi": "A", "ilce_adi": "Merkez", "nufus_yogunlugu": 5000.0,
+        "yasli_oran": 0.10, "cocuk_oran": 0.20, "geometry": box(27.0, 38.0, 27.15, 38.2),
+    }])
+    road_x = [27.01 + 0.003 * i for i in range(N_ROADS)]
+    out = _run_hvi(monkeypatch, tmp_path, mahalle, road_x, risk=[50.0] * N_ROADS,
+                   config=_make_config(str(source)))
+
+    assert (out["nufus_yogunlugu_birim"] == 5000.0).all()
+    assert out["nufus_yogunlugu"].is_monotonic_increasing
+    assert out["exposure_norm"].nunique() > 5
+    # Maruziyet grubu artık ızgaradaki doğu-batı eğimini izliyor (grubun diğer
+    # üyesi yapılaşma, sentetik binalar yüzünden 4 yolda bir döngü yapar).
+    assert out["group_exposure_2020"].rank().corr(out["nufus_yogunlugu"].rank()) > 0.5
+    assert (tmp_path / "nufus_izgarasi_kalibrasyon.csv").exists()
 
 
 def test_population_refresh_uses_adapter_hook_only_when_requested(capsys):

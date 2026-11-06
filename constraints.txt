@@ -12,7 +12,9 @@
 folium==0.20.0
 geopandas==1.1.4
 jenkspy==0.4.1
+matplotlib==3.11.1
 numpy==2.5.2
+openpyxl==3.1.5
 pandas==3.0.5
 planetary-computer==1.0.0
 pyproj==3.7.2

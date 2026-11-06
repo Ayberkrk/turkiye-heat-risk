@@ -70,3 +70,19 @@ def test_index_rejects_invalid_city_stats_without_replacing_existing_index(tmp_p
         build_docs_index.build_index()
 
     assert existing_index.read_text(encoding="utf-8") == "previous index"
+
+
+def test_download_links_appear_only_for_cities_with_a_package(tmp_path, monkeypatch):
+    _write_city(tmp_path, "paketli", "Paketli Şehir", HVI_FORMULA_VERSION)
+    _write_city(tmp_path, "paketsiz", "Paketsiz Şehir", HVI_FORMULA_VERSION)
+    (tmp_path / "paketli" / "indir").mkdir()
+    (tmp_path / "paketli" / "indir" / "ozet.html").write_text("<html></html>", encoding="utf-8")
+    monkeypatch.setattr(build_docs_index, "DOCS_DIR", tmp_path)
+
+    html = build_docs_index.build_index().read_text(encoding="utf-8")
+
+    assert './paketli/indir/paketli_isi_riski.xlsx' in html
+    assert "releases/latest/download/paketli_veri_paketi.zip" in html
+    assert "paketsiz/indir" not in html
+    # Kart artık iç içe bağlantı taşımaz (geçersiz HTML).
+    assert '<a class="kart"' not in html
