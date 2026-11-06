@@ -220,11 +220,12 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
         subset = roads[roads[cat_col_default] == cat][pct_col_default]
         category_labels[cat] = f"{cat} ({subset.min():.1f}-{subset.max():.1f})" if len(subset) else cat
 
-    bounds = roads.total_bounds
+    west, south, east, north = opening_view(roads, cat_col_default)
     m = folium.Map(
-        location=[(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2],
+        location=[(south + north) / 2, (west + east) / 2],
         zoom_start=12, tiles="OpenStreetMap", control_scale=True,
     )
+    m.fit_bounds([[south, west], [north, east]])
 
     geojson_vars, group_vars = {}, {}
     for cat in CATEGORY_ORDER_5:
@@ -354,7 +355,9 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
         <hr style='border-color:#555; margin:8px 0'>
         {legend_rows}
         <hr style='border-color:#555; margin:8px 0'>
-        <small>Bir yola tıklayınca/üzerine gelince skoru oluşturan tüm
+        <small>Açılışta yalnızca Kritik ve Aşırı Kritik yollar gösterilir; diğer
+        kategoriler ve gece katmanı sağ üstteki katman düğmesinden açılır.
+        Bir yola tıklayınca/üzerine gelince skoru oluşturan tüm
         bileşenler görünür.<br>
         {attribution_html}
         Alan: {escape(config.name)} (metro alanı)</small>
@@ -365,6 +368,16 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
     </div>
     """
     m.get_root().html.add_child(folium.Element(control_html))
+    # Dar ekranda (telefon) gösterge haritanın büyük kısmını kapatıyordu;
+    # orada kapalı başlar, başlıktaki "+" ile açılır.
+    m.get_root().html.add_child(folium.Element("""
+    <script>
+    if (window.innerWidth < 700) {
+        document.getElementById('hviPanelIcerik').style.display = 'none';
+        document.getElementById('hviPanelKapat').textContent = '+';
+    }
+    </script>
+    """))
 
     loading_html = """
     <div id='yukleniyorKutusu' style='display:none; position: fixed; top: 10px; left: 50%;
@@ -463,6 +476,13 @@ def _write_embedded(config: CityConfig, m: folium.Map, geojson_vars: dict, group
             }}
         }});
 
+        // Sayfa açıldığında en riskli kategoriler görünür olsun: tüm
+        // katmanlar kapalı başlayınca ziyaretçi boş bir altlık görüyor ve
+        // sağ üstteki katman düğmesini çoğu zaman fark etmiyordu.
+        {json.dumps(DEFAULT_VISIBLE_CATEGORIES, ensure_ascii=False)}.forEach(function(kategori) {{
+            if (grupAdlari[kategori]) {{ harita.addLayer(window[grupAdlari[kategori]]); }}
+        }});
+
         {_night_layer_js(night_geojson_vars, night_group_vars, json.dumps(night_data, ensure_ascii=False))}
     }});
     </script>
@@ -475,6 +495,24 @@ def _write_embedded(config: CityConfig, m: folium.Map, geojson_vars: dict, group
     print(f"Kaydedildi (çevrimdışı, tek dosya): {output_html} ({output_html.stat().st_size / 1e6:.1f} MB)")
     return output_html
 
+
+def opening_view(roads: gpd.GeoDataFrame, category_column: str) -> tuple[float, float, float, float]:
+    """Haritanın açılış görünümü: açılışta görünen yolların %5-%95 kapsamı.
+
+    bbox merkezi kıyı şehirlerinde denize düşebiliyor (İzmir'de körfez);
+    açılan katmanlar ekranın dışında kalınca harita boş görünüyordu. Uç
+    yüzdelikler, tek tük uzak yolların görünümü genişletmesini önler.
+    """
+    shown = roads[roads[category_column].isin(DEFAULT_VISIBLE_CATEGORIES)]
+    sample = shown if len(shown) >= 10 else roads
+    centroids = sample.to_crs(sample.estimate_utm_crs()).geometry.centroid.to_crs("EPSG:4326")
+    xs, ys = centroids.x, centroids.y
+    return (float(xs.quantile(0.05)), float(ys.quantile(0.05)), float(xs.quantile(0.95)), float(ys.quantile(0.95)))
+
+
+# Sayfa açılınca görünür olan kategoriler (gerekçesi yükleyici script'inde).
+# Yalnızca en riskli ikisi: hepsini açmak İzmir'de ~19 MB indirme demek.
+DEFAULT_VISIBLE_CATEGORIES = ["Kritik", "Aşırı Kritik"]
 
 # Barındırma sürümünün veri dosyalarını küçültmek için (bkz. compact_explanations).
 COORDINATE_DECIMALS = 5  # ~1 m; veri 30 m çözünürlükte, fark görünmez
@@ -677,6 +715,13 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
                 var grup = window[grupAdlari[kategori]];
                 if (harita.hasLayer(grup)) {{ katmaniYukle(kategori); }}
             }}
+        }});
+
+        // Sayfa açıldığında en riskli kategoriler görünür olsun: tüm
+        // katmanlar kapalı başlayınca ziyaretçi boş bir altlık görüyor ve
+        // sağ üstteki katman düğmesini çoğu zaman fark etmiyordu.
+        {json.dumps(DEFAULT_VISIBLE_CATEGORIES, ensure_ascii=False)}.forEach(function(kategori) {{
+            if (grupAdlari[kategori]) {{ harita.addLayer(window[grupAdlari[kategori]]); }}
         }});
 
         {night_js}

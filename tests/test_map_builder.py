@@ -627,3 +627,42 @@ def test_hosted_page_expands_explanations_before_adding_data():
     assert "function aciklamalariAc(veri)" in _EXPAND_JS
     assert "{{" not in _EXPAND_JS
     assert r"\B(?=(\d{3})+(?!\d))" in _EXPAND_JS
+
+
+def test_both_map_versions_open_with_the_riskiest_layers_visible(tmp_path, monkeypatch):
+    # Tüm katmanlar kapalı başlayınca ziyaretçi boş bir altlık görüyordu.
+    from core.map_builder import DEFAULT_VISIBLE_CATEGORIES
+
+    proc_dir = tmp_path / "proc"
+    proc_dir.mkdir()
+    monkeypatch.setattr("core.map_builder.OUTPUT_DIR", tmp_path / "output")
+    monkeypatch.setattr("core.map_builder.DOCS_DIR", tmp_path / "docs")
+    monkeypatch.setattr("core.map_builder.city_data_proc", lambda city_id: proc_dir)
+    _make_roads().to_file(proc_dir / "roads_with_hvi.geojson", driver="GeoJSON")
+
+    offline = build_hvi_map(_make_config(), ["2020", "2026"], "2026")
+    hosted = tmp_path / "docs" / "testcity" / "index.html"
+    expected = json.dumps(DEFAULT_VISIBLE_CATEGORIES, ensure_ascii=False) + ".forEach"
+    for page in (offline, hosted):
+        html = page.read_text(encoding="utf-8")
+        assert expected in html, page
+        assert "harita.addLayer(window[grupAdlari[kategori]])" in html
+        assert "Açılışta yalnızca Kritik ve Aşırı Kritik" in html
+    assert DEFAULT_VISIBLE_CATEGORIES == ["Kritik", "Aşırı Kritik"]
+
+
+def test_opening_view_follows_visible_roads_not_the_bbox_centre():
+    import geopandas as gpd
+    from shapely.geometry import LineString
+
+    from core.map_builder import opening_view
+
+    # Yüksek riskli yollar doğuda kümelenmiş, batıda tek bir uzak yol var:
+    # görünüm doğu kümesini kapsamalı, bbox'ın ortasına kaymamalı.
+    xs = [27.20 + 0.001 * i for i in range(40)]
+    rows = [{"cat": "Kritik", "geometry": LineString([(x, 38.40), (x + 0.0005, 38.40)])} for x in xs]
+    rows.append({"cat": "Kritik", "geometry": LineString([(26.50, 38.40), (26.501, 38.40)])})
+    rows.append({"cat": "Düşük", "geometry": LineString([(26.60, 38.30), (26.601, 38.30)])})
+    roads = gpd.GeoDataFrame(rows, crs="EPSG:4326")
+    west, south, east, north = opening_view(roads, "cat")
+    assert 27.19 < west < east < 27.25
