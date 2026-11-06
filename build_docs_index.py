@@ -24,6 +24,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from core.cache import atomic_output_path  # noqa: E402
+from core.export import RELEASE_DOWNLOAD_URL, REPO_URL  # noqa: E402
 from core.hvi import HVI_FORMULA_VERSION  # noqa: E402
 from core.paths import DOCS_DIR  # noqa: E402
 
@@ -120,14 +121,24 @@ def _city_card(stats: dict) -> str:
         status = '<p class="eski">Manifest okunamıyor veya formül sürümü geçersiz</p>'
     else:
         status = '<p class="eski">Eski formülle üretildi, yenilenecek</p>'
+    # İndirme bağlantıları yalnızca paket üretilmişse gösterilir (bkz.
+    # core/export.py); eski formülle kalan haritaların paketi yoktur.
+    links = [f'<a href="./{city_id}/index.html">Harita</a>']
+    if (DOCS_DIR / stats["city_id"] / "indir" / "ozet.html").exists():
+        links += [
+            f'<a href="./{city_id}/indir/ozet.html">Özet rapor</a>',
+            f'<a href="./{city_id}/indir/{city_id}_isi_riski.xlsx">Excel</a>',
+            f'<a href="{RELEASE_DOWNLOAD_URL}/{city_id}_veri_paketi.zip">Tam paket (zip)</a>',
+        ]
     return f"""
-    <a class="kart" href="./{city_id}/index.html">
-        <h2>{city_name}</h2>
+    <div class="kart">
+        <h2><a href="./{city_id}/index.html">{city_name}</a></h2>
         {status}
         <div class="istatistik"><b>{stats['avg_hvi_percentage']:.1f}</b><span>ortalama HVI yüzdesi</span></div>
         <p>{stats['road_count']:,} yol segmenti · {years}</p>
         <p>En riskli mahalle: <b>{top_mahalle}</b></p>
-    </a>
+        <p class="baglantilar">{" · ".join(links)}</p>
+    </div>
     """.strip()
 
 
@@ -148,17 +159,21 @@ def build_index() -> Path:
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kentsel Isı Hassasiyeti - Şehirler</title>
 <style>
   body {{ font-family: Arial, sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 40px 20px; }}
   h1 {{ text-align: center; font-weight: 600; }}
   p.aciklama {{ text-align: center; color: #aaa; max-width: 640px; margin: 0 auto 40px; }}
   .kartlar {{ display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 900px; margin: 0 auto; }}
-  .kart {{ display: block; width: 260px; background: #262626; border-radius: 10px; padding: 20px;
-           text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  .kart {{ display: block; width: 260px; max-width: 100%; box-sizing: border-box; background: #262626;
+           border-radius: 10px; padding: 20px; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
            transition: transform 0.15s; }}
   .kart:hover {{ transform: translateY(-4px); }}
   .kart h2 {{ margin: 0 0 12px; font-size: 18px; }}
+  .kart h2 a {{ color: inherit; text-decoration: none; }}
+  .kart p.baglantilar {{ margin-top: 12px; }}
+  .kart p.baglantilar a, p.aciklama a {{ color: #fdae6b; }}
   .istatistik {{ display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }}
   .istatistik b {{ font-size: 28px; color: #fd8d3c; }}
   .istatistik span {{ font-size: 12px; color: #aaa; }}
@@ -174,6 +189,10 @@ erişimini (kırılganlık) birleştiren bir önceliklendirme endeksi. Bir şehr
 tıklayarak yol bazlı interaktif haritayı açabilirsiniz.</p>
 <p class="aciklama">Skorlar her şehrin kendi içinde ölçeklenir: yüzdeler bir
 şehrin içindeki yolları sıralar, şehirleri birbiriyle karşılaştırmaz.</p>
+<p class="aciklama">Her şehir için Excel tablosu, CSV, GeoPackage, görseller
+ve yazdırılabilir bir özet indirilebilir. Veri ODbL 1.0 (OpenStreetMap
+türevi), kod MIT lisanslıdır. Yöntem, sınırlamalar ve kod:
+<a href="{REPO_URL}">GitHub</a>.</p>
 <div class="kartlar">
 {cards_html}
 </div>

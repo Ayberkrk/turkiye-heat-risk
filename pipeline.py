@@ -8,6 +8,8 @@ Uçtan uca akış:
      alan erişimi ve yapılaşma yoğunluğunu birleştiren çok bileşenli Isı
      Hassasiyet Endeksini (HVI) hesapla
   5. Yıl seçmeli, kategorilere göre tembel yüklenen interaktif harita üret
+  6. Sıralamanın yöntem kararlarına dayanıklılığını ölç (belirsizlik analizi)
+  7. Excel/CSV/GeoPackage/görsel/özet içeren şehir veri paketini yaz
 
 Kullanım:
     python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
@@ -40,19 +42,24 @@ SRC_DIR = Path(__file__).resolve().parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+import geopandas as gpd  # noqa: E402
+
 from core.city_config import load_city_config  # noqa: E402
+from core.export import export_city_package  # noqa: E402
 from core.hvi import compute_heat_vulnerability_index  # noqa: E402
 from core.map_builder import build_hvi_map  # noqa: E402
 from core.night_lst import compute_neighborhood_night_lst, fetch_night_lst  # noqa: E402
-from core.paths import resolve_pbf_path  # noqa: E402
+from core.paths import city_data_proc, resolve_pbf_path  # noqa: E402
 from core.raster import build_lst_ndvi_mosaic  # noqa: E402
 from core.roads import compute_road_risk_timeseries  # noqa: E402
 from core.satellite import fetch_landsat_scenes  # noqa: E402
+from core.uncertainty import UncertaintySettings, run_uncertainty, write_uncertainty_outputs  # noqa: E402
 
 
 def run(city_id: str, years: list[str], main_year: str, open_browser: bool,
         force: bool = False, night_lst: bool = False, refresh_osm: bool = False,
-        refresh_population: bool = False) -> Path:
+        refresh_population: bool = False, uncertainty_runs: int = UncertaintySettings.runs,
+        export: bool = True) -> Path:
     config = load_city_config(city_id)
     print(f"Şehir: {config.name} ({city_id}) | bbox={config.bbox} | yıllar={years}")
 
@@ -77,6 +84,18 @@ def run(city_id: str, years: list[str], main_year: str, open_browser: bool,
 
     output_html = build_hvi_map(config, years, main_year, night_lst_requested=night_lst)
 
+    if uncertainty_runs or export:
+        roads_with_hvi = gpd.read_file(city_data_proc(config.city_id) / "roads_with_hvi.geojson")
+    if uncertainty_runs:
+        # Saniyeler-dakikalar süren, uydu verisi gerektirmeyen bir adım; veri
+        # paketindeki "ilk %10'da kalma olasılığı" sütunları buradan gelir.
+        result = run_uncertainty(roads_with_hvi, years, main_year, UncertaintySettings(runs=uncertainty_runs))
+        write_uncertainty_outputs(config, roads_with_hvi, result)
+        print(f"Belirsizlik analizi: {uncertainty_runs} koşu, varsayılan ilk %10'un "
+              f"%{result['summary']['share_of_default_top10_stable_ge_90pct'] * 100:.0f}'i kararlı")
+    if export:
+        export_city_package(config, roads=roads_with_hvi)
+
     if open_browser:
         # macOS'a özel `open` komutu yerine taşınabilir yol.
         webbrowser.open(output_html.resolve().as_uri())
@@ -98,11 +117,16 @@ def main() -> None:
                         help="Yol analizinden önce mevcut OSM PBF özütünü URL'den yeniden indir")
     parser.add_argument("--refresh-population", action="store_true",
                         help="Adapter destekliyorsa önbelleğe alınmış nüfus/demografi tablolarını yenile")
+    parser.add_argument("--uncertainty-runs", type=int, default=UncertaintySettings.runs,
+                        help="Belirsizlik analizinin Monte Carlo koşu sayısı; 0 ile atlanır")
+    parser.add_argument("--no-export", action="store_true",
+                        help="Excel/CSV/GeoPackage/görsel veri paketini üretme")
     args = parser.parse_args()
 
     run(args.city, args.years, args.main_year, args.open, force=args.force,
         night_lst=args.night_lst, refresh_osm=args.refresh_osm,
-        refresh_population=args.refresh_population)
+        refresh_population=args.refresh_population, uncertainty_runs=args.uncertainty_runs,
+        export=not args.no_export)
 
 
 if __name__ == "__main__":

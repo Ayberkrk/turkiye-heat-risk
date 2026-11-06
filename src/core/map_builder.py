@@ -31,8 +31,10 @@ import geopandas as gpd
 
 from core.cache import atomic_output_path
 from core.city_config import CityConfig
+from core.export import SITE_URL
 from core.hvi import CATEGORY_COLORS_5, CATEGORY_ORDER_5, HVI_FORMULA_VERSION, bucket_5
 from core.paths import DOCS_DIR, OUTPUT_DIR, city_data_proc, year_paths
+from core.population_grid import POPULATION_GRID_ATTRIBUTION
 from core.raster import MOSAIC_VERSION
 from core.roads import RISK_TIMESERIES_VERSION
 from core.satellite import SCENE_FETCH_VERSION
@@ -316,6 +318,9 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
     # anahtarından okunur (yoksa satır tamamen atlanır).
     attribution = config.raw.get("city", {}).get("attribution")
     attribution_html = f"{escape(str(attribution))}<br>" if attribution else ""
+    if config.population_grid_url:
+        # HRSL CC BY 4.0 lisanslı: kullanıldığı her haritada atıf zorunlu.
+        attribution_html += f"{escape(POPULATION_GRID_ATTRIBUTION)}<br>"
 
     legend_rows = "".join(
         f"{swatch(CATEGORY_COLORS_5[cat])}{category_labels[cat]}<br>" for cat in CATEGORY_ORDER_5
@@ -353,6 +358,9 @@ def _base_map(config: CityConfig, roads: gpd.GeoDataFrame, years: list[str], def
         bileşenler görünür.<br>
         {attribution_html}
         Alan: {escape(config.name)} (metro alanı)</small>
+        <hr style='border-color:#555; margin:8px 0'>
+        <a href='{escape(SITE_URL)}/{escape(config.city_id)}/indir/ozet.html' target='_blank' rel='noopener'
+           style='color:#fdae6b; font-size:13px;'>&#8681; Verileri indir (Excel, CSV, görseller)</a>
         </div>
     </div>
     """
@@ -468,6 +476,90 @@ def _write_embedded(config: CityConfig, m: folium.Map, geojson_vars: dict, group
     return output_html
 
 
+# Barındırma sürümünün veri dosyalarını küçültmek için (bkz. compact_explanations).
+COORDINATE_DECIMALS = 5  # ~1 m; veri 30 m çözünürlükte, fark görünmez
+_DISTANCE_PIECE = re.compile(r"^(?P<label>[^:<>]+): (?P<value>\d{1,3}(?:,\d{3})*) m$")
+
+
+def _round_coordinates(value: Any, decimals: int = COORDINATE_DECIMALS) -> Any:
+    if isinstance(value, float):
+        return round(value, decimals)
+    if isinstance(value, list):
+        return [_round_coordinates(v, decimals) for v in value]
+    return value
+
+
+def compact_explanations(geo: dict) -> dict:
+    """Barındırma sürümü için açıklama dizgelerini sözlükle sıkıştırır (yerinde).
+
+    Her yolun `_aciklama_str` alanı ~700 baytlık, büyük ölçüde tekrar eden bir
+    metindi ("Sıcaklık: çok yüksek<br>Ağaç örtüsü: düşük<br>..."); İzmir'de veri
+    dosyalarının ~%90'ı buydu. Metin `<br>` parçalarına bölünür: tekrar eden
+    parçalar dosya başına bir kez `_parcalar` listesine yazılır ve yol yalnızca
+    sırasını taşır; mesafe parçaları ("... eczane: 2,146 m") `[etiket sırası,
+    metre]` çifti olur. Tarayıcı (bkz. `_EXPAND_JS`) aynı metni birebir geri
+    kurar; `expand_explanations` bunun Python karşılığıdır ve testler ikisinin
+    kayıpsız olduğunu doğrular. Koordinatlar da COORDINATE_DECIMALS'a yuvarlanır.
+    """
+    pieces: dict[str, int] = {}
+    distance_labels: dict[str, int] = {}
+    for feature in geo.get("features", []):
+        geometry = feature.get("geometry")
+        if geometry and "coordinates" in geometry:
+            geometry["coordinates"] = _round_coordinates(geometry["coordinates"])
+        props = feature.get("properties", {})
+        text = props.pop("_aciklama_str", None)
+        if text is None:
+            continue
+        tokens = []
+        for piece in str(text).split("<br>"):
+            match = _DISTANCE_PIECE.match(piece)
+            if match:
+                index = distance_labels.setdefault(match["label"], len(distance_labels))
+                tokens.append([index, int(match["value"].replace(",", ""))])
+            else:
+                tokens.append(pieces.setdefault(piece, len(pieces)))
+        props["_a"] = tokens
+    geo["_parcalar"] = list(pieces)
+    geo["_mesafe_etiketleri"] = list(distance_labels)
+    return geo
+
+
+def expand_explanations(geo: dict) -> dict:
+    """`compact_explanations`'ın tersi; tarayıcıdaki `_EXPAND_JS` ile aynı kurallar."""
+    pieces, labels = geo.get("_parcalar", []), geo.get("_mesafe_etiketleri", [])
+    for feature in geo.get("features", []):
+        props = feature.get("properties", {})
+        tokens = props.pop("_a", None)
+        if tokens is None:
+            continue
+        props["_aciklama_str"] = "<br>".join(
+            f"{labels[t[0]]}: {t[1]:,} m" if isinstance(t, list) else pieces[t] for t in tokens
+        )
+    return geo
+
+
+# Parçalar sözlükten geri kurulur; metre değeri tam sayıdır, binlik ayıracı
+# Python'un `{:,}` biçimiyle aynı (virgül).
+_EXPAND_JS = """
+        function aciklamalariAc(veri) {
+            var parcalar = veri._parcalar || [], etiketler = veri._mesafe_etiketleri || [];
+            (veri.features || []).forEach(function(f) {
+                var p = f.properties || {};
+                if (!p._a) { return; }
+                p._aciklama_str = p._a.map(function(t) {
+                    if (Array.isArray(t)) {
+                        return etiketler[t[0]] + ': ' + String(t[1]).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',') + ' m';
+                    }
+                    return parcalar[t];
+                }).join('<br>');
+                delete p._a;
+            });
+            return veri;
+        }
+"""
+
+
 def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, group_vars: dict,
                         data_by_year: dict, years: list[str], default_year: str,
                         night_geojson_vars: dict, night_group_vars: dict, night_data: dict) -> Path:
@@ -483,7 +575,8 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
     for year in years:
         for cat, geo in data_by_year[year].items():
             filename = f"{_slugify(cat)}_{year}.geojson"
-            _write_text_atomic(data_dir / filename, json.dumps(geo, ensure_ascii=False))
+            compact = compact_explanations(json.loads(json.dumps(geo)))
+            _write_text_atomic(data_dir / filename, json.dumps(compact, ensure_ascii=False, separators=(",", ":")))
             file_map[year][cat] = f"data/{filename}"
 
     # Gece LST katmanı yıl seçiciye bağlı değil - kendi küçük dosyaları var.
@@ -528,6 +621,7 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
         var grupAdlari = {json.dumps(group_vars)};
         var mevcutYil = '{default_year}';
         var onbellek = {{}};  // "{{yil}}|{{kategori}}" -> zaten indirilmiş veri
+{_EXPAND_JS}
 
         // Ağ gecikmesinde kullanıcıya geri bildirim - aktif istek sayacı,
         // birden fazla katman aynı anda açılırsa kutunun erken kapanmasını önler.
@@ -560,6 +654,7 @@ def _write_fetch_based(config: CityConfig, m: folium.Map, geojson_vars: dict, gr
             fetch(dosyaYollari[mevcutYil][kategori])
                 .then(function(r) {{ return r.json(); }})
                 .then(function(veri) {{
+                    veri = aciklamalariAc(veri);
                     onbellek[anahtar] = veri;
                     geoJsonKatmani.clearLayers();
                     geoJsonKatmani.addData(veri);
@@ -650,6 +745,8 @@ def _build_manifest(config: CityConfig, years: list[str], default_year: str,
             "admin_level_ilce": config.admin_level_ilce,
             "admin_level_mahalle": config.admin_level_mahalle,
             "osm_pbf_url": config.osm_pbf_url,
+            # None: maruziyet adapter'ın mahalle/ilçe yoğunluğundan geldi.
+            "population_grid_url": config.population_grid_url,
         },
         "scenes": _read_scene_summaries(config, years, default_year),
         "versions": {

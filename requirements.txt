@@ -44,3 +44,7 @@ jenkspy>=0.4,<1.0
 
 # Şehir config.yaml dosyalarını okumak için
 pyyaml>=6.0,<7.0
+
+# Şehir veri paketi (core/export.py): Excel çalışma kitabı ve statik görseller.
+openpyxl>=3.1,<4.0
+matplotlib>=3.8,<4.0

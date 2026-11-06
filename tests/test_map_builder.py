@@ -484,7 +484,7 @@ def test_build_manifest_includes_config_and_versions():
         "bbox": config.bbox, "crs": config.crs, "max_cloud_cover": config.max_cloud_cover,
         "max_scenes_per_tile": config.max_scenes_per_tile, "buffer_meters": config.buffer_meters,
         "admin_level_ilce": config.admin_level_ilce, "admin_level_mahalle": config.admin_level_mahalle,
-        "osm_pbf_url": config.osm_pbf_url,
+        "osm_pbf_url": config.osm_pbf_url, "population_grid_url": config.population_grid_url,
     }
     # Sürüm numaraları core/hvi.py, core/roads.py, core/raster.py,
     # core/satellite.py'deki gerçek sabitlerle birebir aynı olmalı - kod
@@ -584,3 +584,46 @@ def test_build_hvi_map_also_writes_manifest_next_to_both_outputs(tmp_path, monke
     assert manifest["city_id"] == "testcity"
     assert manifest["night_lst_requested"] is True
     assert (docs_dir / "testcity" / "manifest.json").exists()
+
+
+# --- barındırma sürümünün sıkıştırılmış açıklamaları ------------------------
+
+def test_compact_explanations_round_trip_is_lossless_and_smaller():
+    import copy
+
+    from core.map_builder import compact_explanations, expand_explanations
+
+    texts = [
+        "Sıcaklık: çok yüksek<br>Ağaç örtüsü: düşük<br>En yakın haritalı hastane: 841 m"
+        "<br>En yakın haritalı eczane: 2,146 m<br>En yakın haritalı klinik: OSM verisi yok",
+        "Sıcaklık: çok yüksek<br>Ağaç örtüsü: orta<br>En yakın haritalı hastane: 12,345,678 m"
+        "<br>Mahalle: A &lt;b&gt;<br>En yakın haritalı eczane: 0 m",
+        "Sıcaklık: düşük",
+    ]
+    geo = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"name": f"Yol {i}", "_aciklama_str": t},
+         "geometry": {"type": "LineString", "coordinates": [[27.123456789, 38.987654321], [27.1, 38.9]]}}
+        for i, t in enumerate(texts)
+    ] + [{"type": "Feature", "properties": {"name": "boş"}, "geometry": None}]}
+    original = copy.deepcopy(geo)
+
+    compact = compact_explanations(geo)
+    assert all("_aciklama_str" not in f["properties"] for f in compact["features"])
+    assert compact["features"][0]["geometry"]["coordinates"][0] == [27.12346, 38.98765]
+    # Tekrar eden parça bir kez saklanır.
+    assert compact["_parcalar"].count("Sıcaklık: çok yüksek") == 1
+    assert len(json.dumps(compact)) < len(json.dumps(original))
+
+    restored = expand_explanations(copy.deepcopy(compact))
+    for before, after in zip(original["features"], restored["features"], strict=True):
+        assert before["properties"] == after["properties"]
+
+
+def test_hosted_page_expands_explanations_before_adding_data():
+    from core.map_builder import _EXPAND_JS
+
+    # Sayfa, fetch edilen veriyi katmana eklemeden önce açmalı; aksi halde
+    # tooltip boş kalır.
+    assert "function aciklamalariAc(veri)" in _EXPAND_JS
+    assert "{{" not in _EXPAND_JS
+    assert r"\B(?=(\d{3})+(?!\d))" in _EXPAND_JS
