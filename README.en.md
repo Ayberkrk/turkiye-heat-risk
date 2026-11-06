@@ -296,9 +296,14 @@ city window is read over HTTP (about 9 s for İzmir).
 The grid is not used as is: it is calibrated to the official count. Cells of each
 unit are scaled so the unit total equals the official population from the adapter,
 so the total comes from the official source and the within-unit distribution from
-the grid. The calibration unit is the true resolution of the data: the
-neighbourhood in İzmir, the district in cities that copy district density to
-neighbourhoods. A road's density is the calibrated population in the same 150 m
+the grid. The calibration unit is the area the official number refers to: the
+neighbourhood in İzmir, the **whole district** in TÜİK-templated cities. The latter
+matters: district density is divided by the whole district area including its rural
+hinterland, so applying it only to the urban neighbourhoods in the bbox undercounts the
+urban population by a different factor per district (Eskişehir's factors were 0.13 and
+0.59). The grid is therefore scaled to the official count over the whole district, and
+the bbox part receives its grid share (Eskişehir factors 0.91 and 1.43; 571 thousand of
+the two districts' 830 thousand people fall inside the bbox). A road's density is the calibrated population in the same 150 m
 buffer used for building density, divided by the buffer area. Calibration factors
 per unit are written to `data/processed/<city>/nufus_izgarasi_kalibrasyon.csv`.
 
