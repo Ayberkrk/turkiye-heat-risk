@@ -1,0 +1,10 @@
+mahalle_adi,ilce_adi,sira,yol_sayisi,toplam_yol_km,hvi_ort_2020,yuksek_risk_payi_2020,hvi_ort_2026,yuksek_risk_payi_2026,hvi_degisim,lst_ort_2020,ndvi_ort_2020,lst_ort_2026,ndvi_ort_2026,nufus_yogunlugu,yasli_oran,cocuk_oran,sosyoekonomik_skor,dist_saglik_m,dist_yesil_m,guvenilir_ortalama,sira_medyan,olasilik_ilk_5,olasilik_ilk_20
+Cevher Dudayev Mahallesi,Nevşehir Merkez,1,81,26.2,63.3,0.642,59.4,0.5432,-3.9,43.9,0.1833,43.5,0.1943,2970.7,0.0843,0.2164,1.082,618.8,113.4,Evet,1.0,1.0,1.0
+İbrahimpaşa Mahallesi,Nevşehir Merkez,2,37,5.6,63.4,0.5676,57.1,0.4054,-6.3,43.0,0.172,42.2,0.1631,3560.2,0.0843,0.2164,1.082,181.8,242.5,Evet,2.0,0.998,1.0
+Bahçelievler Mahallesi,Nevşehir Merkez,3,14,3.0,53.2,0.5,49.1,0.5,-4.1,44.8,0.2648,43.2,0.2341,3609.8,0.0843,0.2164,1.082,237.0,109.8,Hayır,,,
+20 Temmuz Mahallesi,Nevşehir Merkez,4,43,12.4,51.0,0.2558,49.0,0.186,-2.0,43.1,0.2516,42.3,0.2178,3430.3,0.0843,0.2164,1.082,265.8,83.0,Evet,3.0,0.97,1.0
+Sümer Mahallesi,Nevşehir Merkez,5,129,41.3,49.7,0.2713,45.0,0.2016,-4.7,42.7,0.2384,42.0,0.2288,3089.1,0.0843,0.2164,1.082,471.9,113.4,Evet,4.0,0.996,1.0
+Kıratlıoğlu Mahallesi,Nevşehir Merkez,6,57,11.6,45.1,0.0702,41.5,0.0526,-3.6,42.1,0.2299,41.7,0.2255,3245.1,0.0843,0.2164,1.082,301.3,227.7,Evet,6.0,0.428,1.0
+Bekdik Mahallesi,Nevşehir Merkez,7,53,27.0,39.7,0.1509,41.5,0.0943,1.8,42.3,0.2245,42.1,0.2307,1997.1,0.0843,0.2164,1.082,1912.3,833.2,Evet,5.0,0.608,1.0
+Hacırüştü Mahallesi,Nevşehir Merkez,8,3,0.6,44.2,0.0,38.5,0.0,-5.7,41.8,0.2048,41.2,0.1882,2916.1,0.0843,0.2164,1.082,302.6,394.6,Hayır,,,
+Boğaz Köyü,Nevşehir Merkez,9,1,12.6,36.4,0.0,34.0,0.0,-2.4,43.8,0.1954,43.2,0.1602,469.8,0.0843,0.2164,1.082,7344.7,5524.8,Hayır,,,

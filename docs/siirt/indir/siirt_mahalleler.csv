@@ -1,0 +1,9 @@
+mahalle_adi,ilce_adi,sira,yol_sayisi,toplam_yol_km,hvi_ort_2020,yuksek_risk_payi_2020,hvi_ort_2026,yuksek_risk_payi_2026,hvi_degisim,lst_ort_2020,ndvi_ort_2020,lst_ort_2026,ndvi_ort_2026,nufus_yogunlugu,yasli_oran,cocuk_oran,sosyoekonomik_skor,dist_saglik_m,dist_yesil_m,guvenilir_ortalama,sira_medyan,olasilik_ilk_5,olasilik_ilk_20
+Ülkü Mahallesi,Siirt Merkez,1,16,1.1,52.0,0.25,81.3,1.0,29.3,43.3,0.1243,46.0,0.1212,14733.9,0.0541,0.212,0.074,169.8,520.6,Hayır,,,
+Kooperatif Mahallesi,Siirt Merkez,2,62,8.9,62.8,0.6774,76.3,0.9516,13.4,45.2,0.1424,46.8,0.1219,13316.0,0.0541,0.212,0.074,148.7,236.7,Evet,1.0,1.0,1.0
+Tınaztepe Mahallesi,Siirt Merkez,3,46,4.3,45.6,0.1522,70.7,0.7826,25.1,43.2,0.1312,45.7,0.1409,12115.4,0.0541,0.212,0.074,99.8,645.6,Evet,2.0,0.986,1.0
+Karakol Mahallesi,Siirt Merkez,4,20,1.8,40.8,0.05,64.6,0.8,23.8,43.0,0.1381,45.4,0.1443,13007.7,0.0541,0.212,0.074,222.4,517.8,Evet,4.0,0.886,1.0
+Sakarya Mahallesi,Siirt Merkez,5,29,2.3,39.5,0.0,64.6,0.8621,25.1,43.0,0.1287,45.5,0.1385,11182.8,0.0541,0.212,0.074,296.8,709.4,Evet,3.0,0.956,1.0
+Batı Mahallesi,Siirt Merkez,6,38,2.7,37.0,0.1579,57.9,0.5,20.8,43.1,0.135,45.3,0.1511,13664.8,0.0541,0.212,0.074,98.2,407.2,Evet,6.0,0.442,1.0
+Yeni Mahallesi,Siirt Merkez,7,140,25.4,40.8,0.1286,57.4,0.5786,16.6,43.7,0.1938,45.2,0.1905,11592.0,0.0541,0.212,0.074,257.8,225.4,Evet,5.0,0.592,1.0
+Bahçelievler Mahallesi,Siirt Merkez,8,121,16.0,34.6,0.1322,48.4,0.3719,13.8,44.0,0.1577,46.1,0.1518,11053.7,0.0541,0.212,0.074,132.0,91.5,Evet,7.0,0.138,1.0

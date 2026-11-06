@@ -1,0 +1,18 @@
+mahalle_adi,ilce_adi,sira,yol_sayisi,toplam_yol_km,hvi_ort_2020,yuksek_risk_payi_2020,hvi_ort_2026,yuksek_risk_payi_2026,hvi_degisim,lst_ort_2020,ndvi_ort_2020,lst_ort_2026,ndvi_ort_2026,nufus_yogunlugu,yasli_oran,cocuk_oran,sosyoekonomik_skor,dist_saglik_m,dist_yesil_m,guvenilir_ortalama,sira_medyan,olasilik_ilk_5,olasilik_ilk_20
+Marulcu Mahallesi,Afyonkarahisar Merkez,1,12,2.6,76.7,1.0,80.9,1.0,4.3,39.8,0.1896,40.1,0.1771,4681.2,0.0749,0.1484,1.178,807.0,322.0,Hayır,,,
+Kasımpaşa Mahallesi,Afyonkarahisar Merkez,2,15,3.1,68.3,0.9333,62.1,0.7333,-6.2,41.6,0.1447,40.7,0.1623,3182.6,0.0749,0.1484,1.178,248.6,549.9,Hayır,,,
+Güvenevler Mahallesi,Afyonkarahisar Merkez,3,99,19.3,56.3,0.4747,58.0,0.5253,1.7,40.4,0.1735,40.1,0.1509,3820.6,0.0749,0.1484,1.178,303.5,119.2,Evet,2.0,0.956,1.0
+Cumhuriyet Mahallesi,Afyonkarahisar Merkez,4,32,8.5,54.0,0.5,57.0,0.5625,2.9,39.9,0.2209,39.6,0.1981,4627.4,0.0749,0.1484,1.178,242.6,292.0,Evet,2.0,0.914,1.0
+Dumlupınar Mahallesi,Afyonkarahisar Merkez,5,45,12.9,57.6,0.5778,56.1,0.4444,-1.5,39.7,0.1993,39.5,0.1834,3879.6,0.0749,0.1484,1.178,432.0,200.8,Evet,3.0,0.962,1.0
+Fatih Mahallesi,Afyonkarahisar Merkez,6,152,35.9,56.1,0.5197,55.3,0.4408,-0.8,40.3,0.2482,39.8,0.2298,3702.5,0.0749,0.1484,1.178,519.6,183.2,Evet,3.0,0.914,1.0
+Nazmi Saatçi Mahallesi,Afyonkarahisar Merkez,7,62,13.6,49.5,0.1935,54.1,0.3548,4.5,39.6,0.2085,40.1,0.2085,3416.6,0.0749,0.1484,1.178,274.6,119.0,Evet,5.0,0.614,1.0
+Eşrefpaşa Mahallesi,Afyonkarahisar Merkez,8,88,16.5,55.5,0.4318,51.5,0.1932,-4.1,40.1,0.2206,39.5,0.2169,3884.6,0.0749,0.1484,1.178,471.1,134.2,Evet,7.0,0.12,1.0
+Selçuklu Mahallesi,Afyonkarahisar Merkez,9,37,11.2,53.6,0.4595,51.3,0.3514,-2.3,40.1,0.1913,39.8,0.1752,3175.9,0.0749,0.1484,1.178,775.8,132.4,Evet,7.0,0.35,1.0
+Derviş Paşa Mahallesi,Afyonkarahisar Merkez,10,23,5.0,48.9,0.2609,47.1,0.2174,-1.8,39.3,0.1858,39.0,0.1746,3649.4,0.0749,0.1484,1.178,102.3,332.6,Evet,8.0,0.098,1.0
+Örnekevler Mahallesi,Afyonkarahisar Merkez,11,23,4.4,56.4,0.6522,45.4,0.087,-11.0,40.5,0.2511,39.1,0.2312,4470.9,0.0749,0.1484,1.178,536.6,46.0,Evet,9.0,0.052,1.0
+Kocatepe Mahallesi,Afyonkarahisar Merkez,12,28,6.0,47.1,0.0357,44.1,0.1071,-3.0,39.5,0.2339,39.2,0.234,3870.1,0.0749,0.1484,1.178,430.6,51.0,Evet,10.0,0.01,1.0
+Ali Çetinkaya Mahallesi,Afyonkarahisar Merkez,13,65,14.6,50.5,0.3538,43.8,0.1846,-6.6,40.7,0.224,39.6,0.2082,2952.9,0.0749,0.1484,1.178,450.4,208.5,Evet,10.0,0.008,1.0
+Sahipata Mahallesi,Afyonkarahisar Merkez,14,49,14.7,45.6,0.0204,42.2,0.0204,-3.4,39.7,0.2415,39.2,0.2302,3735.9,0.0749,0.1484,1.178,260.8,254.8,Evet,11.0,0.0,1.0
+Karaman Mahallesi,Afyonkarahisar Merkez,15,9,2.6,41.5,0.0,38.2,0.0,-3.3,38.7,0.2187,38.4,0.1954,3350.6,0.0749,0.1484,1.178,450.0,335.3,Hayır,,,
+Yenice Mahallesi,Afyonkarahisar Merkez,16,164,36.7,43.4,0.1951,37.8,0.1037,-5.6,40.7,0.2494,39.4,0.2346,2845.7,0.0749,0.1484,1.178,426.6,192.8,Evet,13.0,0.002,1.0
+Zafer Mahallesi,Afyonkarahisar Merkez,17,31,5.2,53.9,0.4839,33.9,0.0323,-20.0,41.6,0.2847,38.6,0.2688,3969.7,0.0749,0.1484,1.178,403.3,111.1,Evet,14.0,0.0,1.0

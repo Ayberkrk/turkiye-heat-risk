@@ -1,0 +1,19 @@
+{
+  "city_id": "burdur",
+  "name": "Burdur",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1608,
+  "avg_hvi_percentage": 60.1,
+  "category_counts": {
+    "Kritik": 575,
+    "Aşırı Kritik": 397,
+    "Yüksek": 347,
+    "Orta": 213,
+    "Düşük": 76
+  },
+  "top_risk_mahalle": "Üçdibek Mahallesi"
+}

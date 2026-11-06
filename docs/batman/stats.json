@@ -1,0 +1,19 @@
+{
+  "city_id": "batman",
+  "name": "Batman",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3841,
+  "avg_hvi_percentage": 56.8,
+  "category_counts": {
+    "Kritik": 1216,
+    "Aşırı Kritik": 1111,
+    "Yüksek": 828,
+    "Orta": 518,
+    "Düşük": 168
+  },
+  "top_risk_mahalle": "Çarşı Mahallesi"
+}

@@ -1,0 +1,94 @@
+{
+  "city_id": "van",
+  "city_name": "Van",
+  "generated_at": "2026-11-06T21:58:01+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      43.34,
+      38.47,
+      43.44,
+      38.52
+    ],
+    "crs": "EPSG:32638",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/eastern_anatolia-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_170033_20200727_02_T1",
+        "date": "2020-07-27",
+        "tile": "170_033",
+        "cloud_cover": 0.28
+      },
+      {
+        "scene_id": "LC08_L2SP_170033_20200828_02_T1",
+        "date": "2020-08-28",
+        "tile": "170_033",
+        "cloud_cover": 6.34
+      },
+      {
+        "scene_id": "LC08_L2SP_170033_20200812_02_T1",
+        "date": "2020-08-12",
+        "tile": "170_033",
+        "cloud_cover": 7.78
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_170033_20260805_02_T1",
+        "date": "2026-08-05",
+        "tile": "170_033",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC08_L2SP_170033_20260728_02_T1",
+        "date": "2026-07-28",
+        "tile": "170_033",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC09_L2SP_170033_20260720_02_T1",
+        "date": "2026-07-20",
+        "tile": "170_033",
+        "cloud_cover": 3.09
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "amasya",
+  "name": "Amasya",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1236,
+  "avg_hvi_percentage": 52.5,
+  "category_counts": {
+    "Yüksek": 381,
+    "Kritik": 378,
+    "Orta": 248,
+    "Düşük": 153,
+    "Aşırı Kritik": 76
+  },
+  "top_risk_mahalle": "Yüzevler Mahallesi"
+}

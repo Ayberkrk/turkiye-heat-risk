@@ -1,0 +1,19 @@
+{
+  "city_id": "bitlis",
+  "name": "Bitlis",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 214,
+  "avg_hvi_percentage": 54.1,
+  "category_counts": {
+    "Orta": 59,
+    "Yüksek": 55,
+    "Kritik": 46,
+    "Aşırı Kritik": 28,
+    "Düşük": 26
+  },
+  "top_risk_mahalle": "Hüsrev Paşa Mahallesi"
+}

@@ -431,6 +431,14 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
     mahalle_cols = mahalle_gdf[["mahalle_adi", "ilce_adi", "nufus_yogunlugu", "yasli_oran", "cocuk_oran",
                                  *optional_cols, "geometry"]]
     joined = gpd.sjoin(road_pts, mahalle_cols, how="left", predicate="within")
+    # OSM'de iç içe sınırlar olabilir (Yalova'da tüm mahalleleri kapsayan bir
+    # "Belediye sınırı", Kayseri'de eski belde sınırları): yol merkezi birden
+    # fazla poligona düşünce satır çoğalır. En küçük, yani en özgül poligon seçilir.
+    if joined.index.has_duplicates:
+        areas = mahalle_cols.geometry.to_crs(config.crs).area
+        joined = (joined.assign(_alan=joined["index_right"].map(areas))
+                  .sort_values("_alan", kind="stable", na_position="last"))
+        joined = joined[~joined.index.duplicated(keep="first")].reindex(road_pts.index)
     roads["mahalle_adi"] = joined["mahalle_adi"].values
     # İlçe adı, mahalle yaş oranları ilçe düzeyinde aşağı ölçeklendiği için
     # sonradan yapılacak halk sağlığı yakınsaklık kontrollerinde de gerekir.

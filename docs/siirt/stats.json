@@ -1,0 +1,19 @@
+{
+  "city_id": "siirt",
+  "name": "Siirt",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 472,
+  "avg_hvi_percentage": 60.5,
+  "category_counts": {
+    "Aşırı Kritik": 162,
+    "Kritik": 135,
+    "Yüksek": 100,
+    "Orta": 44,
+    "Düşük": 31
+  },
+  "top_risk_mahalle": "Ülkü Mahallesi"
+}

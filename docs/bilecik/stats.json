@@ -1,0 +1,19 @@
+{
+  "city_id": "bilecik",
+  "name": "Bilecik",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 717,
+  "avg_hvi_percentage": 59.8,
+  "category_counts": {
+    "Yüksek": 202,
+    "Kritik": 179,
+    "Aşırı Kritik": 170,
+    "Orta": 119,
+    "Düşük": 47
+  },
+  "top_risk_mahalle": "İsmetpaşa Mahallesi"
+}

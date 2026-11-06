@@ -1,0 +1,19 @@
+{
+  "city_id": "balikesir",
+  "name": "Balıkesir",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2366,
+  "avg_hvi_percentage": 55.0,
+  "category_counts": {
+    "Aşırı Kritik": 671,
+    "Orta": 588,
+    "Kritik": 478,
+    "Düşük": 337,
+    "Yüksek": 292
+  },
+  "top_risk_mahalle": "Yıldırım Mahallesi"
+}

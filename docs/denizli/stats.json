@@ -1,0 +1,19 @@
+{
+  "city_id": "denizli",
+  "name": "Denizli",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 5779,
+  "avg_hvi_percentage": 49.5,
+  "category_counts": {
+    "Yüksek": 1722,
+    "Orta": 1409,
+    "Kritik": 1222,
+    "Düşük": 749,
+    "Aşırı Kritik": 677
+  },
+  "top_risk_mahalle": "Zafer Mahallesi"
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "trabzon",
+  "name": "Trabzon",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 522,
+  "avg_hvi_percentage": 54.1,
+  "category_counts": {
+    "Kritik": 145,
+    "Aşırı Kritik": 113,
+    "Yüksek": 108,
+    "Orta": 89,
+    "Düşük": 67
+  },
+  "top_risk_mahalle": "Kaymaklı Mahallesi"
+}

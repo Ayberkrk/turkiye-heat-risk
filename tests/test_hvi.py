@@ -342,6 +342,23 @@ def test_road_without_demographics_stays_nan_even_when_demographics_are_constant
     assert pd.isna(out["group_vulnerability_2020"].iloc[-1])
 
 
+def test_road_inside_nested_boundaries_takes_the_smallest_neighbourhood(monkeypatch, tmp_path):
+    # Yalova'daki "Belediye sınırı" gibi tüm mahalleleri kapsayan bir poligon
+    # sjoin'de yol satırlarını çoğaltıyordu; yol en özgül mahalleye düşmeli.
+    common = {"ilce_adi": "Merkez", "yasli_oran": 0.10, "cocuk_oran": 0.20}
+    mahalle = _mahalle([
+        {**common, "mahalle_adi": "Belediye", "nufus_yogunlugu": 100.0, "geometry": box(27.0, 38.0, 27.2, 38.2)},
+        {**common, "mahalle_adi": "A", "nufus_yogunlugu": 5000.0, "geometry": box(27.0, 38.05, 27.06, 38.15)},
+        {**common, "mahalle_adi": "B", "nufus_yogunlugu": 9000.0, "geometry": box(27.06, 38.05, 27.12, 38.15)},
+    ])
+    road_x = [27.01 + 0.003 * i for i in range(N_ROADS)]
+    out = _run_hvi(monkeypatch, tmp_path, mahalle, road_x, risk=list(np.linspace(5, 95, N_ROADS)))
+
+    assert len(out) == N_ROADS
+    expected = ["A" if x + 0.0005 < 27.06 else "B" if x + 0.0005 < 27.12 else "Belediye" for x in road_x]
+    assert out["mahalle_adi"].tolist() == expected
+
+
 def test_population_grid_gives_exposure_spread_inside_one_neighbourhood(monkeypatch, tmp_path):
     # Tek mahalle: birim yoğunluğu sabit olduğu için maruziyet eskiden endekse
     # hiç girmiyordu. Izgara doğuya doğru kalabalıklaşınca yollar ayrışmalı,

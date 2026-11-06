@@ -1,0 +1,19 @@
+{
+  "city_id": "ankara",
+  "name": "Ankara",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 9007,
+  "avg_hvi_percentage": 46.5,
+  "category_counts": {
+    "Orta": 2490,
+    "Yüksek": 2409,
+    "Kritik": 1665,
+    "Aşırı Kritik": 1534,
+    "Düşük": 909
+  },
+  "top_risk_mahalle": "19 Mayıs Mahallesi"
+}

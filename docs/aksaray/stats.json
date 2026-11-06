@@ -1,0 +1,19 @@
+{
+  "city_id": "aksaray",
+  "name": "Aksaray",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 912,
+  "avg_hvi_percentage": 51.7,
+  "category_counts": {
+    "Yüksek": 274,
+    "Kritik": 247,
+    "Orta": 199,
+    "Aşırı Kritik": 102,
+    "Düşük": 90
+  },
+  "top_risk_mahalle": "Minarecik Mahallesi"
+}

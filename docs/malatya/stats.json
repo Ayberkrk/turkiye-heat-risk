@@ -1,0 +1,19 @@
+{
+  "city_id": "malatya",
+  "name": "Malatya",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2372,
+  "avg_hvi_percentage": 41.5,
+  "category_counts": {
+    "Orta": 757,
+    "Yüksek": 727,
+    "Kritik": 500,
+    "Düşük": 239,
+    "Aşırı Kritik": 149
+  },
+  "top_risk_mahalle": "Çavuşoğlu Mahallesi"
+}

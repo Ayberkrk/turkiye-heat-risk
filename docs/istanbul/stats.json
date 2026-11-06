@@ -1,0 +1,19 @@
+{
+  "city_id": "istanbul",
+  "name": "İstanbul",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2986,
+  "avg_hvi_percentage": 58.6,
+  "category_counts": {
+    "Kritik": 928,
+    "Yüksek": 664,
+    "Aşırı Kritik": 661,
+    "Orta": 447,
+    "Düşük": 286
+  },
+  "top_risk_mahalle": "Saraç İshak Mahallesi"
+}

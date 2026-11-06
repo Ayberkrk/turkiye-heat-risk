@@ -1,0 +1,19 @@
+{
+  "city_id": "adana",
+  "name": "Adana",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 20288,
+  "avg_hvi_percentage": 34.5,
+  "category_counts": {
+    "Orta": 6976,
+    "Yüksek": 4586,
+    "Düşük": 4568,
+    "Kritik": 2943,
+    "Aşırı Kritik": 1215
+  },
+  "top_risk_mahalle": "Onur Mahallesi"
+}

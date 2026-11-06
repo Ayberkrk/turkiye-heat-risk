@@ -1,0 +1,19 @@
+{
+  "city_id": "tekirdag",
+  "name": "Tekirdağ",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2837,
+  "avg_hvi_percentage": 57.5,
+  "category_counts": {
+    "Kritik": 846,
+    "Yüksek": 667,
+    "Orta": 597,
+    "Aşırı Kritik": 489,
+    "Düşük": 238
+  },
+  "top_risk_mahalle": "Çınarlı Mahallesi"
+}

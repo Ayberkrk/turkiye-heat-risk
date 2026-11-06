@@ -1,0 +1,19 @@
+{
+  "city_id": "usak",
+  "name": "Uşak",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3041,
+  "avg_hvi_percentage": 36.8,
+  "category_counts": {
+    "Yüksek": 1065,
+    "Orta": 1042,
+    "Düşük": 569,
+    "Kritik": 303,
+    "Aşırı Kritik": 62
+  },
+  "top_risk_mahalle": "İslice Mahallesi"
+}

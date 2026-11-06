@@ -1,0 +1,19 @@
+{
+  "city_id": "mersin",
+  "name": "Mersin",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 9538,
+  "avg_hvi_percentage": 40.5,
+  "category_counts": {
+    "Yüksek": 2854,
+    "Orta": 2680,
+    "Kritik": 1947,
+    "Düşük": 1586,
+    "Aşırı Kritik": 471
+  },
+  "top_risk_mahalle": "Kiremithane Mahallesi"
+}

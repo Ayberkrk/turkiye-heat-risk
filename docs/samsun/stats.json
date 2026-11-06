@@ -1,0 +1,19 @@
+{
+  "city_id": "samsun",
+  "name": "Samsun",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2229,
+  "avg_hvi_percentage": 59.0,
+  "category_counts": {
+    "Kritik": 781,
+    "Aşırı Kritik": 545,
+    "Yüksek": 494,
+    "Orta": 264,
+    "Düşük": 145
+  },
+  "top_risk_mahalle": "Kale Mahallesi"
+}

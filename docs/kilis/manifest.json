@@ -1,0 +1,130 @@
+{
+  "city_id": "kilis",
+  "city_name": "Kilis",
+  "generated_at": "2026-11-06T21:18:19+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      37.06,
+      36.69,
+      37.19,
+      36.76
+    ],
+    "crs": "EPSG:32637",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/southeastern_anatolia-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_174034_20200824_02_T1",
+        "date": "2020-08-24",
+        "tile": "174_034",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC08_L2SP_174034_20200723_02_T1",
+        "date": "2020-07-23",
+        "tile": "174_034",
+        "cloud_cover": 0.27
+      },
+      {
+        "scene_id": "LC08_L2SP_174034_20200808_02_T1",
+        "date": "2020-08-08",
+        "tile": "174_034",
+        "cloud_cover": 3.35
+      },
+      {
+        "scene_id": "LC08_L2SP_174035_20200824_02_T1",
+        "date": "2020-08-24",
+        "tile": "174_035",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_174035_20200723_02_T1",
+        "date": "2020-07-23",
+        "tile": "174_035",
+        "cloud_cover": 4.07
+      },
+      {
+        "scene_id": "LC08_L2SP_174035_20200808_02_T1",
+        "date": "2020-08-08",
+        "tile": "174_035",
+        "cloud_cover": 8.95
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_174034_20260801_02_T1",
+        "date": "2026-08-01",
+        "tile": "174_034",
+        "cloud_cover": 0.01
+      },
+      {
+        "scene_id": "LC09_L2SP_174034_20260716_02_T1",
+        "date": "2026-07-16",
+        "tile": "174_034",
+        "cloud_cover": 1.46
+      },
+      {
+        "scene_id": "LC08_L2SP_174034_20260708_02_T1",
+        "date": "2026-07-08",
+        "tile": "174_034",
+        "cloud_cover": 2.46
+      },
+      {
+        "scene_id": "LC09_L2SP_174035_20260801_02_T1",
+        "date": "2026-08-01",
+        "tile": "174_035",
+        "cloud_cover": 0.76
+      },
+      {
+        "scene_id": "LC08_L2SP_174035_20260809_02_T1",
+        "date": "2026-08-09",
+        "tile": "174_035",
+        "cloud_cover": 6.25
+      },
+      {
+        "scene_id": "LC09_L2SP_174035_20260716_02_T1",
+        "date": "2026-07-16",
+        "tile": "174_035",
+        "cloud_cover": 6.96
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

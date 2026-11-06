@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_7a6c8b28c9b765fefc62423c3d3c7dc7 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    
+                    <style>
+                        .foliumtooltip {
+                            max-width: 320px; white-space: normal;
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+    
+                    <style>
+                        .foliumtooltip {
+                            max-width: 320px; white-space: normal;
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+    
+                    <style>
+                        .foliumtooltip {
+                            max-width: 320px; white-space: normal;
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+    
+                    <style>
+                        .foliumtooltip {
+                            max-width: 320px; white-space: normal;
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+    
+                    <style>
+                        .foliumtooltip {
+                            max-width: 320px; white-space: normal;
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+</head>
+<body>
+    
+    <style>.leaflet-control-layers-base, .leaflet-control-layers-separator { display: none !important; }</style>
+    
+    <script>
+    window.addEventListener('load', function() {
+        var etiketler = document.querySelectorAll('.leaflet-control-layers-overlays label');
+        for (var i = 0; i < etiketler.length; i++) {
+            if (etiketler[i].textContent.indexOf('Gece:') !== -1) {
+                var ayrac = document.createElement('div');
+                ayrac.textContent = 'Gece Isı Haritası (mahalle, MODIS)';
+                ayrac.style.cssText = 'margin-top:6px;padding-top:6px;border-top:1px solid #ccc;'
+                    + 'font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.03em;';
+                etiketler[i].parentNode.insertBefore(ayrac, etiketler[i]);
+                break;
+            }
+        }
+    });
+    </script>
+    
+    
+    <div id='hviPanel' style='position: fixed; bottom: 30px; left: 30px; z-index: 1000;
+        background: rgba(20,20,20,0.9); color: white; padding: 14px 18px;
+        border-radius: 8px; font-family: Arial, sans-serif; font-size: 13px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5); max-width: 280px;'>
+        <div style='display:flex; align-items:center; justify-content:space-between;'>
+            <b style='font-size:14px'>Isı Hassasiyet Endeksi (HVI)</b>
+            <span id='hviPanelKapat' onclick="
+                var g = document.getElementById('hviPanelIcerik');
+                var kapali = g.style.display === 'none';
+                g.style.display = kapali ? '' : 'none';
+                this.textContent = kapali ? '−' : '+';
+            " style='cursor:pointer; padding:0 4px; font-size:15px; user-select:none; color:#ccc;'>&minus;</span>
+        </div>
+        <div id='hviPanelIcerik'>
+        <small>Sıcaklık, ağaç örtüsü, sağlık/yeşil alan erişimi, yapılaşma,
+        nüfus yoğunluğu, yaşlı ve çocuk nüfus oranının birleşimi</small>
+        <hr style='border-color:#555; margin:8px 0'>
+        <b>Yıl:</b>
+        <select id='yilSecici' style='font-size:14px; padding:4px 8px; border-radius:4px; width:90px;'>
+            <option value='2026'>2026</option><option value='2020'>2020</option>
+        </select>
+        <hr style='border-color:#555; margin:8px 0'>
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3182bd;margin-right:6px;vertical-align:middle;"></span>Düşük (0.0-27.9)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdae6b;margin-right:6px;vertical-align:middle;"></span>Orta (27.9-45.3)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fd8d3c;margin-right:6px;vertical-align:middle;"></span>Yüksek (45.3-60.0)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#de2d26;margin-right:6px;vertical-align:middle;"></span>Kritik (60.0-74.3)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#800026;margin-right:6px;vertical-align:middle;"></span>Aşırı Kritik (74.3-100.0)<br>
+        <hr style='border-color:#555; margin:8px 0'>
+        <small>Açılışta yalnızca Kritik ve Aşırı Kritik yollar gösterilir; diğer
+        kategoriler ve gece katmanı sağ üstteki katman düğmesinden açılır.
+        Bir yola tıklayınca/üzerine gelince skoru oluşturan tüm
+        bileşenler görünür.<br>
+        Nüfus ve yaş grupları: TÜİK ADNKS 2025 (DrDataStats ilçe yaş grubu sorgusu); SEGE-2022: T.C. Sanayi ve Teknoloji Bakanlığı.<br>Nüfus ızgarası: Meta &amp; CIESIN, High Resolution Settlement Layer (CC BY 4.0).<br>
+        Alan: Bolu (metro alanı)</small>
+        <hr style='border-color:#555; margin:8px 0'>
+        <a href='https://ayberkrk.github.io/turkiye-heat-risk/bolu/indir/ozet.html' target='_blank' rel='noopener'
+           style='color:#fdae6b; font-size:13px;'>&#8681; Verileri indir (Excel, CSV, görseller)</a>
+        </div>
+    </div>
+    
+    
+    <script>
+    if (window.innerWidth < 700) {
+        document.getElementById('hviPanelIcerik').style.display = 'none';
+        document.getElementById('hviPanelKapat').textContent = '+';
+    }
+    </script>
+    
+    
+    <div id='yukleniyorKutusu' style='display:none; position: fixed; top: 10px; left: 50%;
+        transform: translateX(-50%); z-index: 1000; background: rgba(20,20,20,0.85); color: #ddd;
+        padding: 4px 14px; border-radius: 4px; font-family: Arial, sans-serif; font-size: 12px;'>
+        Katman yükleniyor...
+    </div>
+    
+    
+    <script>
+    window.addEventListener('load', function() {
+        var harita = map_7a6c8b28c9b765fefc62423c3d3c7dc7;
+        var dosyaYollari = {"2020": {"Düşük": "data/dusuk_2020.geojson", "Orta": "data/orta_2020.geojson", "Yüksek": "data/yuksek_2020.geojson", "Kritik": "data/kritik_2020.geojson", "Aşırı Kritik": "data/asiri-kritik_2020.geojson"}, "2026": {"Düşük": "data/dusuk_2026.geojson", "Orta": "data/orta_2026.geojson", "Yüksek": "data/yuksek_2026.geojson", "Kritik": "data/kritik_2026.geojson", "Aşırı Kritik": "data/asiri-kritik_2026.geojson"}};
+        var geoJsonAdlari = {"D\u00fc\u015f\u00fck": "geo_json_919c00f86794d9746cdd2661d01c4110", "Orta": "geo_json_5a46417560bd1d9b1cec24277b925b85", "Y\u00fcksek": "geo_json_efa0efe674c98a915b5ec7d3cb830c59", "Kritik": "geo_json_69f438ed53702c5bf3a6ba7ee11c004f", "A\u015f\u0131r\u0131 Kritik": "geo_json_9b50d01e40144357c5d31f9faaf75fcc"};
+        var grupAdlari = {"D\u00fc\u015f\u00fck": "feature_group_2562a6351cc10bfb64782e47e4685815", "Orta": "feature_group_314859690379a33689f967046f87c961", "Y\u00fcksek": "feature_group_b3392ed434ecd27c21779cc8712fb963", "Kritik": "feature_group_dc722b92d7264536b4dabd5afc5aa3ec", "A\u015f\u0131r\u0131 Kritik": "feature_group_bd4f2f400291279b578c604498d014fb"};
+        var mevcutYil = '2026';
+        var onbellek = {};  // "{yil}|{kategori}" -> zaten indirilmiş veri
+
+        function aciklamalariAc(veri) {
+            var parcalar = veri._parcalar || [], etiketler = veri._mesafe_etiketleri || [];
+            (veri.features || []).forEach(function(f) {
+                var p = f.properties || {};
+                if (!p._a) { return; }
+                p._aciklama_str = p._a.map(function(t) {
+                    if (Array.isArray(t)) {
+                        return etiketler[t[0]] + ': ' + String(t[1]).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' m';
+                    }
+                    return parcalar[t];
+                }).join('<br>');
+                delete p._a;
+            });
+            return veri;
+        }
+
+
+        // Ağ gecikmesinde kullanıcıya geri bildirim - aktif istek sayacı,
+        // birden fazla katman aynı anda açılırsa kutunun erken kapanmasını önler.
+        var aktifIstekSayisi = 0;
+        function yukleniyorGoster() {
+            aktifIstekSayisi++;
+            document.getElementById('yukleniyorKutusu').style.display = 'block';
+        }
+        function yukleniyorGizle() {
+            aktifIstekSayisi = Math.max(0, aktifIstekSayisi - 1);
+            if (aktifIstekSayisi === 0) {
+                document.getElementById('yukleniyorKutusu').style.display = 'none';
+            }
+        }
+
+        var grupNesneToKategori = {};
+        for (var kategori in grupAdlari) {
+            grupNesneToKategori[L.stamp(window[grupAdlari[kategori]])] = kategori;
+        }
+
+        function katmaniYukle(kategori) {
+            var anahtar = mevcutYil + '|' + kategori;
+            var geoJsonKatmani = window[geoJsonAdlari[kategori]];
+            if (onbellek[anahtar]) {
+                geoJsonKatmani.clearLayers();
+                geoJsonKatmani.addData(onbellek[anahtar]);
+                return;
+            }
+            yukleniyorGoster();
+            fetch(dosyaYollari[mevcutYil][kategori])
+                .then(function(r) { return r.json(); })
+                .then(function(veri) {
+                    veri = aciklamalariAc(veri);
+                    onbellek[anahtar] = veri;
+                    geoJsonKatmani.clearLayers();
+                    geoJsonKatmani.addData(veri);
+                    yukleniyorGizle();
+                })
+                .catch(function(hata) { console.error('Katman yüklenemedi:', kategori, hata); yukleniyorGizle(); });
+        }
+
+        harita.on('overlayadd', function(e) {
+            var kategori = grupNesneToKategori[L.stamp(e.layer)];
+            if (!kategori) { return; }
+            katmaniYukle(kategori);
+        });
+
+        var secici = document.getElementById('yilSecici');
+        secici.value = mevcutYil;
+        secici.addEventListener('change', function() {
+            mevcutYil = this.value;
+            for (var kategori in grupAdlari) {
+                var grup = window[grupAdlari[kategori]];
+                if (harita.hasLayer(grup)) { katmaniYukle(kategori); }
+            }
+        });
+
+        // Sayfa açıldığında en riskli kategoriler görünür olsun: tüm
+        // katmanlar kapalı başlayınca ziyaretçi boş bir altlık görüyor ve
+        // sağ üstteki katman düğmesini çoğu zaman fark etmiyordu.
+        ["Kritik", "Aşırı Kritik"].forEach(function(kategori) {
+            if (grupAdlari[kategori]) { harita.addLayer(window[grupAdlari[kategori]]); }
+        });
+
+        
+    });
+    </script>
+    
+    
+            <div class="folium-map" id="map_7a6c8b28c9b765fefc62423c3d3c7dc7" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_7a6c8b28c9b765fefc62423c3d3c7dc7 = L.map(
+                "map_7a6c8b28c9b765fefc62423c3d3c7dc7",
+                {
+                    center: [40.73776073523369, 31.603576171985658],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 12,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_7a6c8b28c9b765fefc62423c3d3c7dc7);
+
+            
+
+        
+    
+            var tile_layer_190c1edf87f3c42fb35e5d1b5a9f10fe = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_190c1edf87f3c42fb35e5d1b5a9f10fe.addTo(map_7a6c8b28c9b765fefc62423c3d3c7dc7);
+        
+    
+            map_7a6c8b28c9b765fefc62423c3d3c7dc7.fitBounds(
+                [[40.72138761077417, 31.57484297401168], [40.75413385969322, 31.63230936995964]],
+                {}
+            );
+        
+    
+            var feature_group_2562a6351cc10bfb64782e47e4685815 = L.featureGroup(
+                {
+}
+            );
+        
+    
+        function geo_json_919c00f86794d9746cdd2661d01c4110_styler(feature) {
+            switch(feature.id) {
+                default:
+                    return {"color": "#3182bd", "opacity": 0.85, "weight": 2.5};
+            }
+        }
+
+        function geo_json_919c00f86794d9746cdd2661d01c4110_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_919c00f86794d9746cdd2661d01c4110 = L.geoJson(null, {
+                onEachFeature: geo_json_919c00f86794d9746cdd2661d01c4110_onEachFeature,
+            
+                style: geo_json_919c00f86794d9746cdd2661d01c4110_styler,
+            ...{
+}
+        });
+
+        function geo_json_919c00f86794d9746cdd2661d01c4110_add (data) {
+            geo_json_919c00f86794d9746cdd2661d01c4110
+                .addData(data);
+        }
+            geo_json_919c00f86794d9746cdd2661d01c4110_add({"bbox": [31.5209034, 40.7319714, 31.5861796, 40.7604103], "features": [{"bbox": [31.5209034, 40.7319714, 31.5861796, 40.7604103], "geometry": {"coordinates": [[31.5861796, 40.7604103], [31.5857787, 40.7602145], [31.585392, 40.7600079], [31.5848911, 40.7597046], [31.5843182, 40.7593354], [31.5837877, 40.7589796], [31.5832892, 40.7586359], [31.5827659, 40.7583202], [31.5823962, 40.7581052], [31.581887, 40.7578333], [31.5814319, 40.7576267], [31.5809631, 40.7574479], [31.5803996, 40.7572829], [31.5798117, 40.7571442], [31.5792157, 40.7570095], [31.578072, 40.756728], [31.5777003, 40.7566419], [31.5768786, 40.7564517], [31.5745276, 40.7558963], [31.5728074, 40.7554892], [31.5722073, 40.7553462], [31.5716393, 40.755187], [31.5708146, 40.7549255], [31.5700916, 40.7546462], [31.5693633, 40.7543343], [31.5683651, 40.7538672], [31.5674983, 40.7534773], [31.567067, 40.7532523], [31.5666357, 40.7529989], [31.5660243, 40.7526288], [31.5655631, 40.7523095], [31.5646366, 40.7516372], [31.563694, 40.7509528], [31.5632566, 40.7506259], [31.5628498, 40.750254], [31.56248, 40.7498446], [31.5621872, 40.7494776], [31.5619683, 40.7491503], [31.5617937, 40.7488817], [31.5616561, 40.7485992], [31.5614634, 40.7481228], [31.5613601, 40.7477771], [31.5612753, 40.7473602], [31.561209, 40.7469294], [31.5611565, 40.7462786], [31.5611349, 40.7456279], [31.5611354, 40.7452355], [31.5611218, 40.7449728], [31.5610484, 40.7442983], [31.5610159, 40.744024], [31.5609712, 40.7437558], [31.5609081, 40.743556], [31.560663, 40.74298], [31.5605301, 40.7427295], [31.5603836, 40.7424845], [31.560225, 40.7422364], [31.5600028, 40.7419201], [31.5596343, 40.7414354], [31.559418, 40.7412173], [31.5591973, 40.7410128], [31.5588441, 40.7407068], [31.5584149, 40.7403958], [31.5578334, 40.7400285], [31.5572752, 40.7397459], [31.5566797, 40.739497], [31.5561083, 40.7392951], [31.5555591, 40.7391353], [31.5551599, 40.7390492], [31.5545012, 40.7389222], [31.5539812, 40.7388579], [31.5533417, 40.7388203], [31.5527902, 40.7388303], [31.5522059, 40.7388597], [31.5516368, 40.7389018], [31.5510279, 40.7390024], [31.5504333, 40.7391232], [31.5491318, 40.7394744], [31.5477976, 40.7398628], [31.5468203, 40.740157], [31.5463059, 40.7403048], [31.5454999, 40.7404743], [31.5449725, 40.7405519], [31.5445321, 40.7405902], [31.5436812, 40.740617], [31.5430377, 40.7406164], [31.5423914, 40.7405751], [31.5417763, 40.7405153], [31.5411432, 40.7404088], [31.540553, 40.7402636], [31.5400065, 40.7401244], [31.5395682, 40.7399758], [31.5391298, 40.7398179], [31.5387664, 40.7396692], [31.5384029, 40.7394989], [31.5380061, 40.7392696], [31.5376214, 40.7390342], [31.5369728, 40.7385611], [31.5365683, 40.7382578], [31.5362044, 40.7379422], [31.5351921, 40.73708], [31.5336737, 40.7358008], [31.5324196, 40.7347639], [31.5319781, 40.7344182], [31.5315912, 40.7341665], [31.5311619, 40.7339171], [31.5307628, 40.7337113], [31.5303544, 40.7335232], [31.5296961, 40.7332766], [31.5290757, 40.733081], [31.5284024, 40.7329005], [31.5278963, 40.7328056], [31.5274043, 40.7327356], [31.5263096, 40.732578], [31.5254173, 40.7324816], [31.5242005, 40.7323633], [31.5230641, 40.7322388], [31.5216632, 40.7320802], [31.5209034, 40.7319714]], "type": "LineString"}, "id": "0", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: d\u00fc\u015f\u00fck\u003cbr\u003eHastaneye uzakl\u0131k: uzak\u003cbr\u003eYe\u015fil alana uzakl\u0131k: uzak\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: orta\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 828 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,602 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: OSM verisi yok\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 1,050 m", "_hvi_str": "%28", "_mahalle_str": "K\u00fcrk\u00e7\u00fcler Mahallesi", "name": "Anadolu Otoyolu"}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_919c00f86794d9746cdd2661d01c4110.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name", "_mahalle_str", "_hvi_str", "_aciklama_str"];
+    let aliases = ["Yol", "Mahalle", "Risk Oran\u0131", "Bile\u015fenler"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_919c00f86794d9746cdd2661d01c4110.addTo(feature_group_2562a6351cc10bfb64782e47e4685815);
+        
+    
+            var feature_group_314859690379a33689f967046f87c961 = L.featureGroup(
+                {
+}
+            );
+        
+    
+        function geo_json_5a46417560bd1d9b1cec24277b925b85_styler(feature) {
+            switch(feature.id) {
+                default:
+                    return {"color": "#fdae6b", "opacity": 0.85, "weight": 2.5};
+            }
+        }
+
+        function geo_json_5a46417560bd1d9b1cec24277b925b85_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_5a46417560bd1d9b1cec24277b925b85 = L.geoJson(null, {
+                onEachFeature: geo_json_5a46417560bd1d9b1cec24277b925b85_onEachFeature,
+            
+                style: geo_json_5a46417560bd1d9b1cec24277b925b85_styler,
+            ...{
+}
+        });
+
+        function geo_json_5a46417560bd1d9b1cec24277b925b85_add (data) {
+            geo_json_5a46417560bd1d9b1cec24277b925b85
+                .addData(data);
+        }
+            geo_json_5a46417560bd1d9b1cec24277b925b85_add({"bbox": [31.5597007, 40.7411456, 31.6302857, 40.7659949], "features": [{"bbox": [31.5597007, 40.7411456, 31.6302857, 40.7659949], "geometry": {"coordinates": [[31.5597007, 40.7411456], [31.5598889, 40.7413641], [31.5602756, 40.7418508], [31.5604372, 40.7420829], [31.5605905, 40.7423246], [31.5607409, 40.7425744], [31.5608766, 40.7428253], [31.5610025, 40.7430787], [31.5611129, 40.7433333], [31.5612045, 40.7436033], [31.5612641, 40.743869], [31.5613055, 40.7441331], [31.5613951, 40.7448878], [31.5614149, 40.7451568], [31.561417, 40.7456054], [31.5614301, 40.7462505], [31.5614741, 40.7468908], [31.5615345, 40.7473293], [31.5616318, 40.7477631], [31.5617247, 40.7481139], [31.5618915, 40.7485254], [31.5620269, 40.748792], [31.5622055, 40.7490793], [31.5624303, 40.7493853], [31.5626943, 40.7497325], [31.5630446, 40.7501147], [31.563418, 40.7504558], [31.5638406, 40.7507875], [31.5647968, 40.7514598], [31.5657102, 40.7521321], [31.5661912, 40.7524588], [31.5667956, 40.752814], [31.5671991, 40.7530567], [31.5676079, 40.7532709], [31.5685151, 40.7536925], [31.569468, 40.7541303], [31.5702519, 40.7544754], [31.5709249, 40.7547333], [31.5717133, 40.7549871], [31.5722884, 40.7551503], [31.5728716, 40.7552972], [31.5745918, 40.7557001], [31.5769444, 40.7562454], [31.5777808, 40.7564379], [31.5781675, 40.7565269], [31.579304, 40.7568025], [31.579891, 40.7569269], [31.5804975, 40.7570685], [31.581086, 40.7572441], [31.5815994, 40.7574375], [31.5820587, 40.7576415], [31.5825088, 40.7578788], [31.5829803, 40.7581486], [31.5834607, 40.7584612], [31.5839166, 40.7587926], [31.5844798, 40.7591743], [31.5850678, 40.7595399], [31.5855583, 40.7598369], [31.5859204, 40.7600363], [31.5863037, 40.7602303], [31.586975, 40.7605053], [31.5873243, 40.7606227], [31.5877991, 40.7607586], [31.5882832, 40.7608641], [31.588751, 40.7609572], [31.589259, 40.761027], [31.5898799, 40.7610675], [31.5905131, 40.761073], [31.5910841, 40.7610409], [31.5918091, 40.7609762], [31.5930886, 40.7608399], [31.5937529, 40.7607685], [31.5949044, 40.7606448], [31.5955398, 40.7605788], [31.5961875, 40.7605175], [31.5967247, 40.7604926], [31.5973432, 40.7605], [31.5979741, 40.7605463], [31.5986132, 40.7606281], [31.5992355, 40.7607531], [31.5998578, 40.7609187], [31.6003518, 40.7610837], [31.6008298, 40.7612609], [31.6022096, 40.7617789], [31.6029403, 40.7620581], [31.6035503, 40.7622623], [31.6042994, 40.7624733], [31.6048375, 40.7626052], [31.6055232, 40.762733], [31.6062767, 40.7628475], [31.6097766, 40.7632593], [31.6139202, 40.7637381], [31.6160181, 40.7639879], [31.6175125, 40.7641564], [31.6190494, 40.7643422], [31.6207834, 40.7645468], [31.6224826, 40.7647474], [31.6242427, 40.7649596], [31.6249632, 40.7650413], [31.6256729, 40.7651515], [31.6262569, 40.7652791], [31.6274819, 40.7655713], [31.6281175, 40.7657251], [31.6284446, 40.7657949], [31.6287879, 40.7658485], [31.6292677, 40.7659246], [31.6297904, 40.7659763], [31.6302857, 40.7659949]], "type": "LineString"}, "id": "1", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: orta\u003cbr\u003eHastaneye uzakl\u0131k: uzak\u003cbr\u003eYe\u015fil alana uzakl\u0131k: \u00e7ok uzak\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: orta\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 2,048 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 2,063 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: OSM verisi yok\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 1,500 m", "_hvi_str": "%40", "_mahalle_str": "\u00c7akmaklar Mahallesi", "name": "Anadolu Otoyolu"}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_5a46417560bd1d9b1cec24277b925b85.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name", "_mahalle_str", "_hvi_str", "_aciklama_str"];
+    let aliases = ["Yol", "Mahalle", "Risk Oran\u0131", "Bile\u015fenler"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_5a46417560bd1d9b1cec24277b925b85.addTo(feature_group_314859690379a33689f967046f87c961);
+        
+    
+            var feature_group_b3392ed434ecd27c21779cc8712fb963 = L.featureGroup(
+                {
+}
+            );
+        
+    
+        function geo_json_efa0efe674c98a915b5ec7d3cb830c59_styler(feature) {
+            switch(feature.id) {
+                default:
+                    return {"color": "#fd8d3c", "opacity": 0.85, "weight": 2.5};
+            }
+        }
+
+        function geo_json_efa0efe674c98a915b5ec7d3cb830c59_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_efa0efe674c98a915b5ec7d3cb830c59 = L.geoJson(null, {
+                onEachFeature: geo_json_efa0efe674c98a915b5ec7d3cb830c59_onEachFeature,
+            
+                style: geo_json_efa0efe674c98a915b5ec7d3cb830c59_styler,
+            ...{
+}
+        });
+
+        function geo_json_efa0efe674c98a915b5ec7d3cb830c59_add (data) {
+            geo_json_efa0efe674c98a915b5ec7d3cb830c59
+                .addData(data);
+        }
+            geo_json_efa0efe674c98a915b5ec7d3cb830c59_add({"bbox": [31.6325533, 40.7631401, 31.6383378, 40.76559], "features": [{"bbox": [31.6325533, 40.7631401, 31.6383378, 40.76559], "geometry": {"coordinates": [[31.6383378, 40.7635101], [31.6376782, 40.7634618], [31.6374423, 40.7634445], [31.6369396, 40.7633892], [31.6367506, 40.7633684], [31.6365393, 40.7633401], [31.636484, 40.7633327], [31.6359006, 40.7632546], [31.6353806, 40.7631769], [31.6351314, 40.7631495], [31.6349418, 40.7631401], [31.6346227, 40.7631572], [31.6343242, 40.7632023], [31.6340694, 40.7632709], [31.633851, 40.763344], [31.6336775, 40.7634114], [31.6334575, 40.7635541], [31.6332421, 40.7636979], [31.6329925, 40.7638942], [31.6328431, 40.764068], [31.6327651, 40.7642212], [31.6326985, 40.7643559], [31.6326249, 40.7645034], [31.6325749, 40.7646752], [31.6325557, 40.7647955], [31.6325543, 40.7649357], [31.6325533, 40.7651906], [31.6327114, 40.76559]], "type": "LineString"}, "id": "5", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: y\u00fcksek\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: \u00e7ok uzak\u003cbr\u003eYe\u015fil alana uzakl\u0131k: \u00e7ok uzak\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: orta\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 2,603 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 3,528 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: OSM verisi yok\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 2,135 m", "_hvi_str": "%59", "_mahalle_str": "Yukar\u0131soku Mahallesi", "name": ""}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_efa0efe674c98a915b5ec7d3cb830c59.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name", "_mahalle_str", "_hvi_str", "_aciklama_str"];
+    let aliases = ["Yol", "Mahalle", "Risk Oran\u0131", "Bile\u015fenler"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_efa0efe674c98a915b5ec7d3cb830c59.addTo(feature_group_b3392ed434ecd27c21779cc8712fb963);
+        
+    
+            var feature_group_dc722b92d7264536b4dabd5afc5aa3ec = L.featureGroup(
+                {
+}
+            );
+        
+    
+        function geo_json_69f438ed53702c5bf3a6ba7ee11c004f_styler(feature) {
+            switch(feature.id) {
+                default:
+                    return {"color": "#de2d26", "opacity": 0.85, "weight": 2.5};
+            }
+        }
+
+        function geo_json_69f438ed53702c5bf3a6ba7ee11c004f_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_69f438ed53702c5bf3a6ba7ee11c004f = L.geoJson(null, {
+                onEachFeature: geo_json_69f438ed53702c5bf3a6ba7ee11c004f_onEachFeature,
+            
+                style: geo_json_69f438ed53702c5bf3a6ba7ee11c004f_styler,
+            ...{
+}
+        });
+
+        function geo_json_69f438ed53702c5bf3a6ba7ee11c004f_add (data) {
+            geo_json_69f438ed53702c5bf3a6ba7ee11c004f
+                .addData(data);
+        }
+            geo_json_69f438ed53702c5bf3a6ba7ee11c004f_add({"bbox": [31.6078536, 40.7411458, 31.6089202, 40.7429714], "features": [{"bbox": [31.6078536, 40.7411458, 31.6089202, 40.7429714], "geometry": {"coordinates": [[31.6078536, 40.7429714], [31.6083688, 40.7421036], [31.6089202, 40.7411458]], "type": "LineString"}, "id": "4", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: orta\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: d\u00fc\u015f\u00fck\u003cbr\u003eHastaneye uzakl\u0131k: \u00e7ok yak\u0131n\u003cbr\u003eYe\u015fil alana uzakl\u0131k: yak\u0131n\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: orta\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 23 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,778 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: OSM verisi yok\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 21 m", "_hvi_str": "%66", "_mahalle_str": "K\u00fclt\u00fcr Mahallesi", "name": ""}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_69f438ed53702c5bf3a6ba7ee11c004f.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name", "_mahalle_str", "_hvi_str", "_aciklama_str"];
+    let aliases = ["Yol", "Mahalle", "Risk Oran\u0131", "Bile\u015fenler"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_69f438ed53702c5bf3a6ba7ee11c004f.addTo(feature_group_dc722b92d7264536b4dabd5afc5aa3ec);
+        
+    
+            var feature_group_bd4f2f400291279b578c604498d014fb = L.featureGroup(
+                {
+}
+            );
+        
+    
+        function geo_json_9b50d01e40144357c5d31f9faaf75fcc_styler(feature) {
+            switch(feature.id) {
+                default:
+                    return {"color": "#800026", "opacity": 0.85, "weight": 2.5};
+            }
+        }
+
+        function geo_json_9b50d01e40144357c5d31f9faaf75fcc_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_9b50d01e40144357c5d31f9faaf75fcc = L.geoJson(null, {
+                onEachFeature: geo_json_9b50d01e40144357c5d31f9faaf75fcc_onEachFeature,
+            
+                style: geo_json_9b50d01e40144357c5d31f9faaf75fcc_styler,
+            ...{
+}
+        });
+
+        function geo_json_9b50d01e40144357c5d31f9faaf75fcc_add (data) {
+            geo_json_9b50d01e40144357c5d31f9faaf75fcc
+                .addData(data);
+        }
+            geo_json_9b50d01e40144357c5d31f9faaf75fcc_add({"bbox": [31.6079942, 40.7272084, 31.6108012, 40.727569], "features": [{"bbox": [31.6079942, 40.7272084, 31.6108012, 40.727569], "geometry": {"coordinates": [[31.6108012, 40.727569], [31.6104414, 40.7275219], [31.6091285, 40.72735], [31.6079942, 40.7272084]], "type": "LineString"}, "id": "30", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: y\u00fcksek\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eHastaneye uzakl\u0131k: \u00e7ok yak\u0131n\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: orta\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 842 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,488 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: OSM verisi yok\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 218 m", "_hvi_str": "%77", "_mahalle_str": "Akta\u015f Mahallesi", "name": "\u015eehit Selen Pa\u015fa Caddesi"}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_9b50d01e40144357c5d31f9faaf75fcc.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name", "_mahalle_str", "_hvi_str", "_aciklama_str"];
+    let aliases = ["Yol", "Mahalle", "Risk Oran\u0131", "Bile\u015fenler"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_9b50d01e40144357c5d31f9faaf75fcc.addTo(feature_group_bd4f2f400291279b578c604498d014fb);
+        
+    
+            var layer_control_202e9029ba467bf6bf708ae79207d0aa_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_190c1edf87f3c42fb35e5d1b5a9f10fe,
+                },
+                overlays :  {
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#3182bd;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eD\u00fc\u015f\u00fck (0.0-27.9)" : feature_group_2562a6351cc10bfb64782e47e4685815,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdae6b;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eOrta (27.9-45.3)" : feature_group_314859690379a33689f967046f87c961,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#fd8d3c;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eY\u00fcksek (45.3-60.0)" : feature_group_b3392ed434ecd27c21779cc8712fb963,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#de2d26;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eKritik (60.0-74.3)" : feature_group_dc722b92d7264536b4dabd5afc5aa3ec,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#800026;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eA\u015f\u0131r\u0131 Kritik (74.3-100.0)" : feature_group_bd4f2f400291279b578c604498d014fb,
+                },
+            };
+            let layer_control_202e9029ba467bf6bf708ae79207d0aa = L.control.layers(
+                layer_control_202e9029ba467bf6bf708ae79207d0aa_layers.base_layers,
+                layer_control_202e9029ba467bf6bf708ae79207d0aa_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_7a6c8b28c9b765fefc62423c3d3c7dc7);
+
+        
+</script>
+</html>

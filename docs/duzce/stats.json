@@ -1,0 +1,19 @@
+{
+  "city_id": "duzce",
+  "name": "Düzce",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 658,
+  "avg_hvi_percentage": 57.4,
+  "category_counts": {
+    "Kritik": 200,
+    "Yüksek": 166,
+    "Aşırı Kritik": 161,
+    "Orta": 91,
+    "Düşük": 40
+  },
+  "top_risk_mahalle": "Şerefiye Mahallesi"
+}

@@ -1,0 +1,12 @@
+mahalle_adi,ilce_adi,sira,yol_sayisi,toplam_yol_km,hvi_ort_2020,yuksek_risk_payi_2020,hvi_ort_2026,yuksek_risk_payi_2026,hvi_degisim,lst_ort_2020,ndvi_ort_2020,lst_ort_2026,ndvi_ort_2026,nufus_yogunlugu,yasli_oran,cocuk_oran,sosyoekonomik_skor,dist_saglik_m,dist_yesil_m,guvenilir_ortalama,sira_medyan,olasilik_ilk_5,olasilik_ilk_20
+Osmaniye Mahallesi,Giresun Merkez,1,16,2.7,70.0,0.9375,85.3,1.0,15.3,34.6,0.2273,38.1,0.2333,7702.9,0.1238,0.172,1.145,244.8,435.8,Hayır,,,
+Şeyhkeramettin Mahallesi,Giresun Merkez,2,10,1.5,74.1,1.0,81.4,1.0,7.4,37.3,0.1395,40.4,0.1714,7666.7,0.1238,0.172,1.145,84.5,255.7,Hayır,,,
+Kapu Mahallesi,Giresun Merkez,3,10,1.1,70.8,0.9,80.0,1.0,9.2,36.5,0.1746,39.5,0.1882,7725.2,0.1238,0.172,1.145,129.6,124.2,Hayır,,,
+Nizamiye Mahallesi,Giresun Merkez,4,46,6.5,60.7,0.6739,73.6,0.8913,12.8,34.8,0.22,38.3,0.2399,7721.4,0.1238,0.172,1.145,113.4,298.6,Evet,2.0,1.0,1.0
+Çınarlar Mahallesi,Giresun Merkez,5,28,3.9,60.2,0.7143,70.0,0.7857,9.7,35.5,0.2869,38.8,0.3048,7826.2,0.1238,0.172,1.145,152.6,252.6,Evet,2.0,0.998,1.0
+Hacımiktat Mahallesi,Giresun Merkez,6,30,2.8,58.2,0.6333,66.8,0.8333,8.6,36.4,0.1416,40.6,0.1787,7587.4,0.1238,0.172,1.145,69.6,101.9,Evet,4.0,0.866,1.0
+Hacısiyam Mahallesi,Giresun Merkez,7,90,12.0,51.7,0.4,60.9,0.7222,9.2,35.5,0.1804,39.3,0.2066,6890.2,0.1238,0.172,1.145,95.8,94.5,Evet,5.0,0.536,1.0
+Hacı Hüseyin Mahallesi,Giresun Merkez,8,34,4.6,70.1,0.8235,60.7,0.5,-9.4,36.2,0.2431,35.4,0.2239,7481.2,0.1238,0.172,1.145,242.0,493.6,Evet,3.0,0.906,1.0
+Gemilerçekeği Mahallesi,Giresun Merkez,9,47,9.8,48.2,0.234,57.3,0.5106,9.1,34.7,0.2066,38.0,0.2312,6198.1,0.1238,0.172,1.145,191.0,237.3,Evet,6.0,0.478,1.0
+Fevzi Çakmak Mahallesi,Giresun Merkez,10,37,4.0,41.0,0.2973,54.7,0.5135,13.8,33.1,0.3276,37.0,0.3447,6812.9,0.1238,0.172,1.145,187.2,177.5,Evet,7.0,0.216,1.0
+Kale Mahallesi,Giresun Merkez,11,16,9.2,22.4,0.0,30.2,0.0625,7.7,31.9,0.3677,35.3,0.3719,3634.6,0.1238,0.172,1.145,365.6,12.8,Hayır,,,

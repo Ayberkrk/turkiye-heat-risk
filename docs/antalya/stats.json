@@ -1,0 +1,19 @@
+{
+  "city_id": "antalya",
+  "name": "Antalya",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 14355,
+  "avg_hvi_percentage": 50.6,
+  "category_counts": {
+    "Kritik": 4142,
+    "Yüksek": 3729,
+    "Aşırı Kritik": 3516,
+    "Orta": 2253,
+    "Düşük": 715
+  },
+  "top_risk_mahalle": "Erenköy Mahallesi"
+}

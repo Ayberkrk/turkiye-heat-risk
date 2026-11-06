@@ -228,8 +228,8 @@ kullan; bu seçenek `refresh_population_data(config)` kancasını sağlayan
 adapter'larda etkilidir (İzmir bunu destekler). Depodaki sabit CSV kullanan
 adapter'lar yerel tabloları kullanmaya devam eder.
 
-Depodaki 70 şehir kaydı, 70 şehrin de OSM kapsamının ölçüldüğü veya
-haritasının yayınlandığı anlamına gelmez. Tüm şehir config'lerini ve depoya
+70 şehrin tamamının haritası, özet raporu ve indirilebilir tabloları sitede
+yayında; Türkiye geneli tablolar `docs/veri/` altında. Tüm şehir config'lerini ve depoya
 ekli nüfus/SEGE tablolarının yapısını ağ isteği yapmadan denetlemek için:
 
 ```bash

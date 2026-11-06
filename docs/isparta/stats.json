@@ -1,0 +1,19 @@
+{
+  "city_id": "isparta",
+  "name": "Isparta",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2840,
+  "avg_hvi_percentage": 48.3,
+  "category_counts": {
+    "Yüksek": 1011,
+    "Orta": 724,
+    "Kritik": 663,
+    "Düşük": 235,
+    "Aşırı Kritik": 207
+  },
+  "top_risk_mahalle": "Pirimehmet Mahallesi"
+}

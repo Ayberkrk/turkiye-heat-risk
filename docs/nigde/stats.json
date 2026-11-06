@@ -1,0 +1,19 @@
+{
+  "city_id": "nigde",
+  "name": "Niğde",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1700,
+  "avg_hvi_percentage": 48.5,
+  "category_counts": {
+    "Yüksek": 609,
+    "Kritik": 518,
+    "Orta": 315,
+    "Düşük": 176,
+    "Aşırı Kritik": 82
+  },
+  "top_risk_mahalle": "Nar Mahallesi"
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "kars",
+  "name": "Kars",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 797,
+  "avg_hvi_percentage": 48.1,
+  "category_counts": {
+    "Yüksek": 219,
+    "Orta": 184,
+    "Kritik": 159,
+    "Düşük": 132,
+    "Aşırı Kritik": 103
+  },
+  "top_risk_mahalle": "Merkez Mahallesi"
+}

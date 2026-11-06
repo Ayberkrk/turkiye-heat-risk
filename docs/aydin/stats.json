@@ -1,0 +1,19 @@
+{
+  "city_id": "aydin",
+  "name": "Aydın",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1057,
+  "avg_hvi_percentage": 49.9,
+  "category_counts": {
+    "Yüksek": 301,
+    "Orta": 294,
+    "Kritik": 233,
+    "Düşük": 127,
+    "Aşırı Kritik": 102
+  },
+  "top_risk_mahalle": "Cuma Mahallesi"
+}

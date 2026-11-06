@@ -1,0 +1,19 @@
+{
+  "city_id": "elazig",
+  "name": "Elazığ",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1555,
+  "avg_hvi_percentage": 45.3,
+  "category_counts": {
+    "Yüksek": 545,
+    "Kritik": 427,
+    "Orta": 356,
+    "Düşük": 160,
+    "Aşırı Kritik": 67
+  },
+  "top_risk_mahalle": "Sanayi Mahallesi"
+}

@@ -1,0 +1,4 @@
+ilce_adi,sira,yol_sayisi,toplam_yol_km,hvi_ort_2020,yuksek_risk_payi_2020,hvi_ort_2026,yuksek_risk_payi_2026,hvi_degisim,lst_ort_2020,ndvi_ort_2020,lst_ort_2026,ndvi_ort_2026,nufus_yogunlugu,yasli_oran,cocuk_oran,sosyoekonomik_skor,dist_saglik_m,dist_yesil_m,guvenilir_ortalama
+Meram,1,4000,965.0,48.2,0.5508,46.2,0.476,-2.0,41.7,0.2607,41.4,0.2471,2550.0,0.094,0.2372,1.053,483.1,195.4,Evet
+Karatay,2,3747,920.1,42.2,0.3832,42.6,0.3606,0.4,42.4,0.1909,42.4,0.1698,2804.7,0.0661,0.2716,1.481,531.7,179.6,Evet
+Selçuklu,3,5513,1302.1,35.4,0.1573,32.1,0.1143,-3.3,42.3,0.1844,41.6,0.1864,6173.5,0.0717,0.2313,2.562,364.2,116.5,Evet

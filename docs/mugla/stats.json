@@ -1,0 +1,19 @@
+{
+  "city_id": "mugla",
+  "name": "Muğla",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 408,
+  "avg_hvi_percentage": 62.6,
+  "category_counts": {
+    "Kritik": 152,
+    "Yüksek": 102,
+    "Aşırı Kritik": 78,
+    "Orta": 50,
+    "Düşük": 26
+  },
+  "top_risk_mahalle": "Balıbey Mahallesi"
+}

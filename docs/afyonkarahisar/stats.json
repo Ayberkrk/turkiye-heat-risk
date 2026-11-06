@@ -1,0 +1,19 @@
+{
+  "city_id": "afyonkarahisar",
+  "name": "Afyonkarahisar",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 934,
+  "avg_hvi_percentage": 49.3,
+  "category_counts": {
+    "Yüksek": 306,
+    "Orta": 245,
+    "Kritik": 210,
+    "Düşük": 110,
+    "Aşırı Kritik": 63
+  },
+  "top_risk_mahalle": "Marulcu Mahallesi"
+}

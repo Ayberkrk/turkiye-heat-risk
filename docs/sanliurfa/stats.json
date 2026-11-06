@@ -1,0 +1,19 @@
+{
+  "city_id": "sanliurfa",
+  "name": "Şanlıurfa",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 7406,
+  "avg_hvi_percentage": 44.5,
+  "category_counts": {
+    "Orta": 2063,
+    "Yüksek": 2052,
+    "Kritik": 1490,
+    "Düşük": 1387,
+    "Aşırı Kritik": 414
+  },
+  "top_risk_mahalle": "Pınarbaşı Mahallesi"
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "gaziantep",
+  "name": "Gaziantep",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 15234,
+  "avg_hvi_percentage": 46.0,
+  "category_counts": {
+    "Yüksek": 4167,
+    "Orta": 3623,
+    "Kritik": 3187,
+    "Düşük": 2148,
+    "Aşırı Kritik": 2109
+  },
+  "top_risk_mahalle": "Dumlupınar Mahallesi"
+}
