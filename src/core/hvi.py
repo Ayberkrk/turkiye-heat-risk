@@ -84,7 +84,7 @@ from core.osm_amenities import (
     load_health_points,
 )
 from core.paths import city_data_proc, resolve_pbf_path
-from core.population_grid import compute_road_population_density
+from core.population_grid import POPULATION_GRID_VERSION, compute_road_population_density
 
 CATEGORY_COLORS_5 = {
     "Düşük": "#3182bd",
@@ -375,6 +375,7 @@ def _hvi_input_fingerprint(
         "years": list(years),
         "formula_version": HVI_FORMULA_VERSION,
         "population_grid_url": config.population_grid_url,
+        "population_grid_version": POPULATION_GRID_VERSION if config.population_grid_url else None,
         "roads_file": file_signature(city_data_proc(config.city_id) / "roads_timeseries.geojson"),
         "roads_content_sha256": road_digest,
         "osm_pbf": file_signature(pbf_path),
