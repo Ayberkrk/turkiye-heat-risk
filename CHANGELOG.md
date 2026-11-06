@@ -5,6 +5,16 @@ değişiklikleri sürüm sürüm listeler.
 
 ## Unreleased
 
+## 2.1.0 - 2026-11-07
+
+- **70 şehrin tamamı yayında**: her şehir için harita, özet rapor ve
+  Excel/CSV indirmeleri `docs/<şehir>/`, Türkiye tablosu `docs/veri/` altında
+  (70 şehir, 3.619 mahalle); tam veri paketleri sürüm ekinde.
+- Harita açılışta Kritik ve Aşırı Kritik katmanlarını gösteriyor ve görünür
+  yollara yakınlaşıyor; dar ekranda gösterge kapalı başlıyor.
+- Düzeltme: OSM'de iç içe idari sınırlar olan şehirlerde (Adana, Kayseri,
+  Rize, Yalova) yol-mahalle eşlemesi satır çoğaltıp HVI adımını
+  durduruyordu; yol artık içine düştüğü en küçük mahalleye atanıyor.
 - `build_turkey_table.py`: üretilmiş tüm şehirlerin mahalle ve şehir tabloları
   `docs/veri/` altında tek CSV ve Excel olarak; şehir içi göreli ve şehirler
   arası karşılaştırılabilir sütunlar ayrı belirtiliyor.
