@@ -5,6 +5,12 @@ değişiklikleri sürüm sürüm listeler.
 
 ## Unreleased
 
+- `build_turkey_table.py`: üretilmiş tüm şehirlerin mahalle ve şehir tabloları
+  `docs/veri/` altında tek CSV ve Excel olarak; şehir içi göreli ve şehirler
+  arası karşılaştırılabilir sütunlar ayrı belirtiliyor.
+- `examples/hizli_baslangic.ipynb`: yayımlanan tabloları siteden okuyan,
+  Colab'da çalışan örnek defter.
+- `.zenodo.json`: Zenodo GitHub entegrasyonu açıldığında sürüm arşivinin üst verisi.
 - **Uçtan uca regresyon testi ve çevrimdışı demo**: gerçek İzmir verisinden
   kesilmiş ~1,7 km'lik örnek şehir (`tests/fixtures/ornek`, 3,5 MB, 604 yol)
   ile `pipeline.py` ağ bağlantısı olmadan ~6 saniyede baştan sona çalışıyor.
