@@ -198,3 +198,28 @@ def test_invalid_population_grid_config_is_rejected(value):
 def test_valid_population_grid_config_passes():
     assert validate_config_dict(_cfg(population_grid=False)) == []
     assert validate_config_dict(_cfg(population_grid={"url": "https://x/y.vrt"})) == []
+
+
+def test_declared_district_units_fix_rural_dilution():
+    # Eskişehir durumu: ilçe yoğunluğu kırsalı da içeren tüm ilçe alanına
+    # bölünmüş. bbox yalnızca kentsel batı yarıyı kapsıyor. Ilçe birimi
+    # verilince ızgara ilçenin tamamında resmi nüfusa ölçeklenir ve kentsel
+    # kısım ızgaradaki payını alır (burada %90).
+    transform, shape = _grid()
+    grid = np.zeros(shape)
+    grid[:, :100] = 9.0   # kentsel batı yarı: nüfusun %90'ı
+    grid[:, 100:] = 1.0   # kırsal doğu yarı
+    district = box(27.0, 38.0, 27.06, 38.03)
+    official = 100000.0
+    urban = _mahalle([{"ilce_adi": "A", "nufus_yogunlugu": official / (gpd.GeoSeries([district], crs="EPSG:4326")
+                                                                       .to_crs(CRS).area.iloc[0] / 1e6),
+                       "geometry": box(27.0, 38.0, 27.03, 38.03)}])
+    naive = pg.calibration_units(urban, CRS)
+    assert naive["resmi_nufus"].iloc[0] == pytest.approx(official / 2, rel=0.01)  # alanla orantılı: hatalı
+
+    urban.attrs["nufus_birimleri"] = gpd.GeoDataFrame(
+        {"birim": ["a"], "resmi_nufus": [official]}, geometry=[district], crs="EPSG:4326")
+    units = pg.calibration_units(urban, CRS)
+    calibrated, _ = pg.calibrate_grid(grid, transform, "EPSG:4326", units)
+    assert np.nansum(calibrated) == pytest.approx(official, rel=1e-4)
+    assert np.nansum(calibrated[:, :100]) == pytest.approx(0.9 * official, rel=1e-4)

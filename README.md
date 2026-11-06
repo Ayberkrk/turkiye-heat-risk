@@ -350,8 +350,14 @@ penceresi HTTP üzerinden okunur, ülke dosyası indirilmez (İzmir için ~9 sn)
 Izgara doğrudan kullanılmaz, resmi sayıma kalibre edilir: her birimin
 hücreleri, birim toplamı adapter'ın verdiği resmi nüfusa eşit olacak şekilde
 ölçeklenir. Böylece toplam resmi kaynaktan, birim içi dağılım ızgaradan
-gelir. Kalibrasyon birimi verinin gerçek çözünürlüğüdür: İzmir'de mahalle,
-ilçe yoğunluğunu mahallelere kopyalayan şehirlerde ilçe. Yolun yoğunluğu,
+gelir. Kalibrasyon birimi, resmi sayının ait olduğu alandır: İzmir'de
+mahalle, TÜİK şablonlu şehirlerde **ilçenin tamamı**. İkincisi önemli: ilçe
+yoğunluğu kırsal hinterlandı da içeren tüm ilçe alanına bölündüğü için,
+yalnızca bbox'taki kentsel mahallelere uygulanırsa kentsel nüfusu ilçeden
+ilçeye farklı oranda eksik gösterir (Eskişehir'de çarpanlar 0,13 ve 0,59
+çıkıyordu). Izgara bu yüzden ilçenin tamamında resmi nüfusa ölçeklenir ve
+bbox'taki kısım ızgaradaki payını alır (Eskişehir'de çarpanlar 0,91 ve
+1,43; iki ilçenin 830 bin kişisinin 571 bini bbox içinde). Yolun yoğunluğu,
 bina yoğunluğuyla aynı 150 m tampondaki kalibre nüfusun tampon alanına
 bölümüdür. Birim başına kalibrasyon çarpanı
 `data/processed/<şehir>/nufus_izgarasi_kalibrasyon.csv` dosyasına yazılır;
