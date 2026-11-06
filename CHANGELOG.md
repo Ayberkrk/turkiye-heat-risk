@@ -5,6 +5,12 @@ değişiklikleri sürüm sürüm listeler.
 
 ## Unreleased
 
+- **Doğrulama ve ek duyarlılık kontrolleri** (`validation_analysis.py`):
+  Landsat LST'nin NOAA GHCNh istasyon hava sıcaklığıyla sahne bazında
+  karşılaştırması (`core/station_check.py`; İzmir'de 37 çift, gün içi anomali
+  korelasyonu 0,61, 2026 geçiş günleri 0,3-0,6 °C daha sıcak), 10/30/50 m yol
+  tamponu duyarlılığı ve 2020-2026 HVI değişiminin sıcaklık ve NDVI katkısına
+  Shapley ayrıştırması (`core/sensitivity.py`).
 - **Şehir veri paketi**: pipeline son adımda Excel çalışma kitabı (Özet,
   Mahalleler, İlçeler, Öncelikli yollar, Sütun sözlüğü, Kaynaklar ve lisans),
   CSV'ler, GeoPackage (yollar + mahalle poligonları), dört PNG görsel ve

@@ -95,6 +95,7 @@ Release history: [CHANGELOG.md](CHANGELOG.md).
 - [Methodology](#methodology)
 - [Multi-year sensitivity and intervention analysis](#multi-year-sensitivity-and-intervention-analysis)
 - [Uncertainty and sensitivity analysis](#uncertainty-and-sensitivity-analysis)
+- [Validation and additional sensitivity checks](#validation-and-additional-sensitivity-checks)
 - [2020 → 2026: Findings](#2020--2026-findings)
 - [Setup and running](#setup-and-running)
 - [Project structure](#project-structure)
@@ -566,6 +567,68 @@ separately) and measurement error in the data itself (LST, OSM gaps, population)
 The ranges are therefore a lower bound on uncertainty from method choices only;
 they do not replace validating the index against health outcomes.
 
+## Validation and additional sensitivity checks
+
+`validation_analysis.py` runs three checks on the main pipeline output and writes
+the results to `data/processed/<city>/validation/`:
+
+```bash
+python validation_analysis.py --city izmir
+```
+
+**1. Satellite temperature vs station air temperature.** Weather stations inside the
+city bbox are found automatically in NOAA's GHCN-hourly dataset (public domain). For
+each Landsat overpass, the cloud-free surface temperature of the 3x3 pixels (90 m)
+around a station is compared with the hourly air temperature closest to the overpass
+(at most 45 minutes away). İzmir: 4 stations, 37 scene-station pairs:
+
+| Station | Pairs | LST - air temperature (mean, °C) | Std. dev. |
+|---|---|---|---|
+| İzmir/Güzelyalı | 14 | 13.1 | 1.8 |
+| Adnan Menderes | 14 | 12.7 | 2.0 |
+| Gaziemir | 6 | 17.5 | 1.4 |
+| Kaklıç | 3 | 15.8 | 0.5 |
+
+The surface is 13-17 °C warmer than daytime air, consistently per station. Comparing
+deviations from each station's own mean, LST and air temperature move together day to
+day with **r = 0.61**: satellite temperature does not replace air temperature but is
+consistent with it. **Caveat across years:** at the two stations measured in both
+years, the air at the selected overpass times was **0.3-0.6 °C warmer** in 2026 than
+in 2020. The +0.47 °C mean road LST difference is of that size and cannot be
+separated from weather.
+
+This check does not validate the index: it says nothing about whether the HVI predicts
+health outcomes. District- or neighbourhood-level daily mortality, emergency visits or
+ambulance calls are not open data in Türkiye (including the İstanbul and İzmir open
+data portals, checked in November 2026); that validation needs data sharing with
+institutions.
+
+**2. Road buffer sensitivity.** Temperature and NDVI are resampled with 10, 30 and
+50 m buffers and the index is recomputed with the same steps. İzmir 2026, relative to
+10 m:
+
+| Buffer | Spearman | Top-10% overlap | Median absolute rank change | Roads moving more than 20 points |
+|---|---|---|---|---|
+| 30 m | 0.996 | 95.9% | 0.9 points | 0.11% |
+| 50 m | 0.994 | 94.9% | 1.1 points | 0.16% |
+
+Buffer width affects the ranking much less than the weighting choices in the
+uncertainty analysis. The change is systematic by road type: with a wider buffer,
+motorways (median -1.9 points), trunk roads (-1.3) and link roads lose rank because
+the wider buffer also takes in cooler surfaces at the corridor edge; residential
+streets barely change. The 500 roads that change most are in
+`tampon_en_cok_degisen_yollar.geojson`.
+
+**3. Decomposing the 2020-2026 change.** The two years' scores differ only in surface
+temperature and NDVI; population, age structure, SEGE-2022 and OSM components are held
+fixed. In İzmir the mean HVI rose by **+1.72 points** from 2020 to 2026; by a two-factor
+Shapley decomposition **+1.11 points come from temperature and +0.62 from vegetation
+loss** (72% of the absolute change from temperature). District- and road-level
+contributions and the category transition table are in the folder. **Not measured:**
+the 2020 score is computed with a later year's population (İzmir: 2023 TÜİK
+neighbourhood population); open data has no 2020 neighbourhood population, so the
+effect of this is unknown.
+
 ## 2020 → 2026: Findings
 
 *(İzmir, a 6-year window. For each year, the pixel-wise median of 4 satellite
@@ -809,6 +872,8 @@ turkiye-heat-risk/
 ├── pipeline.py               # Single top-level entry point: python pipeline.py --city izmir
 ├── analyze_pipeline.py       # Multi-year weather/sensitivity/what-if analysis package
 ├── uncertainty_analysis.py   # Monte Carlo uncertainty/sensitivity analysis of the HVI ranking
+├── validation_analysis.py    # Station comparison, buffer sensitivity, 2020-2026 decomposition
+├── export_city.py            # Rebuilds a city's data package (Excel/CSV/GeoPackage/figures)
 ├── validate_city.py           # Quickly validates a new city's config.yaml
 ├── build_docs_index.py        # Produces the comparison page for the cities under docs/
 ├── tools/
@@ -822,6 +887,9 @@ turkiye-heat-risk/
 │   │   ├── impact_analysis.py #   weather correction, HVI sensitivity and intervention scenarios
 │   │   ├── population_grid.py #   calibrating the 30 m population grid to official counts and allocating it to roads
 │   │   ├── uncertainty.py     #   Monte Carlo uncertainty and first-order sensitivity indices
+│   │   ├── station_check.py   #   Landsat LST vs GHCNh station air temperature
+│   │   ├── sensitivity.py     #   road buffer sensitivity and 2020-2026 Shapley decomposition
+│   │   ├── export.py          #   city data package
 │   │   ├── osm_amenities.py   #   health/green space/building layers (from OSM)
 │   │   ├── hvi.py             #   multi-component HVI computation
 │   │   ├── map_builder.py     #   interactive Folium map (offline + hosting version)

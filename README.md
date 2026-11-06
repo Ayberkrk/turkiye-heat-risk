@@ -117,6 +117,7 @@ repository** düğmesi biçimlendirilmiş hâlini verir). Sürüm geçmişi:
 - [Metodoloji](#metodoloji)
 - [Çok yıllı duyarlılık ve müdahale analizi](#çok-yıllı-duyarlılık-ve-müdahale-analizi)
 - [Belirsizlik ve duyarlılık analizi](#belirsizlik-ve-duyarlılık-analizi)
+- [Doğrulama ve ek duyarlılık kontrolleri](#doğrulama-ve-ek-duyarlılık-kontrolleri)
 - [2020 → 2026: Bulgular](#2020--2026-bulgular)
 - [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
 - [Proje yapısı](#proje-yapısı)
@@ -626,6 +627,69 @@ ayrıca ölçer) ve verinin kendi ölçüm hatası (LST, OSM eksikliği, nüfus)
 Bu yüzden aralıklar yalnızca yöntem kararlarından gelen belirsizliğin alt
 sınırıdır; endeksin sağlık sonuçlarıyla doğrulanmasının yerini tutmaz.
 
+## Doğrulama ve ek duyarlılık kontrolleri
+
+`validation_analysis.py` ana pipeline çıktısı üzerinde üç kontrol yürütür ve
+sonuçları `data/processed/<şehir>/validation/` altına yazar:
+
+```bash
+python validation_analysis.py --city izmir
+```
+
+**1. Uydu sıcaklığı ile istasyon hava sıcaklığı.** Şehir bbox'ındaki
+meteoroloji istasyonları NOAA'nın GHCN-hourly veri setinden (kamu malı)
+otomatik bulunur. Her Landsat geçişinde istasyonun çevresindeki 3x3 pikselin
+(90 m) bulutsuz yüzey sıcaklığı, geçiş anına en yakın (en fazla 45 dakika)
+saatlik hava sıcaklığıyla karşılaştırılır. İzmir'de 4 istasyon, 37
+sahne-istasyon çifti:
+
+| İstasyon | Çift | LST - hava sıcaklığı (ort., °C) | Std. sapma |
+|---|---|---|---|
+| İzmir/Güzelyalı | 14 | 13,1 | 1,8 |
+| Adnan Menderes | 14 | 12,7 | 2,0 |
+| Gaziemir | 6 | 17,5 | 1,4 |
+| Kaklıç | 3 | 15,8 | 0,5 |
+
+Yüzey, gündüz hava sıcaklığından 13-17 °C sıcak; fark istasyon başına tutarlı.
+İstasyonların kendi ortalamasından sapmalar karşılaştırıldığında LST ile hava
+sıcaklığının gün gün birlikte değişimi **r = 0,61**. Yani uydu sıcaklığı hava
+sıcaklığının yerine geçmez ama onunla tutarlı hareket ediyor. **Yıllar arası
+uyarı:** iki yılda da ölçümü olan iki istasyonda, seçilen geçiş anlarında hava
+2026'da 2020'ye göre **0,3-0,6 °C daha sıcaktı**. Yollardaki +0,47 °C ortalama
+LST farkı bu büyüklükte olduğu için hava koşullarından ayrıştırılamaz.
+
+Bu kontrol endeksi doğrulamaz: HVI'nin sağlık sonuçlarını öngörüp öngörmediğini
+söylemez. Türkiye'de ilçe ya da mahalle düzeyinde günlük ölüm, acil başvuru
+veya ambulans çağrısı verisi açık değildir (İstanbul ve İzmir açık veri
+portalları dahil, Kasım 2026'da kontrol edildi); bu doğrulama ancak kurumlarla
+veri paylaşımıyla yapılabilir.
+
+**2. Yol tamponu duyarlılığı.** Sıcaklık ve NDVI 10, 30 ve 50 m tamponla
+yeniden örneklenip endeks aynı adımlarla yeniden hesaplanır. İzmir 2026, 10 m'ye
+göre:
+
+| Tampon | Spearman | İlk %10 örtüşmesi | Medyan mutlak sıra değişimi | 20 puandan fazla değişen yol |
+|---|---|---|---|---|
+| 30 m | 0,996 | %95,9 | 0,9 puan | %0,11 |
+| 50 m | 0,994 | %94,9 | 1,1 puan | %0,16 |
+
+Tampon seçimi sıralamayı belirsizlik analizindeki ağırlık kararlarından çok daha
+az etkiliyor. Değişim yol tipine göre sistematik: tampon genişleyince otoyol
+(medyan -1,9 puan), ana arter (trunk, -1,3) ve bağlantı yolları sıra kaybediyor,
+çünkü geniş tampon koridorun kenarındaki daha serin yüzeyleri de içine alıyor;
+konut sokakları neredeyse değişmiyor. En çok değişen 500 yol
+`tampon_en_cok_degisen_yollar.geojson` dosyasında.
+
+**3. 2020-2026 değişiminin ayrıştırılması.** İki yılın skorları yalnızca yüzey
+sıcaklığı ve NDVI'de farklıdır; nüfus, yaş yapısı, SEGE-2022 ve OSM bileşenleri
+iki yılda da aynı tutulur. İzmir'de ortalama HVI 2020'den 2026'ya **+1,72 puan**
+arttı; iki etkenli Shapley ayrıştırmasına göre bunun **+1,11 puanı sıcaklıktan,
++0,62 puanı bitki örtüsü kaybından** geliyor (mutlak değişimin %72'si sıcaklık).
+İlçe ve yol düzeyindeki katkılar ile kategori geçiş tablosu klasörde. **Ölçülemeyen:**
+2020 skoru 2020 nüfusuyla değil sonraki bir yılın verisiyle (İzmir'de 2023 TÜİK
+mahalle nüfusu) hesaplanır; açık veride 2020 mahalle nüfusu olmadığı için bunun
+etkisi bilinmiyor.
+
 ## 2020 → 2026: Bulgular
 
 *(İzmir, 6 yıllık pencere. Her yıl için 4 uydu karosunda karo başına 3,
@@ -718,8 +782,10 @@ bileşenleri ilçe düzeyinde olduğu için mahalle içi ayrımı zayıftır.
   yıllar kolayca eklenebilir.
 
 **Metodolojik uyarı:** +0,47 °C, iki yılın yaz medyan kompozitleri
-arasındaki yüzey sıcaklığı farkıdır ve uzun dönem iklim trendi olarak
-yorumlanmamalıdır. İki nokta bir trend belirlemez; medyan kompozit
+arasındaki yüzey sıcaklığı farkıdır; istasyon kayıtlarına göre seçilen geçiş
+anlarında hava 2026'da 0,3-0,6 °C daha sıcaktı (bkz. "Doğrulama"), yani fark
+büyük ölçüde o günlerin hava koşullarını da yansıtıyor olabilir. Fark
+uzun dönem iklim trendi olarak yorumlanmamalıdır. İki nokta bir trend belirlemez; medyan kompozit
 tek-günlük anomalileri azaltır ama o yazın genel hava koşullarını
 (sıcak/serin yaz, toprak nemi) gidermez. Hava koşullarından arındırılmış
 çok yıllı bir tahmin için `analyze_pipeline.py` kullanılabilir.
@@ -870,6 +936,8 @@ turkiye-heat-risk/
 ├── pipeline.py               # Tek üst seviye giriş noktası: python pipeline.py --city izmir
 ├── analyze_pipeline.py       # Çok yıllı hava/duyarlılık/what-if analiz paketi
 ├── uncertainty_analysis.py   # HVI sıralamasının Monte Carlo belirsizlik/duyarlılık analizi
+├── validation_analysis.py    # İstasyon karşılaştırması, tampon duyarlılığı, 2020-2026 ayrıştırması
+├── export_city.py            # Şehir veri paketini (Excel/CSV/GeoPackage/görseller) yeniden üretir
 ├── validate_city.py           # Yeni bir şehir config.yaml'ını hızlıca doğrular
 ├── validate_city_data.py      # Tüm şehir kayıtları için çevrimdışı kalite/kapsam raporu
 ├── build_docs_index.py        # docs/ altındaki şehirler için karşılaştırma sayfası üretir
@@ -884,6 +952,9 @@ turkiye-heat-risk/
 │   │   ├── impact_analysis.py #   hava düzeltmesi, HVI duyarlılığı ve müdahale senaryoları
 │   │   ├── population_grid.py #   30 m nüfus ızgarasının resmi nüfusa kalibre edilip yollara dağıtılması
 │   │   ├── uncertainty.py     #   Monte Carlo belirsizlik ve birinci derece duyarlılık indeksleri
+│   │   ├── station_check.py   #   Landsat LST ile GHCNh istasyon hava sıcaklığı karşılaştırması
+│   │   ├── sensitivity.py     #   yol tamponu duyarlılığı ve 2020-2026 Shapley ayrıştırması
+│   │   ├── export.py          #   şehir veri paketi
 │   │   ├── osm_amenities.py   #   sağlık/yeşil alan/bina katmanları (OSM'den)
 │   │   ├── hvi.py             #   çok bileşenli HVI hesaplama
 │   │   ├── map_builder.py     #   interaktif Folium haritası (çevrimdışı + barındırma sürümü)
