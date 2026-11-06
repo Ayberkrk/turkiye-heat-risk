@@ -260,6 +260,9 @@ def validate_config_dict(cfg: Any) -> list[str]:
                 season[key] = _parse_month_day(value)
                 if season[key] is None:
                     errors.append(f"'landsat.{key}' tırnak içinde \"AA-GG\" biçiminde geçerli bir tarih olmalı: {value!r}")
+            catalog = landsat.get("catalog")
+            if catalog is not None and (not isinstance(catalog, str) or not catalog.strip()):
+                errors.append("'landsat.catalog' şehir klasörüne göre bir STAC dosya yolu (metin) olmalı")
             start = season.get("season_start", _parse_month_day("07-01"))
             end = season.get("season_end", _parse_month_day("08-31"))
             if start is not None and end is not None and start > end:

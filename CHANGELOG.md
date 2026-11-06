@@ -5,6 +5,15 @@ değişiklikleri sürüm sürüm listeler.
 
 ## Unreleased
 
+- **Uçtan uca regresyon testi ve çevrimdışı demo**: gerçek İzmir verisinden
+  kesilmiş ~1,7 km'lik örnek şehir (`tests/fixtures/ornek`, 3,5 MB, 604 yol)
+  ile `pipeline.py` ağ bağlantısı olmadan ~6 saniyede baştan sona çalışıyor.
+  `tests/test_e2e.py` sonuçları kayıtlı değerlerle karşılaştırıyor (formül
+  değişikliğini yakaladığı doğrulandı); `tools/run_demo.py` aynı kurulumu
+  kullanıcıya sunuyor. Bunun için `landsat.catalog` ile yerel bir STAC sahne
+  listesi okunabiliyor.
+- `tools/batch_cities.py`: şehirleri ayrı süreçlerde sırayla üretir, bölgesel
+  OSM özütlerini paylaşır, başarısız şehri atlayıp durumu kaydeder.
 - **Doğrulama ve ek duyarlılık kontrolleri** (`validation_analysis.py`):
   Landsat LST'nin NOAA GHCNh istasyon hava sıcaklığıyla sahne bazında
   karşılaştırması (`core/station_check.py`; İzmir'de 37 çift, gün içi anomali

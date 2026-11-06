@@ -73,10 +73,13 @@ git clone https://github.com/Ayberkrk/turkiye-heat-risk.git
 cd turkiye-heat-risk
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -c constraints.txt
+python tools/run_demo.py --open      # 10 seconds, offline: a small sample city
 python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
-This one command picks the satellite scenes, reads only the city window of each
+The first command runs a ~1.7 km sample city cut from real İzmir data
+(`tests/fixtures/ornek`) end to end without any network access; it is the quickest
+way to check your setup. The second command picks the satellite scenes, reads only the city window of each
 band (no full-scene downloads), computes the index, opens the map, runs the
 uncertainty analysis and writes the data package to `output/izmir/`. The 70 city ids
 live under `src/cities/`; adding a city needs no change in `src/core/`

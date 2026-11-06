@@ -76,10 +76,13 @@ git clone https://github.com/Ayberkrk/turkiye-heat-risk.git
 cd turkiye-heat-risk
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -c constraints.txt
+python tools/run_demo.py --open      # 10 saniye, internetsiz: küçük örnek şehir
 python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
-Bu tek komut uydu sahnelerini seçer, yalnızca şehrin penceresini okur (tam sahne
+İlk komut, gerçek İzmir verisinden kesilmiş ~1,7 km'lik bir örnek şehri
+(`tests/fixtures/ornek`) ağ bağlantısı olmadan baştan sona çalıştırır; kurulumun
+doğru olduğunu görmenin en hızlı yolu. İkinci komut uydu sahnelerini seçer, yalnızca şehrin penceresini okur (tam sahne
 indirmez), endeksi hesaplar, haritayı açar, belirsizlik analizini koşar ve veri
 paketini `output/izmir/` altına yazar. 70 şehrin kimliği `src/cities/` altında;
 yeni şehir eklemek `src/core/` içinde hiçbir dosyayı değiştirmeden mümkündür
