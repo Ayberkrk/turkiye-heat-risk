@@ -1,0 +1,19 @@
+{
+  "city_id": "kayseri",
+  "name": "Kayseri",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 14212,
+  "avg_hvi_percentage": 51.6,
+  "category_counts": {
+    "Kritik": 4210,
+    "Yüksek": 3509,
+    "Aşırı Kritik": 2793,
+    "Orta": 2271,
+    "Düşük": 1429
+  },
+  "top_risk_mahalle": "Sanayi Mahallesi"
+}

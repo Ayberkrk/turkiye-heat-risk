@@ -1,0 +1,19 @@
+{
+  "city_id": "erzurum",
+  "name": "Erzurum",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1846,
+  "avg_hvi_percentage": 59.9,
+  "category_counts": {
+    "Kritik": 495,
+    "Yüksek": 476,
+    "Aşırı Kritik": 461,
+    "Orta": 288,
+    "Düşük": 126
+  },
+  "top_risk_mahalle": "Yunusemre Mahallesi"
+}

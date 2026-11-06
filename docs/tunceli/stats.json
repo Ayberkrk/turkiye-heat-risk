@@ -1,0 +1,19 @@
+{
+  "city_id": "tunceli",
+  "name": "Tunceli",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 180,
+  "avg_hvi_percentage": 47.8,
+  "category_counts": {
+    "Yüksek": 64,
+    "Kritik": 47,
+    "Orta": 39,
+    "Düşük": 27,
+    "Aşırı Kritik": 3
+  },
+  "top_risk_mahalle": "Cumhuriyet Mahallesi"
+}

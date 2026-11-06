@@ -1,0 +1,19 @@
+{
+  "city_id": "konya",
+  "name": "Konya",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 13260,
+  "avg_hvi_percentage": 39.3,
+  "category_counts": {
+    "Orta": 3827,
+    "Yüksek": 3749,
+    "Kritik": 2511,
+    "Düşük": 1799,
+    "Aşırı Kritik": 1374
+  },
+  "top_risk_mahalle": "Hadimi Mahallesi"
+}

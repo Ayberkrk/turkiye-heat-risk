@@ -1,0 +1,124 @@
+{
+  "city_id": "amasya",
+  "city_name": "Amasya",
+  "generated_at": "2026-11-06T20:07:32+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      35.77,
+      40.59,
+      35.87,
+      40.68
+    ],
+    "crs": "EPSG:32636",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/black_sea-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_175032_20200831_02_T1",
+        "date": "2020-08-31",
+        "tile": "175_032",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_175032_20200815_02_T1",
+        "date": "2020-08-15",
+        "tile": "175_032",
+        "cloud_cover": 24.17
+      },
+      {
+        "scene_id": "LC08_L2SP_176032_20200806_02_T1",
+        "date": "2020-08-06",
+        "tile": "176_032",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_176032_20200705_02_T1",
+        "date": "2020-07-05",
+        "tile": "176_032",
+        "cloud_cover": 0.34
+      },
+      {
+        "scene_id": "LC08_L2SP_176032_20200721_02_T1",
+        "date": "2020-07-21",
+        "tile": "176_032",
+        "cloud_cover": 17.26
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_175032_20260824_02_T1",
+        "date": "2026-08-24",
+        "tile": "175_032",
+        "cloud_cover": 2.95
+      },
+      {
+        "scene_id": "LC09_L2SP_175032_20260723_02_T1",
+        "date": "2026-07-23",
+        "tile": "175_032",
+        "cloud_cover": 3.05
+      },
+      {
+        "scene_id": "LC09_L2SP_175032_20260808_02_T1",
+        "date": "2026-08-08",
+        "tile": "175_032",
+        "cloud_cover": 3.93
+      },
+      {
+        "scene_id": "LC08_L2SP_176032_20260823_02_T1",
+        "date": "2026-08-23",
+        "tile": "176_032",
+        "cloud_cover": 0.06
+      },
+      {
+        "scene_id": "LC08_L2SP_176032_20260722_02_T1",
+        "date": "2026-07-22",
+        "tile": "176_032",
+        "cloud_cover": 0.74
+      },
+      {
+        "scene_id": "LC08_L2SP_176032_20260807_02_T1",
+        "date": "2026-08-07",
+        "tile": "176_032",
+        "cloud_cover": 2.87
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

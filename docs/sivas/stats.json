@@ -1,0 +1,19 @@
+{
+  "city_id": "sivas",
+  "name": "Sivas",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3254,
+  "avg_hvi_percentage": 58.1,
+  "category_counts": {
+    "Kritik": 863,
+    "Yüksek": 853,
+    "Aşırı Kritik": 802,
+    "Orta": 538,
+    "Düşük": 198
+  },
+  "top_risk_mahalle": "Çarşıbaşı Mahallesi"
+}

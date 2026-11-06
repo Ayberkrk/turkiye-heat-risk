@@ -1,0 +1,19 @@
+{
+  "city_id": "van",
+  "name": "Van",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1644,
+  "avg_hvi_percentage": 57.9,
+  "category_counts": {
+    "Kritik": 597,
+    "Yüksek": 443,
+    "Aşırı Kritik": 334,
+    "Orta": 205,
+    "Düşük": 65
+  },
+  "top_risk_mahalle": "Bahçıvan Mahallesi"
+}

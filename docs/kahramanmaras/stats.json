@@ -1,0 +1,19 @@
+{
+  "city_id": "kahramanmaras",
+  "name": "Kahramanmaraş",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3720,
+  "avg_hvi_percentage": 51.9,
+  "category_counts": {
+    "Kritik": 1270,
+    "Yüksek": 1077,
+    "Aşırı Kritik": 700,
+    "Orta": 484,
+    "Düşük": 189
+  },
+  "top_risk_mahalle": "Piri Reis Mahallesi"
+}

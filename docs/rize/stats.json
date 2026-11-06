@@ -1,0 +1,19 @@
+{
+  "city_id": "rize",
+  "name": "Rize",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1941,
+  "avg_hvi_percentage": 42.6,
+  "category_counts": {
+    "Orta": 649,
+    "Yüksek": 392,
+    "Kritik": 338,
+    "Düşük": 293,
+    "Aşırı Kritik": 269
+  },
+  "top_risk_mahalle": "Ekrem Orhon Mahallesi"
+}

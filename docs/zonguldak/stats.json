@@ -1,0 +1,19 @@
+{
+  "city_id": "zonguldak",
+  "name": "Zonguldak",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 698,
+  "avg_hvi_percentage": 53.7,
+  "category_counts": {
+    "Kritik": 227,
+    "Yüksek": 186,
+    "Orta": 140,
+    "Aşırı Kritik": 87,
+    "Düşük": 58
+  },
+  "top_risk_mahalle": "Bahçelievler Mahallesi"
+}

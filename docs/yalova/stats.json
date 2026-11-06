@@ -1,0 +1,19 @@
+{
+  "city_id": "yalova",
+  "name": "Yalova",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1376,
+  "avg_hvi_percentage": 57.2,
+  "category_counts": {
+    "Kritik": 490,
+    "Aşırı Kritik": 320,
+    "Yüksek": 312,
+    "Orta": 173,
+    "Düşük": 81
+  },
+  "top_risk_mahalle": "Rüstem Paşa Mahallesi"
+}

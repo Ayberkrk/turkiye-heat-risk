@@ -1,0 +1,19 @@
+{
+  "city_id": "ordu",
+  "name": "Ordu",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3575,
+  "avg_hvi_percentage": 50.2,
+  "category_counts": {
+    "Orta": 887,
+    "Kritik": 766,
+    "Yüksek": 693,
+    "Aşırı Kritik": 651,
+    "Düşük": 578
+  },
+  "top_risk_mahalle": "Yeni Mahallesi"
+}

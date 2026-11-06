@@ -1,0 +1,19 @@
+{
+  "city_id": "giresun",
+  "name": "Giresun",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 364,
+  "avg_hvi_percentage": 63.4,
+  "category_counts": {
+    "Aşırı Kritik": 133,
+    "Kritik": 117,
+    "Yüksek": 67,
+    "Orta": 38,
+    "Düşük": 9
+  },
+  "top_risk_mahalle": "Osmaniye Mahallesi"
+}

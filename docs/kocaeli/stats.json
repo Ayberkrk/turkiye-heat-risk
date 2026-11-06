@@ -1,0 +1,19 @@
+{
+  "city_id": "kocaeli",
+  "name": "Kocaeli",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 16185,
+  "avg_hvi_percentage": 47.1,
+  "category_counts": {
+    "Orta": 4452,
+    "Yüksek": 4140,
+    "Kritik": 3177,
+    "Düşük": 2368,
+    "Aşırı Kritik": 2048
+  },
+  "top_risk_mahalle": "Çenedağ Mahallesi"
+}

@@ -1,0 +1,160 @@
+{
+  "city_id": "balikesir",
+  "city_name": "Balıkesir",
+  "generated_at": "2026-11-06T20:17:04+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      27.86,
+      39.62,
+      27.91,
+      39.67
+    ],
+    "crs": "EPSG:32635",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/marmara-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_180032_20200701_02_T1",
+        "date": "2020-07-01",
+        "tile": "180_032",
+        "cloud_cover": 0.06
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20200802_02_T1",
+        "date": "2020-08-02",
+        "tile": "180_032",
+        "cloud_cover": 10.27
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20200717_02_T1",
+        "date": "2020-07-17",
+        "tile": "180_032",
+        "cloud_cover": 11.51
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20200701_02_T1",
+        "date": "2020-07-01",
+        "tile": "180_033",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20200717_02_T1",
+        "date": "2020-07-17",
+        "tile": "180_033",
+        "cloud_cover": 0.03
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20200818_02_T1",
+        "date": "2020-08-18",
+        "tile": "180_033",
+        "cloud_cover": 1.25
+      },
+      {
+        "scene_id": "LC08_L2SP_181032_20200825_02_T1",
+        "date": "2020-08-25",
+        "tile": "181_032",
+        "cloud_cover": 0.56
+      },
+      {
+        "scene_id": "LC08_L2SP_181032_20200724_02_T1",
+        "date": "2020-07-24",
+        "tile": "181_032",
+        "cloud_cover": 2.44
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_180032_20260827_02_T1",
+        "date": "2026-08-27",
+        "tile": "180_032",
+        "cloud_cover": 2.52
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20260702_02_T1",
+        "date": "2026-07-02",
+        "tile": "180_032",
+        "cloud_cover": 2.65
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20260718_02_T1",
+        "date": "2026-07-18",
+        "tile": "180_032",
+        "cloud_cover": 2.69
+      },
+      {
+        "scene_id": "LC09_L2SP_180033_20260827_02_T1",
+        "date": "2026-08-27",
+        "tile": "180_033",
+        "cloud_cover": 0.02
+      },
+      {
+        "scene_id": "LC09_L2SP_180033_20260710_02_T1",
+        "date": "2026-07-10",
+        "tile": "180_033",
+        "cloud_cover": 1.12
+      },
+      {
+        "scene_id": "LC08_L2SP_180033_20260718_02_T1",
+        "date": "2026-07-18",
+        "tile": "180_033",
+        "cloud_cover": 1.2
+      },
+      {
+        "scene_id": "LC08_L2SP_181032_20260826_02_T1",
+        "date": "2026-08-26",
+        "tile": "181_032",
+        "cloud_cover": 0.05
+      },
+      {
+        "scene_id": "LC09_L2SP_181032_20260818_02_T1",
+        "date": "2026-08-18",
+        "tile": "181_032",
+        "cloud_cover": 0.23
+      },
+      {
+        "scene_id": "LC09_L2SP_181032_20260717_02_T1",
+        "date": "2026-07-17",
+        "tile": "181_032",
+        "cloud_cover": 5.85
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "sakarya",
+  "name": "Sakarya",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2465,
+  "avg_hvi_percentage": 45.9,
+  "category_counts": {
+    "Yüksek": 1059,
+    "Orta": 534,
+    "Kritik": 396,
+    "Aşırı Kritik": 295,
+    "Düşük": 181
+  },
+  "top_risk_mahalle": "Hızırtepe Mahallesi"
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "diyarbakir",
+  "name": "Diyarbakır",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 4339,
+  "avg_hvi_percentage": 52.3,
+  "category_counts": {
+    "Orta": 1196,
+    "Kritik": 996,
+    "Aşırı Kritik": 913,
+    "Yüksek": 816,
+    "Düşük": 418
+  },
+  "top_risk_mahalle": "Mevlana Halit Mahallesi"
+}

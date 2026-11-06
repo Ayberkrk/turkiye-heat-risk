@@ -1,0 +1,19 @@
+{
+  "city_id": "erzincan",
+  "name": "Erzincan",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1352,
+  "avg_hvi_percentage": 39.4,
+  "category_counts": {
+    "Orta": 528,
+    "Yüksek": 427,
+    "Düşük": 227,
+    "Kritik": 152,
+    "Aşırı Kritik": 18
+  },
+  "top_risk_mahalle": "Karaağaç Mahallesi"
+}

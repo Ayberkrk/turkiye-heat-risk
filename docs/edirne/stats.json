@@ -1,0 +1,19 @@
+{
+  "city_id": "edirne",
+  "name": "Edirne",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2338,
+  "avg_hvi_percentage": 50.9,
+  "category_counts": {
+    "Kritik": 746,
+    "Yüksek": 703,
+    "Orta": 476,
+    "Aşırı Kritik": 248,
+    "Düşük": 165
+  },
+  "top_risk_mahalle": "Yıldırım Hacı Sarraf Mahallesi"
+}

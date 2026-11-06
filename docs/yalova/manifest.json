@@ -1,0 +1,130 @@
+{
+  "city_id": "yalova",
+  "city_name": "Yalova",
+  "generated_at": "2026-11-06T22:07:43+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      29.24,
+      40.6,
+      29.3,
+      40.67
+    ],
+    "crs": "EPSG:32635",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/marmara-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_179032_20200827_02_T1",
+        "date": "2020-08-27",
+        "tile": "179_032",
+        "cloud_cover": 2.19
+      },
+      {
+        "scene_id": "LC08_L2SP_179032_20200726_02_T1",
+        "date": "2020-07-26",
+        "tile": "179_032",
+        "cloud_cover": 6.83
+      },
+      {
+        "scene_id": "LC08_L2SP_179032_20200710_02_T1",
+        "date": "2020-07-10",
+        "tile": "179_032",
+        "cloud_cover": 11.5
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20200701_02_T1",
+        "date": "2020-07-01",
+        "tile": "180_032",
+        "cloud_cover": 0.06
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20200802_02_T1",
+        "date": "2020-08-02",
+        "tile": "180_032",
+        "cloud_cover": 10.27
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20200717_02_T1",
+        "date": "2020-07-17",
+        "tile": "180_032",
+        "cloud_cover": 11.51
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC08_L2SP_179032_20260727_02_T1",
+        "date": "2026-07-27",
+        "tile": "179_032",
+        "cloud_cover": 0.03
+      },
+      {
+        "scene_id": "LC08_L2SP_179032_20260711_02_T1",
+        "date": "2026-07-11",
+        "tile": "179_032",
+        "cloud_cover": 0.1
+      },
+      {
+        "scene_id": "LC09_L2SP_179032_20260804_02_T1",
+        "date": "2026-08-04",
+        "tile": "179_032",
+        "cloud_cover": 0.25
+      },
+      {
+        "scene_id": "LC09_L2SP_180032_20260827_02_T1",
+        "date": "2026-08-27",
+        "tile": "180_032",
+        "cloud_cover": 2.52
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20260702_02_T1",
+        "date": "2026-07-02",
+        "tile": "180_032",
+        "cloud_cover": 2.65
+      },
+      {
+        "scene_id": "LC08_L2SP_180032_20260718_02_T1",
+        "date": "2026-07-18",
+        "tile": "180_032",
+        "cloud_cover": 2.69
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

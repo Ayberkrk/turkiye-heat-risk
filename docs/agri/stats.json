@@ -1,0 +1,19 @@
+{
+  "city_id": "agri",
+  "name": "Ağrı",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 932,
+  "avg_hvi_percentage": 58.2,
+  "category_counts": {
+    "Kritik": 337,
+    "Aşırı Kritik": 252,
+    "Yüksek": 221,
+    "Orta": 92,
+    "Düşük": 30
+  },
+  "top_risk_mahalle": "Alpaslan Mahallesi"
+}

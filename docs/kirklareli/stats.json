@@ -1,0 +1,19 @@
+{
+  "city_id": "kirklareli",
+  "name": "Kırklareli",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1876,
+  "avg_hvi_percentage": 50.7,
+  "category_counts": {
+    "Kritik": 713,
+    "Yüksek": 505,
+    "Aşırı Kritik": 386,
+    "Orta": 214,
+    "Düşük": 58
+  },
+  "top_risk_mahalle": "Karacaibrahim Mahallesi"
+}

@@ -1,0 +1,166 @@
+{
+  "city_id": "karabuk",
+  "city_name": "Karabük",
+  "generated_at": "2026-11-06T21:03:26+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      32.59,
+      41.18,
+      32.68,
+      41.25
+    ],
+    "crs": "EPSG:32636",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/black_sea-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_177031_20200829_02_T1",
+        "date": "2020-08-29",
+        "tile": "177_031",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_177031_20200712_02_T1",
+        "date": "2020-07-12",
+        "tile": "177_031",
+        "cloud_cover": 1.1
+      },
+      {
+        "scene_id": "LC08_L2SP_177031_20200813_02_T1",
+        "date": "2020-08-13",
+        "tile": "177_031",
+        "cloud_cover": 9.49
+      },
+      {
+        "scene_id": "LC08_L2SP_177032_20200829_02_T1",
+        "date": "2020-08-29",
+        "tile": "177_032",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC08_L2SP_177032_20200712_02_T1",
+        "date": "2020-07-12",
+        "tile": "177_032",
+        "cloud_cover": 1.6
+      },
+      {
+        "scene_id": "LC08_L2SP_177032_20200813_02_T1",
+        "date": "2020-08-13",
+        "tile": "177_032",
+        "cloud_cover": 3.3
+      },
+      {
+        "scene_id": "LC08_L2SP_178031_20200804_02_T1",
+        "date": "2020-08-04",
+        "tile": "178_031",
+        "cloud_cover": 1.28
+      },
+      {
+        "scene_id": "LC08_L2SP_178031_20200703_02_T1",
+        "date": "2020-07-03",
+        "tile": "178_031",
+        "cloud_cover": 2.38
+      },
+      {
+        "scene_id": "LC08_L2SP_178031_20200719_02_T1",
+        "date": "2020-07-19",
+        "tile": "178_031",
+        "cloud_cover": 19.97
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_177031_20260822_02_T1",
+        "date": "2026-08-22",
+        "tile": "177_031",
+        "cloud_cover": 0.47
+      },
+      {
+        "scene_id": "LC08_L2SP_177031_20260713_02_T1",
+        "date": "2026-07-13",
+        "tile": "177_031",
+        "cloud_cover": 3.76
+      },
+      {
+        "scene_id": "LC09_L2SP_177031_20260721_02_T1",
+        "date": "2026-07-21",
+        "tile": "177_031",
+        "cloud_cover": 4.57
+      },
+      {
+        "scene_id": "LC09_L2SP_177032_20260822_02_T1",
+        "date": "2026-08-22",
+        "tile": "177_032",
+        "cloud_cover": 0.0
+      },
+      {
+        "scene_id": "LC09_L2SP_177032_20260721_02_T1",
+        "date": "2026-07-21",
+        "tile": "177_032",
+        "cloud_cover": 0.89
+      },
+      {
+        "scene_id": "LC08_L2SP_177032_20260713_02_T1",
+        "date": "2026-07-13",
+        "tile": "177_032",
+        "cloud_cover": 1.67
+      },
+      {
+        "scene_id": "LC09_L2SP_178031_20260728_02_T1",
+        "date": "2026-07-28",
+        "tile": "178_031",
+        "cloud_cover": 0.2
+      },
+      {
+        "scene_id": "LC08_L2SP_178031_20260821_02_T1",
+        "date": "2026-08-21",
+        "tile": "178_031",
+        "cloud_cover": 1.86
+      },
+      {
+        "scene_id": "LC08_L2SP_178031_20260720_02_T1",
+        "date": "2026-07-20",
+        "tile": "178_031",
+        "cloud_cover": 2.74
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

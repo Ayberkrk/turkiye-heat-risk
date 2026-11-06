@@ -1,0 +1,19 @@
+{
+  "city_id": "kilis",
+  "name": "Kilis",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1668,
+  "avg_hvi_percentage": 66.4,
+  "category_counts": {
+    "Aşırı Kritik": 662,
+    "Kritik": 463,
+    "Yüksek": 307,
+    "Orta": 192,
+    "Düşük": 44
+  },
+  "top_risk_mahalle": "Muallim Rıfat Bilge Mahallesi"
+}

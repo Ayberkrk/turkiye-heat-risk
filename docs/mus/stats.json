@@ -1,0 +1,19 @@
+{
+  "city_id": "mus",
+  "name": "Muş",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 438,
+  "avg_hvi_percentage": 53.6,
+  "category_counts": {
+    "Kritik": 132,
+    "Aşırı Kritik": 111,
+    "Yüksek": 97,
+    "Orta": 69,
+    "Düşük": 29
+  },
+  "top_risk_mahalle": "Hürriyet Mahallesi"
+}

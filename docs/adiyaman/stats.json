@@ -1,0 +1,19 @@
+{
+  "city_id": "adiyaman",
+  "name": "Adıyaman",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 568,
+  "avg_hvi_percentage": 48.9,
+  "category_counts": {
+    "Yüksek": 208,
+    "Kritik": 145,
+    "Orta": 143,
+    "Düşük": 46,
+    "Aşırı Kritik": 26
+  },
+  "top_risk_mahalle": "Kayalık Mahallesi"
+}

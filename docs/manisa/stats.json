@@ -1,0 +1,19 @@
+{
+  "city_id": "manisa",
+  "name": "Manisa",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2470,
+  "avg_hvi_percentage": 46.9,
+  "category_counts": {
+    "Yüksek": 773,
+    "Kritik": 643,
+    "Orta": 499,
+    "Düşük": 285,
+    "Aşırı Kritik": 270
+  },
+  "top_risk_mahalle": "Muradiye Mahallesi"
+}

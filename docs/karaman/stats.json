@@ -1,0 +1,19 @@
+{
+  "city_id": "karaman",
+  "name": "Karaman",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1378,
+  "avg_hvi_percentage": 54.8,
+  "category_counts": {
+    "Kritik": 470,
+    "Yüksek": 413,
+    "Orta": 244,
+    "Aşırı Kritik": 186,
+    "Düşük": 65
+  },
+  "top_risk_mahalle": "Kırbağı Mahallesi"
+}

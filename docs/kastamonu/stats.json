@@ -1,0 +1,19 @@
+{
+  "city_id": "kastamonu",
+  "name": "Kastamonu",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1426,
+  "avg_hvi_percentage": 57.8,
+  "category_counts": {
+    "Yüksek": 420,
+    "Kritik": 364,
+    "Aşırı Kritik": 276,
+    "Orta": 259,
+    "Düşük": 107
+  },
+  "top_risk_mahalle": "Hepkebirler Mahallesi"
+}

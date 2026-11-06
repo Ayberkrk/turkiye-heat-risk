@@ -1,0 +1,19 @@
+{
+  "city_id": "bingol",
+  "name": "Bingöl",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 755,
+  "avg_hvi_percentage": 56.2,
+  "category_counts": {
+    "Kritik": 218,
+    "Yüksek": 184,
+    "Aşırı Kritik": 133,
+    "Orta": 131,
+    "Düşük": 89
+  },
+  "top_risk_mahalle": "Yeşilyurt Mahallesi"
+}

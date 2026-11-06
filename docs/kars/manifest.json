@@ -1,0 +1,124 @@
+{
+  "city_id": "kars",
+  "city_name": "Kars",
+  "generated_at": "2026-11-06T21:06:27+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      43.06,
+      40.57,
+      43.15,
+      40.65
+    ],
+    "crs": "EPSG:32638",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/eastern_anatolia-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_170032_20200828_02_T1",
+        "date": "2020-08-28",
+        "tile": "170_032",
+        "cloud_cover": 1.76
+      },
+      {
+        "scene_id": "LC08_L2SP_170032_20200727_02_T1",
+        "date": "2020-07-27",
+        "tile": "170_032",
+        "cloud_cover": 3.55
+      },
+      {
+        "scene_id": "LC08_L2SP_171032_20200718_02_T1",
+        "date": "2020-07-18",
+        "tile": "171_032",
+        "cloud_cover": 1.76
+      },
+      {
+        "scene_id": "LC08_L2SP_171032_20200819_02_T1",
+        "date": "2020-08-19",
+        "tile": "171_032",
+        "cloud_cover": 2.38
+      },
+      {
+        "scene_id": "LC08_L2SP_171032_20200702_02_T1",
+        "date": "2020-07-02",
+        "tile": "171_032",
+        "cloud_cover": 7.96
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC09_L2SP_170032_20260821_02_T1",
+        "date": "2026-08-21",
+        "tile": "170_032",
+        "cloud_cover": 9.9
+      },
+      {
+        "scene_id": "LC09_L2SP_170032_20260805_02_T1",
+        "date": "2026-08-05",
+        "tile": "170_032",
+        "cloud_cover": 12.58
+      },
+      {
+        "scene_id": "LC08_L2SP_170032_20260728_02_T1",
+        "date": "2026-07-28",
+        "tile": "170_032",
+        "cloud_cover": 13.41
+      },
+      {
+        "scene_id": "LC08_L2SP_171032_20260804_02_T1",
+        "date": "2026-08-04",
+        "tile": "171_032",
+        "cloud_cover": 4.35
+      },
+      {
+        "scene_id": "LC09_L2SP_171032_20260812_02_T1",
+        "date": "2026-08-12",
+        "tile": "171_032",
+        "cloud_cover": 8.37
+      },
+      {
+        "scene_id": "LC08_L2SP_171032_20260719_02_T1",
+        "date": "2026-07-19",
+        "tile": "171_032",
+        "cloud_cover": 9.23
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

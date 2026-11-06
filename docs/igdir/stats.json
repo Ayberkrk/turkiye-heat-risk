@@ -1,0 +1,19 @@
+{
+  "city_id": "igdir",
+  "name": "Iğdır",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 540,
+  "avg_hvi_percentage": 59.7,
+  "category_counts": {
+    "Kritik": 154,
+    "Yüksek": 141,
+    "Aşırı Kritik": 122,
+    "Orta": 96,
+    "Düşük": 27
+  },
+  "top_risk_mahalle": "Bağlar Mahallesi"
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "bursa",
+  "name": "Bursa",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 19744,
+  "avg_hvi_percentage": 51.1,
+  "category_counts": {
+    "Orta": 6211,
+    "Yüksek": 4187,
+    "Aşırı Kritik": 3722,
+    "Kritik": 3303,
+    "Düşük": 2321
+  },
+  "top_risk_mahalle": "Duaçınarı Mahallesi"
+}

@@ -1,0 +1,19 @@
+{
+  "city_id": "corum",
+  "name": "Çorum",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3319,
+  "avg_hvi_percentage": 38.2,
+  "category_counts": {
+    "Orta": 1112,
+    "Yüksek": 991,
+    "Düşük": 649,
+    "Kritik": 452,
+    "Aşırı Kritik": 115
+  },
+  "top_risk_mahalle": "Yeniyol Mahallesi"
+}

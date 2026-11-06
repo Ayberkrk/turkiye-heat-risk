@@ -1,0 +1,19 @@
+{
+  "city_id": "bayburt",
+  "name": "Bayburt",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 703,
+  "avg_hvi_percentage": 38.6,
+  "category_counts": {
+    "Orta": 233,
+    "Düşük": 195,
+    "Yüksek": 154,
+    "Kritik": 99,
+    "Aşırı Kritik": 22
+  },
+  "top_risk_mahalle": "Camiikebir Mahallesi"
+}

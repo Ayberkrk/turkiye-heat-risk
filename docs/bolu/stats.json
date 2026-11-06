@@ -1,0 +1,19 @@
+{
+  "city_id": "bolu",
+  "name": "Bolu",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 4267,
+  "avg_hvi_percentage": 54.9,
+  "category_counts": {
+    "Kritik": 1266,
+    "Yüksek": 1237,
+    "Orta": 871,
+    "Aşırı Kritik": 552,
+    "Düşük": 341
+  },
+  "top_risk_mahalle": "Büyükcami Mahallesi"
+}

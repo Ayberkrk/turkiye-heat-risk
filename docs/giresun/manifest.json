@@ -1,0 +1,124 @@
+{
+  "city_id": "giresun",
+  "city_name": "Giresun",
+  "generated_at": "2026-11-06T20:51:04+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      38.365,
+      40.91,
+      38.425,
+      40.99
+    ],
+    "crs": "EPSG:32637",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/black_sea-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_174031_20200824_02_T1",
+        "date": "2020-08-24",
+        "tile": "174_031",
+        "cloud_cover": 3.09
+      },
+      {
+        "scene_id": "LC08_L2SP_174031_20200723_02_T1",
+        "date": "2020-07-23",
+        "tile": "174_031",
+        "cloud_cover": 18.32
+      },
+      {
+        "scene_id": "LC08_L2SP_174031_20200707_02_T1",
+        "date": "2020-07-07",
+        "tile": "174_031",
+        "cloud_cover": 19.32
+      },
+      {
+        "scene_id": "LC08_L2SP_174032_20200824_02_T1",
+        "date": "2020-08-24",
+        "tile": "174_032",
+        "cloud_cover": 2.16
+      },
+      {
+        "scene_id": "LC08_L2SP_174032_20200808_02_T1",
+        "date": "2020-08-08",
+        "tile": "174_032",
+        "cloud_cover": 22.25
+      },
+      {
+        "scene_id": "LC08_L2SP_174032_20200707_02_T1",
+        "date": "2020-07-07",
+        "tile": "174_032",
+        "cloud_cover": 27.6
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC08_L2SP_174031_20260825_02_T2",
+        "date": "2026-08-25",
+        "tile": "174_031",
+        "cloud_cover": 11.41
+      },
+      {
+        "scene_id": "LC08_L2SP_174031_20260809_02_T1",
+        "date": "2026-08-09",
+        "tile": "174_031",
+        "cloud_cover": 13.73
+      },
+      {
+        "scene_id": "LC09_L2SP_174031_20260817_02_T1",
+        "date": "2026-08-17",
+        "tile": "174_031",
+        "cloud_cover": 14.87
+      },
+      {
+        "scene_id": "LC08_L2SP_174032_20260809_02_T1",
+        "date": "2026-08-09",
+        "tile": "174_032",
+        "cloud_cover": 8.49
+      },
+      {
+        "scene_id": "LC08_L2SP_174032_20260724_02_T1",
+        "date": "2026-07-24",
+        "tile": "174_032",
+        "cloud_cover": 29.96
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

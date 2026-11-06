@@ -1,0 +1,19 @@
+{
+  "city_id": "kutahya",
+  "name": "Kütahya",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 1362,
+  "avg_hvi_percentage": 55.1,
+  "category_counts": {
+    "Kritik": 421,
+    "Aşırı Kritik": 332,
+    "Yüksek": 304,
+    "Orta": 191,
+    "Düşük": 114
+  },
+  "top_risk_mahalle": "Fuatpaşa Mahallesi"
+}

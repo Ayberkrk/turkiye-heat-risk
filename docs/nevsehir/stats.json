@@ -1,0 +1,19 @@
+{
+  "city_id": "nevsehir",
+  "name": "Nevşehir",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 418,
+  "avg_hvi_percentage": 48.4,
+  "category_counts": {
+    "Yüksek": 133,
+    "Orta": 120,
+    "Kritik": 60,
+    "Düşük": 57,
+    "Aşırı Kritik": 48
+  },
+  "top_risk_mahalle": "Cevher Dudayev Mahallesi"
+}

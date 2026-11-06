@@ -1,0 +1,19 @@
+{
+  "city_id": "kirikkale",
+  "name": "Kırıkkale",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 3313,
+  "avg_hvi_percentage": 44.6,
+  "category_counts": {
+    "Orta": 846,
+    "Yüksek": 762,
+    "Kritik": 758,
+    "Düşük": 507,
+    "Aşırı Kritik": 440
+  },
+  "top_risk_mahalle": "Ovacık Mahallesi"
+}

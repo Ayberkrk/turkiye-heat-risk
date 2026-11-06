@@ -1,0 +1,19 @@
+{
+  "city_id": "sinop",
+  "name": "Sinop",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 725,
+  "avg_hvi_percentage": 42.6,
+  "category_counts": {
+    "Yüksek": 194,
+    "Orta": 182,
+    "Kritik": 169,
+    "Düşük": 139,
+    "Aşırı Kritik": 41
+  },
+  "top_risk_mahalle": "Yeni Mahallesi"
+}

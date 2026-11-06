@@ -1,0 +1,106 @@
+{
+  "city_id": "aksaray",
+  "city_name": "Aksaray",
+  "generated_at": "2026-11-06T20:03:29+00:00",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "config": {
+    "bbox": [
+      34.005,
+      38.365,
+      34.035,
+      38.395
+    ],
+    "crs": "EPSG:32636",
+    "max_cloud_cover": 30,
+    "max_scenes_per_tile": 3,
+    "buffer_meters": 10,
+    "admin_level_ilce": "6",
+    "admin_level_mahalle": "8",
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/central_anatolia-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
+  },
+  "scenes": {
+    "2020": [
+      {
+        "scene_id": "LC08_L2SP_176033_20200806_02_T1",
+        "date": "2020-08-06",
+        "tile": "176_033",
+        "cloud_cover": 0.11
+      },
+      {
+        "scene_id": "LC08_L2SP_176033_20200705_02_T1",
+        "date": "2020-07-05",
+        "tile": "176_033",
+        "cloud_cover": 0.12
+      },
+      {
+        "scene_id": "LC08_L2SP_176033_20200721_02_T1",
+        "date": "2020-07-21",
+        "tile": "176_033",
+        "cloud_cover": 12.85
+      },
+      {
+        "scene_id": "LC08_L2SP_176034_20200806_02_T1",
+        "date": "2020-08-06",
+        "tile": "176_034",
+        "cloud_cover": 0.03
+      },
+      {
+        "scene_id": "LC08_L2SP_176034_20200721_02_T1",
+        "date": "2020-07-21",
+        "tile": "176_034",
+        "cloud_cover": 1.68
+      }
+    ],
+    "2026": [
+      {
+        "scene_id": "LC08_L2SP_176033_20260823_02_T1",
+        "date": "2026-08-23",
+        "tile": "176_033",
+        "cloud_cover": 0.24
+      },
+      {
+        "scene_id": "LC08_L2SP_176033_20260722_02_T1",
+        "date": "2026-07-22",
+        "tile": "176_033",
+        "cloud_cover": 0.83
+      },
+      {
+        "scene_id": "LC08_L2SP_176033_20260807_02_T1",
+        "date": "2026-08-07",
+        "tile": "176_033",
+        "cloud_cover": 0.99
+      }
+    ]
+  },
+  "versions": {
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
+  },
+  "night_lst_requested": false
+}

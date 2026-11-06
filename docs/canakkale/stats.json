@@ -1,0 +1,19 @@
+{
+  "city_id": "canakkale",
+  "name": "Çanakkale",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2026,
+  "avg_hvi_percentage": 58.3,
+  "category_counts": {
+    "Kritik": 639,
+    "Yüksek": 521,
+    "Orta": 367,
+    "Aşırı Kritik": 340,
+    "Düşük": 159
+  },
+  "top_risk_mahalle": "İsmetpaşa Mahallesi"
+}

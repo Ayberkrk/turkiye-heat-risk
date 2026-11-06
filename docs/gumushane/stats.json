@@ -1,0 +1,19 @@
+{
+  "city_id": "gumushane",
+  "name": "Gümüşhane",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 280,
+  "avg_hvi_percentage": 40.5,
+  "category_counts": {
+    "Orta": 92,
+    "Yüksek": 75,
+    "Kritik": 56,
+    "Düşük": 55,
+    "Aşırı Kritik": 2
+  },
+  "top_risk_mahalle": "İnönü Mahallesi"
+}

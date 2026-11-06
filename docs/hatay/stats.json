@@ -1,0 +1,19 @@
+{
+  "city_id": "hatay",
+  "name": "Hatay",
+  "years": [
+    "2020",
+    "2026"
+  ],
+  "default_year": "2026",
+  "road_count": 2130,
+  "avg_hvi_percentage": 50.9,
+  "category_counts": {
+    "Yüksek": 594,
+    "Kritik": 543,
+    "Orta": 475,
+    "Düşük": 346,
+    "Aşırı Kritik": 172
+  },
+  "top_risk_mahalle": "Meydan Mahallesi"
+}

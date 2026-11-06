@@ -1,0 +1,12 @@
+mahalle_adi,ilce_adi,sira,yol_sayisi,toplam_yol_km,hvi_ort_2020,yuksek_risk_payi_2020,hvi_ort_2026,yuksek_risk_payi_2026,hvi_degisim,lst_ort_2020,ndvi_ort_2020,lst_ort_2026,ndvi_ort_2026,nufus_yogunlugu,yasli_oran,cocuk_oran,sosyoekonomik_skor,dist_saglik_m,dist_yesil_m,guvenilir_ortalama,sira_medyan,olasilik_ilk_5,olasilik_ilk_20
+İsmetpaşa Mahallesi,Çanakkale Merkez,1,315,58.0,65.6,0.6508,68.8,0.7333,3.2,41.0,0.171,41.6,0.173,6174.1,0.1309,0.1506,1.846,493.6,269.2,Evet,1.0,1.0,1.0
+Namık Kemal Mahallesi,Çanakkale Merkez,2,32,4.4,65.3,0.625,68.5,0.8438,3.2,41.2,0.1625,41.8,0.1648,6733.6,0.1309,0.1506,1.846,81.5,252.6,Evet,2.0,0.878,1.0
+Cumhuriyet Mahallesi,Çanakkale Merkez,3,301,55.9,53.3,0.4585,63.5,0.6047,10.2,39.9,0.2466,41.2,0.228,5557.0,0.1309,0.1506,1.846,315.8,249.1,Evet,3.0,0.994,1.0
+Boğazkent Mahallesi,Çanakkale Merkez,4,141,29.7,52.4,0.3546,62.6,0.6241,10.2,39.3,0.2517,40.6,0.2422,5186.4,0.1309,0.1506,1.846,402.7,209.5,Evet,4.0,0.786,1.0
+Cevat Paşa Mahallesi,Çanakkale Merkez,5,219,43.9,59.2,0.5434,58.4,0.5479,-0.7,41.2,0.2033,41.1,0.2097,6156.0,0.1309,0.1506,1.846,212.1,146.6,Evet,5.0,0.68,1.0
+Barbaros Mahallesi,Çanakkale Merkez,6,629,121.0,49.0,0.3482,54.6,0.4149,5.6,40.0,0.213,41.0,0.2156,5092.8,0.1309,0.1506,1.846,301.2,161.3,Evet,7.0,0.038,1.0
+Hamidiye Mahallesi,Çanakkale Merkez,7,83,21.3,43.9,0.0241,54.1,0.3494,10.1,40.1,0.2088,42.4,0.2133,3927.1,0.1309,0.1506,1.846,369.1,197.9,Evet,5.0,0.584,1.0
+Fevzipaşa Mahallesi,Çanakkale Merkez,8,39,3.9,54.8,0.359,54.1,0.359,-0.7,40.2,0.1641,40.4,0.1861,6070.0,0.1309,0.1506,1.846,210.6,151.4,Evet,8.0,0.04,1.0
+Esenler Mahallesi,Çanakkale Merkez,9,225,55.9,49.9,0.1867,48.2,0.0978,-1.7,40.5,0.2166,40.4,0.226,5948.9,0.1309,0.1506,1.846,236.3,69.3,Evet,9.0,0.0,1.0
+Kemalpaşa Mahallesi,Çanakkale Merkez,10,35,4.5,42.2,0.0857,42.9,0.1429,0.7,39.1,0.1718,39.0,0.1616,4281.2,0.1309,0.1506,1.846,100.5,120.2,Evet,10.0,0.0,1.0
+Çınarlı Köyü,Çanakkale Merkez,11,7,10.3,31.5,0.0,38.1,0.0,6.5,39.9,0.3415,41.5,0.2921,1134.5,0.1309,0.1506,1.846,1677.2,1630.0,Hayır,,,
