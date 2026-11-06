@@ -163,7 +163,7 @@ def test_scene_cache_invalidates_when_query_settings_change(monkeypatch, tmp_pat
 
     downloaded = []
 
-    def _write_test_band(item, asset, path):
+    def _write_test_band(item, asset, path, bbox=None):
         downloaded.append(asset)
         with satellite.rasterio.open(
             path, "w", driver="GTiff", height=1, width=1, count=1,
@@ -317,3 +317,66 @@ def test_download_band_gives_up_after_all_attempts_without_writing_target(monkey
     # Başarısız yenileme önceki tam dosyayı korumalı; yarım dosyalar sızmamalı.
     assert target.read_bytes() == b"previous complete band"
     assert not list(tmp_path.glob(".b4.*.part.tif"))
+
+
+# --- download_band: şehir penceresi okuma -------------------------------------
+
+def test_window_read_keeps_scene_pixel_lattice_and_values(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from rasterio.windows import from_bounds
+
+    from core import satellite
+
+    # Tam sahne yerine geçen yerel bir GeoTIFF: 30 m, UTM 35N, değerleri
+    # konumunu kodluyor ki yanlış pencere hemen fark edilsin.
+    width, height = 800, 600
+    transform = from_origin(450000, 4300000, 30, 30)
+    data = (np.arange(width * height, dtype="uint32") % 60000).astype("uint16").reshape(height, width)
+    full = tmp_path / "full.tif"
+    with satellite.rasterio.open(full, "w", driver="GTiff", height=height, width=width, count=1, dtype="uint16",
+                                 crs="EPSG:32635", transform=transform, nodata=0) as dst:
+        dst.write(data, 1)
+
+    monkeypatch.setattr("core.satellite.planetary_computer.sign", lambda url: url)
+    item = SimpleNamespace(assets={"lwir11": SimpleNamespace(href=str(full))})
+    target = tmp_path / "window.tif"
+    bbox = [26.45, 38.75, 26.5, 38.79]  # sahnenin içinde, kenarlardan uzak
+    satellite.download_band(item, "lwir11", target, bbox=bbox)
+
+    with satellite.rasterio.open(target) as win, satellite.rasterio.open(full) as src:
+        assert win.width < width and win.height < height
+        assert win.crs == src.crs and win.nodata == src.nodata
+        # Pencere orijini sahnenin piksel kafesinde (tam sayı ofset).
+        col = (win.transform.c - src.transform.c) / 30
+        row = (src.transform.f - win.transform.f) / 30
+        assert col == int(col) and row == int(row)
+        expected = src.read(1, window=from_bounds(*win.bounds, src.transform).round_offsets().round_lengths())
+        assert (win.read(1) == expected).all()
+        # bbox ve pay pencerenin içinde.
+        west, south, east, north = satellite.transform_bounds("EPSG:4326", src.crs, *bbox)
+        assert win.bounds.left <= west - satellite.WINDOW_MARGIN_M + 30
+        assert win.bounds.top >= north + satellite.WINDOW_MARGIN_M - 30
+
+
+def test_window_read_retries_on_io_error(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from core import satellite
+
+    calls = []
+
+    def flaky(url, save_path, bbox):
+        calls.append(url)
+        if len(calls) == 1:
+            raise satellite.RasterioIOError("HTTP 503")
+        save_path.write_bytes(b"ok")
+
+    monkeypatch.setattr("core.satellite.planetary_computer.sign", lambda url: url + "?sig=taze")
+    monkeypatch.setattr("core.satellite._write_band_window", flaky)
+    monkeypatch.setattr("core.satellite.time.sleep", lambda seconds: None)
+    item = SimpleNamespace(assets={"red": SimpleNamespace(href="https://blob.example/B4.TIF?sig=eski")})
+    satellite.download_band(item, "red", tmp_path / "b4.tif", bbox=[27.0, 38.0, 27.1, 38.1])
+
+    # Her deneme taze imzayla yapılır.
+    assert calls == ["https://blob.example/B4.TIF?sig=taze"] * 2
