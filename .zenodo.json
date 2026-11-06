@@ -1,0 +1,12 @@
+{
+  "title": "turkiye-heat-risk: Türkiye için sokak ölçekli, açıklanabilir Isı Hassasiyet Endeksi (HVI)",
+  "description": "<p>Landsat yüzey sıcaklığı, OpenStreetMap ve resmi nüfus verisinden (30 m HRSL ızgarasına kalibre) yol segmenti ölçeğinde Isı Hassasiyet Endeksi üreten, tekrar üretilebilir açık kaynak hat. Tehlike, maruziyet ve kırılganlık grupları geometrik ortalamayla birleştirilir; her şehir için Monte Carlo belirsizlik analizi, istasyon karşılaştırması ve indirilebilir veri paketi (Excel, CSV, GeoPackage) üretilir.</p><p>A reproducible open-source pipeline producing a street-level, explainable Heat Vulnerability Index for Turkish cities from Landsat land surface temperature, OpenStreetMap and official population calibrated to a 30 m grid, with uncertainty analysis, station checks and downloadable data packages.</p><p>The index is a prioritisation tool and has not been validated against health outcomes. Code: MIT. Data packages derived from OpenStreetMap: ODbL 1.0.</p>",
+  "upload_type": "software",
+  "creators": [{"name": "Korkmaz, Ayberk"}],
+  "license": "MIT",
+  "keywords": ["urban heat island", "heat vulnerability index", "Landsat", "OpenStreetMap", "GIS", "Türkiye", "composite indicator", "uncertainty analysis"],
+  "language": "tur",
+  "related_identifiers": [
+    {"identifier": "https://ayberkrk.github.io/turkiye-heat-risk/", "relation": "isDocumentedBy", "resource_type": "other"}
+  ]
+}

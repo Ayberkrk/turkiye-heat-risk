@@ -42,7 +42,7 @@ bir yolda risk düşük kalır. Haritada bir yola tıklayınca puanın nedenini 
 | **Belediye, planlamacı, STK** | Mahalle sıralaması, en riskli 1000 sokak listesi, rapora konabilir görseller, yazdırılabilir özet | Şehrin **Excel** dosyası ve **özet raporu** ([Veri indir](#veri-indir)) |
 | **CBS kullanıcısı** | Tüm yollar ve mahalle poligonları, bileşen sütunlarıyla | **GeoPackage** (QGIS, ArcGIS, NetCAD tek dosya olarak açar) |
 | **Gazeteci** | "En riskli mahalleler hangileri, neden?" sorusunun tablosu ve grafiği | Excel'in "Mahalleler" sayfası, `en_riskli_mahalleler.png` |
-| **Araştırmacı** | Yol düzeyi tüm bileşenler, belirsizlik aralıkları, tekrar üretilebilir manifest | **CSV** + `manifest.json`, [yöntem](#metodoloji), [belirsizlik](#belirsizlik-ve-duyarlılık-analizi) |
+| **Araştırmacı** | Yol düzeyi tüm bileşenler, belirsizlik aralıkları, tüm şehirler tek tabloda, tekrar üretilebilir manifest | **CSV** + `manifest.json`, `docs/veri/turkiye_mahalleler.csv`, [örnek defter](examples/hizli_baslangic.ipynb) [![Colab'da aç](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ayberkrk/turkiye-heat-risk/blob/main/examples/hizli_baslangic.ipynb) |
 | **Geliştirici, katkıcı** | Şehirden bağımsız Python hattı, 550+ test, yeni şehir eklemek için şablon | [Hızlı başlangıç](#hızlı-başlangıç), [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Veri indir
@@ -58,6 +58,12 @@ bağlantısı ya da [şehirler sayfası](https://ayberkrk.github.io/turkiye-heat
 | `ozet.html` | Tek sayfalık, yazdırılabilir şehir özeti: bulgular, en riskli mahalleler, görseller, atıf |
 | `harita.png`, `en_riskli_mahalleler.png`, `risk_kaynagi.png`, `kategori_dagilimi.png` | Rapora ya da sunuma doğrudan konabilir görseller |
 | `<şehir>_veri_paketi.zip` ([Releases](https://github.com/Ayberkrk/turkiye-heat-risk/releases/latest)) | Hepsi + tüm yollar (CSV ve GeoPackage), mahalle poligonları, sütun sözlüğü, manifest |
+
+**Tüm şehirler tek tabloda:** [`docs/veri/`](docs/veri/) altında
+`turkiye_mahalleler.csv`, `turkiye_sehirler.csv` ve `turkiye_isi_riski.xlsx`
+(`python build_turkey_table.py` üretir). HVI ve kategoriler şehir içi görelidir;
+şehirler arasında yalnızca mutlak sütunlar (yüzey sıcaklığı °C, NDVI, kişi/km²,
+yaş oranları, mesafeler) karşılaştırılmalıdır.
 
 Her sütunun anlamı ve birimi paketteki `sutun_sozlugu.csv` dosyasında ve Excel'in
 "Sütun sözlüğü" sayfasında. Paket yerelde de üretilir:

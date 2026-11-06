@@ -44,7 +44,7 @@ as it does.
 | **Municipality, planner, NGO** | Neighbourhood ranking, the 1,000 highest-risk streets, report-ready figures, a printable summary | The city's **Excel** file and **summary report** ([Download data](#download-data)) |
 | **GIS user** | All roads and neighbourhood polygons with component columns | **GeoPackage** (opens as one file in QGIS, ArcGIS, NetCAD) |
 | **Journalist** | A table and chart answering "which neighbourhoods are most at risk, and why?" | The "Mahalleler" sheet, `en_riskli_mahalleler.png` |
-| **Researcher** | Every component per road, uncertainty ranges, a reproducibility manifest | **CSV** + `manifest.json`, [method](#methodology), [uncertainty](#uncertainty-and-sensitivity-analysis) |
+| **Researcher** | Every component per road, uncertainty ranges, all cities in one table, a reproducibility manifest | **CSV** + `manifest.json`, `docs/veri/turkiye_mahalleler.csv`, [example notebook](examples/hizli_baslangic.ipynb) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ayberkrk/turkiye-heat-risk/blob/main/examples/hizli_baslangic.ipynb) |
 | **Developer, contributor** | A city-agnostic Python pipeline, 550+ tests, a template for new cities | [Quick start](#quick-start), [CONTRIBUTING.en.md](CONTRIBUTING.en.md) |
 
 ## Download data
@@ -59,6 +59,12 @@ Each city page (the **Verileri indir** link in the live map legend, or the
 | `ozet.html` | A one-page printable city summary: findings, top neighbourhoods, figures, citation |
 | `harita.png`, `en_riskli_mahalleler.png`, `risk_kaynagi.png`, `kategori_dagilimi.png` | Figures ready for a report or slide |
 | `<city>_veri_paketi.zip` ([Releases](https://github.com/Ayberkrk/turkiye-heat-risk/releases/latest)) | All of the above + every road (CSV and GeoPackage), neighbourhood polygons, column dictionary, manifest |
+
+**All cities in one table:** `turkiye_mahalleler.csv`, `turkiye_sehirler.csv` and
+`turkiye_isi_riski.xlsx` under [`docs/veri/`](docs/veri/) (built by
+`python build_turkey_table.py`). HVI and categories are relative within a city; compare
+cities only on the absolute columns (surface temperature °C, NDVI, people/km², age
+shares, distances).
 
 Column names are Turkish; their meaning and unit are in `sutun_sozlugu.csv` and in
 the "Sütun sözlüğü" sheet. **Licence:** road geometries and OSM-derived attributes
