@@ -1,70 +1,92 @@
-# Urban Heat Island and Heat Vulnerability Index (HVI)
+<div align="center">
+
+# Türkiye Urban Heat Risk
+
+**Which street deserves attention first in a heatwave?**
+A street-level, explainable Heat Vulnerability Index (HVI) built from satellite,
+OpenStreetMap and official population data. Open data, open code, reproducible with one command.
 
 [![Tests](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml/badge.svg)](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml)
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![code license](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
+[![data license](https://img.shields.io/badge/data-ODbL%201.0-green)](https://opendatacommons.org/licenses/odbl/1-0/)
 [![version](https://img.shields.io/github/v/tag/Ayberkrk/turkiye-heat-risk?label=version&color=informational)](https://github.com/Ayberkrk/turkiye-heat-risk/releases)
 [![good first issues](https://img.shields.io/github/issues/Ayberkrk/turkiye-heat-risk/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/Ayberkrk/turkiye-heat-risk/labels/good%20first%20issue)
 
-See [CHANGELOG.md](CHANGELOG.md) for the release history and
-[CITATION.cff](CITATION.cff) for citation.
+[**Live map**](https://ayberkrk.github.io/turkiye-heat-risk/) ·
+[**Download data**](#download-data) ·
+[**Quick start**](#quick-start) ·
+[**Method**](#methodology) ·
+[**Citation**](#citation) ·
+[Türkçe](README.md)
 
-> The Turkish original of this document: [README.md](README.md).
+</div>
 
-## English summary
+![İzmir HVI interactive map: road network coloured from orange to dark red by Heat Vulnerability Index, layer control top right, year selector and legend bottom left](assets/screenshots/harita-genel.png)
 
-An open-data, reproducible urban heat risk pipeline. It combines Landsat
-land surface temperature (LST), the OpenStreetMap road network, and
-demographic data into a street-level, explainable Heat Vulnerability Index
-(HVI): Landsat LST/NDVI, a road-to-temperature spatial join, and an index
-that groups nine components into Hazard (surface temperature), Exposure
-(population and built-up density) and Vulnerability (elderly/child share,
-socioeconomic development, distance to health care and green space, tree
-canopy). Components are averaged within a group and the three groups are
-combined by geometric mean, so each group carries one third of the index
-regardless of how many components it holds. Categories use Jenks natural
-breaks shared across years. Live maps:
-<https://ayberkrk.github.io/turkiye-heat-risk/>. The index is a
-prioritisation tool; it has not been validated against health outcomes. The architecture is city-agnostic -
-`src/core/` never changes when a new city is added; 70 cities are supported
-today (Izmir, Eskişehir, Şanlıurfa, Antalya, Mersin, Adana and 64 more, listed
-with their data sources and measured OSM coverage in
-[the register](docs/turkiye-ilce-yas-verisi-taramasi.md); see
-[CONTRIBUTING.md](CONTRIBUTING.md) to add another). Cities that cover a single
-district have constant demographic components, so their maps show heat and
-green cover, not demographic vulnerability.
+Every road segment gets a score from 0 to 100 that combines three questions:
+**is it hot** (Landsat summer land surface temperature), **are many people here**
+(30 m population grid and building density), **are the people here vulnerable**
+(elderly and child share, district development, lack of trees, distance to health
+care and parks). The three groups cannot compensate each other: a road that is not
+hot or where nobody lives stays low. Click a road on the map to see why it scores
+as it does.
 
-Quick start (produces a single-file interactive HTML map):
+> **Important:** this is a prioritisation tool and has not been validated against
+> health outcomes (emergency visits, deaths). It answers "where should we look
+> first?", not how many times more dangerous one road is than another. Details:
+> [Known limitations](#known-limitations). The Turkish [README.md](README.md) is the
+> reference if the two documents disagree.
+
+## Who is it for, and what do you get?
+
+| You are | What helps | Where |
+|---|---|---|
+| **Municipality, planner, NGO** | Neighbourhood ranking, the 1,000 highest-risk streets, report-ready figures, a printable summary | The city's **Excel** file and **summary report** ([Download data](#download-data)) |
+| **GIS user** | All roads and neighbourhood polygons with component columns | **GeoPackage** (opens as one file in QGIS, ArcGIS, NetCAD) |
+| **Journalist** | A table and chart answering "which neighbourhoods are most at risk, and why?" | The "Mahalleler" sheet, `en_riskli_mahalleler.png` |
+| **Researcher** | Every component per road, uncertainty ranges, a reproducibility manifest | **CSV** + `manifest.json`, [method](#methodology), [uncertainty](#uncertainty-and-sensitivity-analysis) |
+| **Developer, contributor** | A city-agnostic Python pipeline, 550+ tests, a template for new cities | [Quick start](#quick-start), [CONTRIBUTING.en.md](CONTRIBUTING.en.md) |
+
+## Download data
+
+Each city page (the **Verileri indir** link in the live map legend, or the
+[cities page](https://ayberkrk.github.io/turkiye-heat-risk/)) offers:
+
+| File | Contents |
+|---|---|
+| `<city>_isi_riski.xlsx` | Summary, neighbourhoods, districts, priority roads, column dictionary, sources and licence sheets |
+| `<city>_mahalleler.csv`, `<city>_ilceler.csv`, `<city>_oncelikli_yollar.csv` | The same tables for code and statistics software (UTF-8, comma separated) |
+| `ozet.html` | A one-page printable city summary: findings, top neighbourhoods, figures, citation |
+| `harita.png`, `en_riskli_mahalleler.png`, `risk_kaynagi.png`, `kategori_dagilimi.png` | Figures ready for a report or slide |
+| `<city>_veri_paketi.zip` ([Releases](https://github.com/Ayberkrk/turkiye-heat-risk/releases/latest)) | All of the above + every road (CSV and GeoPackage), neighbourhood polygons, column dictionary, manifest |
+
+Column names are Turkish; their meaning and unit are in `sutun_sozlugu.csv` and in
+the "Sütun sözlüğü" sheet. **Licence:** road geometries and OSM-derived attributes
+are a derivative of OpenStreetMap, so the data package is under **ODbL 1.0**
+(attribution: "© OpenStreetMap contributors"). Population grid: Meta & CIESIN HRSL
+(CC BY 4.0); Landsat: USGS (public domain). Code: MIT.
+
+## Quick start
 
 ```bash
+git clone https://github.com/Ayberkrk/turkiye-heat-risk.git
+cd turkiye-heat-risk
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt -c constraints.txt
 python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 ```
 
-The rest of this document is the English translation of the Turkish original.
-If the two disagree, [README.md](README.md) is the reference.
+This one command picks the satellite scenes, reads only the city window of each
+band (no full-scene downloads), computes the index, opens the map, runs the
+uncertainty analysis and writes the data package to `output/izmir/`. The 70 city ids
+live under `src/cities/`; adding a city needs no change in `src/core/`
+([CONTRIBUTING.en.md](CONTRIBUTING.en.md)).
 
----
+## Citation
 
-An open-data, reproducible urban heat risk analysis pipeline. It combines
-Landsat land surface temperature, the OpenStreetMap road network and
-demographic data to map heat risk at street scale. It has a city-agnostic
-architecture; 70 cities are supported today (İzmir, Eskişehir, Şanlıurfa,
-Antalya, Mersin, Adana and 64 more cities; their sources and their coverage
-measured against real OSM are on the [register
-page](docs/turkiye-ilce-yas-verisi-taramasi.md)).
-Adding a new city is possible without changing any file in `src/core/`
-(see [CONTRIBUTING.md](CONTRIBUTING.md)).
-
-**Live map:** <https://ayberkrk.github.io/turkiye-heat-risk/> (a small version
-hosted on GitHub Pages that loads data on demand; its source is in `docs/`).
-The fully offline, single-file version (~60 MB; not kept in the repository
-because it exceeds GitHub's 50 MB warning / 100 MB rejection limit) is produced
-locally in a few minutes with the command below:
-
-```bash
-python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
-```
-
-![İzmir HVI interactive map: the road network coloured from orange to dark red by the Heat Vulnerability Index, with the layer control at top right and the year selector and legend at bottom left](assets/screenshots/harita-genel.png)
+If you use the pipeline or a data package, cite it with the details in
+[CITATION.cff](CITATION.cff) (GitHub's **Cite this repository** button formats it).
+Release history: [CHANGELOG.md](CHANGELOG.md).
 
 ## Table of contents
 
@@ -72,6 +94,7 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 - [Adapting to another city/region](#adapting-to-another-cityregion)
 - [Methodology](#methodology)
 - [Multi-year sensitivity and intervention analysis](#multi-year-sensitivity-and-intervention-analysis)
+- [Uncertainty and sensitivity analysis](#uncertainty-and-sensitivity-analysis)
 - [2020 → 2026: Findings](#2020--2026-findings)
 - [Setup and running](#setup-and-running)
 - [Project structure](#project-structure)
@@ -79,30 +102,28 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 
 ## What does it do?
 
-1. **Satellite data** - downloads the least cloudy summer scenes covering the
-   İzmir metropolitan area from Landsat 8/9 (Microsoft Planetary Computer).
-2. **Land surface temperature (LST) and NDVI** - computes the true surface
-   temperature (°C) from the thermal band and vegetation density from the
-   red/near-infrared bands; merges the scenes into a single seamless mosaic.
-3. **Road network ↔ temperature join** - assigns to each of the ~44,000 road
-   segments pulled from OpenStreetMap the mean LST within a 10-metre buffer and
-   converts it to a 0-100 "risk score".
-4. **Heat Vulnerability Index (HVI)** - combines temperature, tree cover,
-   population density, elderly/child population share, distance to
-   hospital/pharmacy, distance to green space and built-up density into a single
-   0-100 score; it answers the question "this place is both hot and
-   crowded/elderly/child-heavy and also treeless and far from health care, so
-   the real risk is here". Each component's own value is stored separately
-   too - the final score is visible not on its own but together with the
-   factors that make it up (see Methodology).
-5. **Interactive map** - produces a Folium/Leaflet map that opens as a single
-   file in the browser, with category-based toggleable layers, a 2020/2026 year
-   selector and a tooltip that shows every component making up the score when a
-   road is clicked.
-6. **Multi-year analysis package (optional)** - compares three or more years
-   against the ERA5-Land air anomaly; measures ranking stability by changing the
-   HVI weights and road buffers; shows afforestation and shading what-if
-   scenarios on a separate map.
+1. **Satellite data**: picks the least cloudy summer Landsat 8/9 scenes over the city
+   (Microsoft Planetary Computer) and reads only the city window of each band (Cloud
+   Optimized GeoTIFF; in İzmir 3 MB instead of 86 MB for one thermal band, pixels
+   identical to the same window of the full scene).
+2. **Land surface temperature (LST) and NDVI**: surface temperature (°C) from the
+   thermal band, vegetation from red/near-infrared; the median of three scenes per
+   tile is mosaicked seamlessly.
+3. **Road and temperature join**: each OpenStreetMap road segment gets the mean LST
+   in a 10 m buffer.
+4. **Population**: official neighbourhood/district population calibrated to the 30 m
+   HRSL grid, measured within 150 m of each road.
+5. **Heat Vulnerability Index (HVI)**: nine components grouped into Hazard, Exposure
+   and Vulnerability, combined into a 0-100 score. Each component and group value is
+   kept, so the score is shown with its drivers.
+6. **Interactive map**: category layers, year selector and a per-road explanation;
+   a single-file offline version and a GitHub Pages version.
+7. **Uncertainty analysis**: varies scaling, weighting and aggregation choices 500
+   times and computes, for each road and neighbourhood, the probability of staying
+   among the highest-risk ones.
+8. **Data package**: Excel, CSV, GeoPackage, figures and a printable summary.
+9. **Multi-year analysis package (optional)**: compares three or more years against
+   the ERA5-Land weather anomaly and maps tree-planting and shading what-if scenarios.
 
 ## Adapting to another city/region
 
@@ -253,7 +274,7 @@ HVI         = geometric_mean(Hazard, Exposure, Vulnerability) × 100
 | Group | Component | What it measures | Source |
 |---|---|---|---|
 | Hazard | Surface temperature | LST risk score (per year) | Landsat thermal band |
-| Exposure | Population density | People/km² | City adapter (municipal open data or TÜİK) |
+| Exposure | Population density | People/km² within 150 m of the road, from a 30 m grid calibrated to official population | City adapter (municipal open data or TÜİK) + Meta/CIESIN HRSL grid |
 | Exposure | Built-up density | Building density within 150 m of the road | OSM building (`building`) layer |
 | Vulnerability | Elderly share | 65+ population share (district) | City adapter |
 | Vulnerability | Child share | 0-14 population share (district) | City adapter |
@@ -261,6 +282,38 @@ HVI         = geometric_mean(Hazard, Exposure, Vulnerability) × 100
 | Vulnerability | Health access | Distance to the nearest hospital/clinic/pharmacy | OSM (`amenity=hospital/clinic/pharmacy`) |
 | Vulnerability | Green space access | Distance to the nearest park/forest/meadow polygon | OSM (`leisure=park`, `landuse=forest` etc.) |
 | Vulnerability | Tree cover | Inverse of the mean NDVI in the road buffer | Landsat NDVI |
+
+**Road-level population density (dasymetric allocation).** Official population
+is only known per neighbourhood (İzmir) or per district (TÜİK-templated cities);
+up to v2.0 a main street and an empty industrial lane in the same neighbourhood
+got the same density. Since the exposure group drives the ranking most, that
+coarseness went straight into the result. The pipeline now uses the 30 m
+[High Resolution Settlement Layer](https://registry.opendata.aws/dataforgood-fb-hrsl/)
+by Meta and CIESIN (CC BY 4.0), which allocates census population to cells where
+buildings are detected in satellite imagery. It is one global COG/VRT, so only the
+city window is read over HTTP (about 9 s for İzmir).
+
+The grid is not used as is: it is calibrated to the official count. Cells of each
+unit are scaled so the unit total equals the official population from the adapter,
+so the total comes from the official source and the within-unit distribution from
+the grid. The calibration unit is the true resolution of the data: the
+neighbourhood in İzmir, the district in cities that copy district density to
+neighbourhoods. A road's density is the calibrated population in the same 150 m
+buffer used for building density, divided by the buffer area. Calibration factors
+per unit are written to `data/processed/<city>/nufus_izgarasi_kalibrasyon.csv`.
+
+In İzmir (45,874 roads) the rank correlation between grid density and the old
+neighbourhood density is 0.93: the same signal at finer grain. But 20% of the log
+variance of road density lies *within* neighbourhoods, which the old method erased,
+and 28% of the top-10% exposure roads changed. The old unit density stays in the
+`nufus_yogunlugu_birim` column for diagnostics. Set `population_grid: false` in a
+city's `config.yaml` to turn it off, or `population_grid: {url: ...}` for another grid.
+
+HRSL's age layers (60+, 0-5) are not used: across 282 thousand populated cells in
+İzmir the 60+/total ratio takes only 19 distinct values, i.e. the age share is
+spread uniformly within administrative units and adds nothing to the existing
+district-level age data. HRSL is dated 2020; calibration updates totals, but the
+within-unit distribution may miss areas built after 2020.
 
 **Why grouped?** In v1.x the plain geometric mean of the nine components was
 taken. There the number of components was a hidden weight: a single temperature
@@ -462,6 +515,57 @@ python -m http.server 8000
 
 Then open `http://localhost:8000/analysis_map.html`.
 
+## Uncertainty and sensitivity analysis
+
+The HVI is not a measurement but the outcome of design decisions: how components
+are scaled, how groups and components are weighted, whether groups may compensate
+each other, the floor of the geometric mean, which components enter at all.
+`uncertainty_analysis.py` varies these decisions by Monte Carlo and measures how
+much road ranks move. This is the standard uncertainty/sensitivity analysis for
+composite indicators (OECD/JRC, *Handbook on Constructing Composite Indicators*,
+2008; Saisana, Saltelli and Tarantola, 2005). It reads the main pipeline output and
+downloads no satellite data:
+
+```bash
+python uncertainty_analysis.py --city izmir --year 2026
+```
+
+Each run (default 500, seed 42) draws:
+
+| Decision | Distribution | Value in the default index |
+|---|---|---|
+| Scaling | 2-98% percentile, min-max or rank percentile (equal probability) | 2-98% |
+| Group weights | Dirichlet(8, 8, 8): each group within 0.19-0.49 with ~90% probability | 1/3 |
+| Within-group component weights | Dirichlet(4, ..., 4) | equal |
+| Aggregation across groups | geometric or arithmetic mean | geometric |
+| Geometric mean floor | uniform 0.01-0.10 | 0.05 |
+| Component exclusion | one component dropped with 25% probability (never the single hazard component) | none |
+
+The first run is the default index itself, and the analysis checks that it
+reproduces the published score (`default_run_reproduces_published_index_pearson`).
+The distributions are a judgement; change them with `--group-concentration`,
+`--component-concentration` and `--exclusion-probability`, and they are recorded in
+the report.
+
+Outputs in `data/processed/<city>/uncertainty/`:
+
+- `belirsizlik_yollar.geojson`: per road, median and 5-95% range of the rank
+  percentile (`sira_p05`, `sira_p95`, `sira_bandi`) and the probability of being in
+  the top 10% / top 20% (`olasilik_ilk_yuzde10`, `olasilik_ilk_yuzde20`).
+- `belirsizlik_mahalleler.csv`: rank distribution of neighbourhoods with at least
+  20 roads by mean score, and the probability of being in the top 5 / top 20.
+- `belirsizlik_duyarlilik.csv`: first-order sensitivity index
+  S<sub>i</sub> = Var(E[Y|X<sub>i</sub>]) / Var(Y) for each decision, where Y is the
+  run's Spearman correlation and top-10% overlap with the default index. Continuous
+  decisions are estimated with 10 quantile bins; below ~0.02 is noise at 500 runs.
+- `belirsizlik_kosular.csv`, `belirsizlik_ozet.json`: decisions and results per run,
+  summary statistics and the settings used.
+
+Out of scope: road buffer width (`analyze_pipeline.py` measures 10/30/50 m
+separately) and measurement error in the data itself (LST, OSM gaps, population).
+The ranges are therefore a lower bound on uncertainty from method choices only;
+they do not replace validating the index against health outcomes.
+
 ## 2020 → 2026: Findings
 
 *(İzmir, a 6-year window. For each year, the pixel-wise median of 4 satellite
@@ -472,7 +576,7 @@ from the same data set that also feeds the map:
 `docs/izmir/manifest.json`.)*
 
 **Temperature - overall trend:**
-- The mean surface temperature of 44,041 road segments was 42.6 °C in 2020 and
+- The mean surface temperature of 44,068 road segments was 42.6 °C in 2020 and
   43.1 °C in 2026: mean change **+0.47 °C**.
 - Most-warmed road: **+13.5 °C** · most-cooled road: **-7.6 °C**
 - **49%** of roads warmed (by more than +0.5 °C), **23%** cooled, **27%**
@@ -485,43 +589,59 @@ from the same data set that also feeds the map:
 > same tile the difference falls to +0.47 °C. The lesson: a year-over-year
 > warming conclusion cannot be drawn from a single satellite overpass.
 
-**HVI - risk distribution (grouped methodology, 5 categories, with the two
-years' common Jenks breaks; 43,183 roads with matched demographics):**
+**HVI - risk distribution (formula version 7: grouped index, road-level
+population; 5 categories, with the two years' common Jenks breaks; 43,210 roads
+with matched demographics):**
 
 | Category | 2020 | 2026 | Change |
 |---|---|---|---|
-| Low | 7,462 | 5,659 | -1,803 |
-| Medium | 11,902 | 12,091 | +189 |
-| High | 9,569 | 10,739 | +1,170 |
-| Critical | 9,694 | 9,799 | +105 |
-| Extreme Critical | 4,556 | 4,895 | +339 |
+| Low | 7,476 | 5,709 | -1,767 |
+| Medium | 11,721 | 11,789 | +68 |
+| High | 9,769 | 10,830 | +1,061 |
+| Critical | 9,391 | 9,670 | +279 |
+| Extreme Critical | 4,853 | 5,212 | +359 |
 
 Because the category breaks are computed once from the two years' common
 distribution, "Critical" means the same threshold in both years. The shift is
 mainly at the lower end: roads leaving the Low category moved to Medium and High;
-the Critical and Extreme Critical total **increased by 3%** (from 14,250 to
-14,694). Since the demographic and OSM components are the same in both years, all
-of this change comes from temperature and vegetation.
+the Critical and Extreme Critical total **increased by 4%** (from 14,244 to
+14,882). Since the demographic and OSM components are held fixed across the two
+years, all of this change comes from temperature and vegetation.
 
-> Note: these numbers cannot be compared with those in v1.x. In v2.0.0 the index
-> moved to a grouped structure, the scaling changed and the temperature input
-> comes from a median composite instead of a single scene.
+> Note: these numbers cannot be compared with earlier versions. In v2.0.0 the index
+> moved to a grouped structure; in version 7 population density is measured around
+> each road instead of being a neighbourhood constant.
 
-**The 5 neighbourhoods with the highest mean HVI (2026, among the 418
-neighbourhoods with at least 20 road segments):**
+**The 5 neighbourhoods with the highest mean HVI (2026, among the 416
+neighbourhoods with at least 20 road segments) and their probability of staying
+in the top 20 in the uncertainty analysis:**
 
-1. Umut Mahallesi (Karabağlar) - 90.4%
-2. Sarıyer Mahallesi (Karabağlar) - 89.7%
-3. Uğur Mumcu Mahallesi (Karabağlar) - 89.4%
-4. İhsan Alyanak Mahallesi (Karabağlar) - 88.5%
-5. Bozyaka Mahallesi (Karabağlar) - 86.4%
+1. Sarıyer Mahallesi (Karabağlar): 87.0 (97%)
+2. Uğur Mumcu Mahallesi (Karabağlar): 86.8 (98%)
+3. Umut Mahallesi (Karabağlar): 86.3 (98%)
+4. İhsan Alyanak Mahallesi (Karabağlar): 84.7 (96%)
+5. Abdi İpekçi Mahallesi (Karabağlar): 84.0 (97%)
 
-At district-average level Karabağlar (70.5%) is far ahead; then come Buca (56.2%),
-Bayraklı (55.3%) and Karşıyaka (53.7%). The top of the list is largely the same
-neighbourhoods as in v1.x: the result is stable against the formula change.
+At district-average level Karabağlar (69.2) is far ahead; then come Buca (55.8),
+Bayraklı (54.5) and Karşıyaka (53.3). The top of the list is largely the same
+neighbourhoods as in v1.x and v2.0.
+
+**How robust is the result? (uncertainty analysis, 500 runs, 2026)** The
+neighbourhood ranking is robust to method choices: each of the top five stays in
+the top 20 in 96-98% of runs. **The road-level ranking is clearly more volatile:**
+a run's rank correlation with the default index has a median of 0.87 (0.66 at the
+5th percentile), a median 76% of the top-10% road set is retained, and only **35%**
+of the 4,321 roads in the default top 10% stay there in at least 90% of runs. The
+5-95% range of a road's rank percentile has a median width of 39 points. The two
+decisions that move the ranking most are the exposure group weight (first-order
+sensitivity index 0.25) and whether groups are combined geometrically or
+arithmetically (0.14); the scaling method and individual component weights matter
+less. In practice: **decide at neighbourhood level; use the road list as a second
+step to see where to look within a neighbourhood**, starting with roads that have
+a high `olasilik_ilk_yuzde10`.
 
 **The groups' real effect on the index (2026, rank correlation between the group
-score and the HVI):** exposure 0.82 · hazard 0.39 · vulnerability 0.23. Although
+score and the HVI):** exposure 0.82 · hazard 0.40 · vulnerability 0.25. Although
 the three groups have equal weight, their effects are not equal: in İzmir the
 spatial distribution of risk is determined most of all by population and built-up
 density. In other words this map highlights mainly places that are "hot AND
@@ -529,7 +649,7 @@ crowded"; because the vulnerability components are at district level,
 within-neighbourhood discrimination is weak.
 
 **What can be done?**
-- The 14,694 road segments in the Critical/Extreme Critical category (~34% of the
+- The 14,882 road segments in the Critical/Extreme Critical category (~34% of the
   scored roads) can be prioritised for interventions such as afforestation,
   shading, light-coloured surfaces.
 - A road's HVI can be read from the map tooltip together with the "why" question -
@@ -548,12 +668,16 @@ cleaned of weather conditions, `analyze_pipeline.py` can be used.
 
 ## Setup and running
 
+**Supported Python versions: 3.12, 3.13 and 3.14** (CI tests all three). 3.11 is
+not supported: numpy 2.5 and rasterio 1.5 pinned in `constraints.txt` need 3.12 or
+newer.
+
 ```bash
-git clone <this-repo>
+git clone https://github.com/Ayberkrk/turkiye-heat-risk.git
 cd turkiye-heat-risk
-python3 -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+python3.12 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[dev]" -c constraints.txt   # or: pip install -r requirements.txt
 ```
 
 The version ranges in `requirements.txt` are upper-bounded against major-version
@@ -579,11 +703,16 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 - `--force`: ignore the road risk score and HVI cache, recompute
 - `--night-lst`: also produce the MODIS night heat island layer at neighbourhood
   scale (optional, downloads an additional satellite source - see Methodology)
+- `--uncertainty-runs N`: number of uncertainty analysis runs (default 500, about
+  15 s for İzmir); `0` skips it
+- `--no-export`: do not write the Excel/CSV/GeoPackage/figure data package
 
 Every step is skipped if its output is already on disk - even if the script is
 interrupted halfway, `python pipeline.py --city izmir` continues from where it
-left off. The first run (4 Landsat scenes × 2 years + OSM extract) takes ~15-25
-minutes and ~5-6 GB of disk space on a reasonable internet connection.
+left off. Because only the city window of each Landsat band is read, İzmir's first
+two-year run (24 scenes, OSM extract, night layer) took about 12.5 minutes and
+0.5 GB of disk on the development machine; the earlier full-scene version needed
+about 3 hours and 6 GB.
 
 The road risk score and HVI outputs are recomputed automatically when the formula
 version changes (see `src/core/cache.py`); if the data source stays the same and
@@ -602,9 +731,9 @@ config validation, cache validity) are under `tests/` - they need no satellite
 download or OSM network and run in seconds:
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt
+pip install -e ".[dev]" -c constraints.txt
 python -m ruff check .
-pytest
+pytest            # the import path is set in pyproject.toml, no PYTHONPATH needed
 ```
 
 On every push and PR, `.github/workflows/tests.yml` first runs `ruff check`
@@ -679,6 +808,7 @@ python -m json.tool docs/izmir/manifest.json
 turkiye-heat-risk/
 ├── pipeline.py               # Single top-level entry point: python pipeline.py --city izmir
 ├── analyze_pipeline.py       # Multi-year weather/sensitivity/what-if analysis package
+├── uncertainty_analysis.py   # Monte Carlo uncertainty/sensitivity analysis of the HVI ranking
 ├── validate_city.py           # Quickly validates a new city's config.yaml
 ├── build_docs_index.py        # Produces the comparison page for the cities under docs/
 ├── tools/
@@ -690,6 +820,8 @@ turkiye-heat-risk/
 │   │   ├── raster.py          #   LST/NDVI computation + memory-safe mosaicking
 │   │   ├── roads.py           #   OSM road network + annual temperature/NDVI join
 │   │   ├── impact_analysis.py #   weather correction, HVI sensitivity and intervention scenarios
+│   │   ├── population_grid.py #   calibrating the 30 m population grid to official counts and allocating it to roads
+│   │   ├── uncertainty.py     #   Monte Carlo uncertainty and first-order sensitivity indices
 │   │   ├── osm_amenities.py   #   health/green space/building layers (from OSM)
 │   │   ├── hvi.py             #   multi-component HVI computation
 │   │   ├── map_builder.py     #   interactive Folium map (offline + hosting version)
@@ -807,12 +939,16 @@ turkiye-heat-risk/
   neighbourhood-level CKAN population data, these adapters could not find a
   district-level TÜİK release for the elderly/child share and therefore apply the
   PROVINCE's overall age distribution (0-14 and 65+) to all districts in the same
-  way; population density too is constant at district rather than neighbourhood
-  level (because the district area is computed from the OSM administrative
-  boundary, density comes out low in districts with a wide rural hinterland).
-  Real within-district/within-neighbourhood inequality is therefore less visible
-  than in İzmir (see `core/ilce_table_adapter.py` and each city's `adapter.py`
-  docstring).
+  way. Population density comes from a 30 m grid calibrated to the district
+  total, so it varies at road level, but the age and socioeconomic components are
+  constant within districts. Real within-district vulnerability inequality is
+  therefore less visible than in İzmir (see `core/ilce_table_adapter.py` and each
+  city's `adapter.py` docstring).
+- **The population grid is a model**: HRSL allocates census population to cells
+  with detected buildings; detection errors, construction after 2020 and
+  non-residential buildings (industry, warehouses) can distort the within-unit
+  distribution. Because totals are calibrated to the official source, the error is
+  limited to the within-unit split.
 
 ## License
 

@@ -1,73 +1,114 @@
-# Kentsel Isı Adası ve Isı Hassasiyet Endeksi (HVI)
+<div align="center">
+
+# Türkiye Kentsel Isı Riski
+
+**Hangi sokak sıcak havada önce ilgilenilmeyi hak ediyor?**
+Uydu, OpenStreetMap ve resmi nüfus verisinden sokak ölçeğinde, açıklanabilir
+bir Isı Hassasiyet Endeksi (HVI). Açık veri, açık kod, tek komutla yeniden üretilebilir.
 
 [![Testler](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml/badge.svg)](https://github.com/Ayberkrk/turkiye-heat-risk/actions/workflows/tests.yml)
-[![lisans](https://img.shields.io/badge/lisans-MIT-blue)](LICENSE)
+[![lisans](https://img.shields.io/badge/kod-MIT-blue)](LICENSE)
+[![veri lisansı](https://img.shields.io/badge/veri-ODbL%201.0-green)](https://opendatacommons.org/licenses/odbl/1-0/)
 [![sürüm](https://img.shields.io/github/v/tag/Ayberkrk/turkiye-heat-risk?label=s%C3%BCr%C3%BCm&color=informational)](https://github.com/Ayberkrk/turkiye-heat-risk/releases)
 [![good first issues](https://img.shields.io/github/issues/Ayberkrk/turkiye-heat-risk/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/Ayberkrk/turkiye-heat-risk/labels/good%20first%20issue)
 
-Sürüm geçmişi için [CHANGELOG.md](CHANGELOG.md), atıf için
-[CITATION.cff](CITATION.cff) dosyalarına bakın.
+[**Canlı harita**](https://ayberkrk.github.io/turkiye-heat-risk/) ·
+[**Veri indir**](#veri-indir) ·
+[**Hızlı başlangıç**](#hızlı-başlangıç) ·
+[**Yöntem**](#metodoloji) ·
+[**Atıf**](#atıf) ·
+[English](README.en.md)
 
-Bu belgenin tam İngilizce çevirisi: [README.en.md](README.en.md).
-
-## English summary
-
-An open-data, reproducible urban heat risk pipeline. It combines Landsat
-land surface temperature (LST), the OpenStreetMap road network, and
-demographic data into a street-level, explainable Heat Vulnerability Index
-(HVI): Landsat LST/NDVI, a road-to-temperature spatial join, and an index
-that groups nine components into Hazard (surface temperature), Exposure
-(population and built-up density) and Vulnerability (elderly/child share,
-socioeconomic development, distance to health care and green space, tree
-canopy). Components are averaged within a group and the three groups are
-combined by geometric mean, so each group carries one third of the index
-regardless of how many components it holds. Categories use Jenks natural
-breaks shared across years. Live maps:
-<https://ayberkrk.github.io/turkiye-heat-risk/>. The index is a
-prioritisation tool; it has not been validated against health outcomes. The
-architecture is city-agnostic: `src/core/` does not change when a city is
-added. City configurations are registered for 70 cities (including Izmir,
-Eskişehir, Şanlıurfa, Antalya, Mersin and Adana); measured OSM coverage and
-published maps vary by city, as documented in
-[the register](docs/turkiye-ilce-yas-verisi-taramasi.md). See
-[CONTRIBUTING.md](CONTRIBUTING.md) to add another city. Cities that cover a single
-district have constant demographic components, so their maps show heat and
-green cover, not demographic vulnerability.
-
-Quick start (produces a single-file interactive HTML map):
-
-```bash
-python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
-```
-
-The rest of this README - methodology, findings, setup, project layout,
-known limitations - was originally written in Turkish (this is an
-Izmir/Türkiye-focused project) and is now also available as a full English
-translation in [README.en.md](README.en.md). If the two disagree, the
-Turkish original (this file) is the reference.
-
----
-
-Açık verilerle çalışan, tekrar üretilebilir bir kentsel ısı riski analiz hattı.
-Landsat yüzey sıcaklığı, OpenStreetMap yol ağı ve demografik verileri
-birleştirerek ısı riskini sokak ölçeğinde haritalar. Şehirden bağımsız bir
-mimariye sahiptir; 70 şehir kaydı tanımlıdır (İzmir, Eskişehir, Şanlıurfa,
-Antalya, Mersin, Adana ve 64 şehir daha; kaynakları, OSM kapsam ölçümleri ve
-yayın durumu [kayıt sayfasında](docs/turkiye-ilce-yas-verisi-taramasi.md)).
-Yeni bir şehir eklemek `src/core/` içindeki hiçbir dosyayı değiştirmeden
-mümkündür (bkz. [CONTRIBUTING.md](CONTRIBUTING.md)).
-
-**Canlı harita:** <https://ayberkrk.github.io/turkiye-heat-risk/> (GitHub
-Pages'te barındırılan, veri talep üzerine yüklenen küçük sürüm; kaynağı
-`docs/`). Tamamen çevrimdışı, tek dosyalık sürüm (~60 MB, GitHub'ın 50 MB
-uyarı/100 MB ret sınırını aştığı için depoda tutulmuyor) aşağıdaki komutla
-birkaç dakikada yerelde üretilir:
-
-```bash
-python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
-```
+</div>
 
 ![İzmir HVI interaktif haritası: yol ağı Isı Hassasiyet Endeksi'ne göre turuncudan bordoya renklendirilmiş, sağ üstte katman kontrolü, sol altta yıl seçici ve gösterge](assets/screenshots/harita-genel.png)
+
+Her yol segmenti 0-100 arası bir puan alır. Puan üç sorunun cevabını birleştirir:
+**burası sıcak mı** (Landsat yaz yüzey sıcaklığı), **burada çok insan var mı**
+(30 m nüfus ızgarası ve bina yoğunluğu), **buradaki insanlar kırılgan mı** (yaşlı
+ve çocuk oranı, ilçenin gelişmişliği, ağaç azlığı, sağlık tesisine ve parka
+uzaklık). Üç grup birbirini telafi edemez: sıcak olmayan ya da kimsenin yaşamadığı
+bir yolda risk düşük kalır. Haritada bir yola tıklayınca puanın nedenini görürsünüz.
+
+> **Önemli:** Bu bir önceliklendirme aracıdır, sağlık verisiyle (acil başvuru,
+> ölüm) doğrulanmamıştır. "Nereye önce bakmalı?" sorusuna cevap verir; bir yolun
+> ötekinden kaç kat tehlikeli olduğunu ölçmez. Ayrıntı:
+> [Bilinen sınırlamalar](#bilinen-sınırlamalar).
+
+## Kim için, ne alırsınız?
+
+| Siz | İşinize yarayacak olan | Nereden |
+|---|---|---|
+| **Belediye, planlamacı, STK** | Mahalle sıralaması, en riskli 1000 sokak listesi, rapora konabilir görseller, yazdırılabilir özet | Şehrin **Excel** dosyası ve **özet raporu** ([Veri indir](#veri-indir)) |
+| **CBS kullanıcısı** | Tüm yollar ve mahalle poligonları, bileşen sütunlarıyla | **GeoPackage** (QGIS, ArcGIS, NetCAD tek dosya olarak açar) |
+| **Gazeteci** | "En riskli mahalleler hangileri, neden?" sorusunun tablosu ve grafiği | Excel'in "Mahalleler" sayfası, `en_riskli_mahalleler.png` |
+| **Araştırmacı** | Yol düzeyi tüm bileşenler, belirsizlik aralıkları, tekrar üretilebilir manifest | **CSV** + `manifest.json`, [yöntem](#metodoloji), [belirsizlik](#belirsizlik-ve-duyarlılık-analizi) |
+| **Geliştirici, katkıcı** | Şehirden bağımsız Python hattı, 550+ test, yeni şehir eklemek için şablon | [Hızlı başlangıç](#hızlı-başlangıç), [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+## Veri indir
+
+Her şehrin sayfasında (canlı haritanın göstergesindeki **Verileri indir**
+bağlantısı ya da [şehirler sayfası](https://ayberkrk.github.io/turkiye-heat-risk/))
+şu dosyalar var:
+
+| Dosya | İçerik |
+|---|---|
+| `<şehir>_isi_riski.xlsx` | Özet, Mahalleler, İlçeler, Öncelikli yollar, Sütun sözlüğü, Kaynaklar ve lisans sayfaları |
+| `<şehir>_mahalleler.csv`, `<şehir>_ilceler.csv`, `<şehir>_oncelikli_yollar.csv` | Aynı tablolar, kod ve istatistik yazılımı için (UTF-8, virgül ayraçlı) |
+| `ozet.html` | Tek sayfalık, yazdırılabilir şehir özeti: bulgular, en riskli mahalleler, görseller, atıf |
+| `harita.png`, `en_riskli_mahalleler.png`, `risk_kaynagi.png`, `kategori_dagilimi.png` | Rapora ya da sunuma doğrudan konabilir görseller |
+| `<şehir>_veri_paketi.zip` ([Releases](https://github.com/Ayberkrk/turkiye-heat-risk/releases/latest)) | Hepsi + tüm yollar (CSV ve GeoPackage), mahalle poligonları, sütun sözlüğü, manifest |
+
+Her sütunun anlamı ve birimi paketteki `sutun_sozlugu.csv` dosyasında ve Excel'in
+"Sütun sözlüğü" sayfasında. Paket yerelde de üretilir:
+`python pipeline.py ...` son adımda yazar, `python export_city.py --city <şehir>`
+yalnızca paketi tazeler.
+
+**Lisans:** yol geometrileri ve OSM'den türetilen öznitelikler OpenStreetMap
+verisinin türevi olduğu için veri paketi **ODbL 1.0** altındadır; atıf:
+"© OpenStreetMap katkıcıları". Nüfus ızgarası Meta & CIESIN HRSL (CC BY 4.0),
+Landsat USGS (kamu malı). Kod MIT.
+
+## Hızlı başlangıç
+
+```bash
+git clone https://github.com/Ayberkrk/turkiye-heat-risk.git
+cd turkiye-heat-risk
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt -c constraints.txt
+python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
+```
+
+Bu tek komut uydu sahnelerini seçer, yalnızca şehrin penceresini okur (tam sahne
+indirmez), endeksi hesaplar, haritayı açar, belirsizlik analizini koşar ve veri
+paketini `output/izmir/` altına yazar. 70 şehrin kimliği `src/cities/` altında;
+yeni şehir eklemek `src/core/` içinde hiçbir dosyayı değiştirmeden mümkündür
+([CONTRIBUTING.md](CONTRIBUTING.md)). Ayrıntılı kurulum ve Docker:
+[Kurulum ve çalıştırma](#kurulum-ve-çalıştırma).
+
+## Nasıl çalışır?
+
+```mermaid
+flowchart LR
+    L[Landsat 8/9<br>yaz sahneleri] --> T[Yüzey sıcaklığı<br>ve NDVI mozaiği]
+    O[OpenStreetMap<br>yollar, binalar,<br>sağlık, park] --> R[Yol segmentleri]
+    N[Resmi nüfus<br>mahalle / ilçe] --> P[30 m ızgaraya<br>kalibre nüfus]
+    H[HRSL 30 m<br>nüfus ızgarası] --> P
+    T --> R
+    P --> R
+    R --> I["HVI = geo. ort.<br>(Tehlike, Maruziyet,<br>Kırılganlık)"]
+    I --> M[Interaktif harita]
+    I --> U[Belirsizlik analizi]
+    I --> E[Excel, CSV,<br>GeoPackage, görseller]
+    U --> E
+```
+
+## Atıf
+
+Bu hattı ya da veri paketini kullanıyorsanız [CITATION.cff](CITATION.cff)
+dosyasındaki bilgiyle atıf verin (GitHub'ın sağ panelindeki **Cite this
+repository** düğmesi biçimlendirilmiş hâlini verir). Sürüm geçmişi:
+[CHANGELOG.md](CHANGELOG.md).
 
 ## İçindekiler
 
@@ -75,6 +116,7 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 - [Başka bir şehre/bölgeye uyarlama](#başka-bir-şehrebölgeye-uyarlama)
 - [Metodoloji](#metodoloji)
 - [Çok yıllı duyarlılık ve müdahale analizi](#çok-yıllı-duyarlılık-ve-müdahale-analizi)
+- [Belirsizlik ve duyarlılık analizi](#belirsizlik-ve-duyarlılık-analizi)
 - [2020 → 2026: Bulgular](#2020--2026-bulgular)
 - [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
 - [Proje yapısı](#proje-yapısı)
@@ -82,29 +124,29 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 
 ## Ne yapıyor?
 
-1. **Uydu verisi** - Landsat 8/9 (Microsoft Planetary Computer) üzerinden
-   İzmir büyükşehir alanını kaplayan en az bulutlu yaz sahnelerini indirir.
-2. **Yüzey sıcaklığı (LST) ve NDVI** - termal banttan gerçek yüzey
-   sıcaklığını (°C), kırmızı/yakın-kızılötesi banttan bitki örtüsü
-   yoğunluğunu hesaplar; sahneleri tek bir kesintisiz mozaikte birleştirir.
-3. **Yol ağı ↔ sıcaklık eşlemesi** - OpenStreetMap'ten çekilen ~44.000 yol
-   segmentinin her birine, 10 metrelik bir tampon içindeki ortalama LST'yi
-   atar ve 0-100 arası bir "risk skoru"na çevirir.
-4. **Isı Hassasiyet Endeksi (HVI)** - sıcaklık, ağaç örtüsü, nüfus
-   yoğunluğu, yaşlı/çocuk nüfus oranı, hastane/eczaneye uzaklık, yeşil
-   alana uzaklık ve yapılaşma yoğunluğunu tek bir 0-100 skorda birleştirir;
-   "burası hem sıcak hem kalabalık/yaşlı/çocuk nüfuslu hem de ağaçsız ve
-   sağlık hizmetine uzak, yani gerçek risk burada" sorusuna cevap verir.
-   Her bileşenin kendi değeri de ayrı ayrı saklanır - nihai skor tek başına
-   değil, onu oluşturan etkenlerle birlikte görünür (bkz. Metodoloji).
-5. **İnteraktif harita** - kategori bazlı aç/kapa katmanları, 2020/2026
-   yıl seçici ve her yola tıklandığında skoru oluşturan tüm bileşenleri
-   gösteren bir tooltip içeren, tarayıcıda tek dosya olarak açılabilen bir
-   Folium/Leaflet haritası üretir.
-6. **Çok yıllı analiz paketi (isteğe bağlı)** - üç veya daha fazla yılı
-   ERA5-Land hava anomalisiyle karşılaştırır; HVI ağırlıklarını ve yol
-   tamponlarını değiştirerek sıralama kararlılığını ölçer; ağaçlandırma ve
-   gölgeleme what-if senaryolarını ayrı bir haritada gösterir.
+1. **Uydu verisi**: Landsat 8/9 (Microsoft Planetary Computer) üzerinden şehri
+   kaplayan en az bulutlu yaz sahnelerini seçer ve her bandın yalnızca şehir
+   penceresini okur (Cloud Optimized GeoTIFF; İzmir'de bir termal bant için
+   86 MB yerine 3 MB, pikseller tam sahnedeki aynı pencereyle birebir aynı).
+2. **Yüzey sıcaklığı (LST) ve NDVI**: termal banttan yüzey sıcaklığını (°C),
+   kırmızı/yakın kızılötesi banttan bitki örtüsünü hesaplar; karo başına üç
+   sahnenin medyanını alıp kesintisiz bir mozaikte birleştirir.
+3. **Yol ağı ve sıcaklık eşlemesi**: OpenStreetMap'ten çekilen her yol
+   segmentine 10 m tampondaki ortalama LST'yi atar.
+4. **Nüfus**: resmi mahalle/ilçe nüfusunu 30 m HRSL ızgarasına kalibre edip
+   her yolun 150 m çevresindeki yoğunluğu ölçer.
+5. **Isı Hassasiyet Endeksi (HVI)**: dokuz bileşeni Tehlike, Maruziyet ve
+   Kırılganlık gruplarında toplayıp 0-100 skora çevirir. Her bileşenin ve
+   grubun değeri ayrıca saklanır; skor onu oluşturan etkenlerle birlikte görünür.
+6. **İnteraktif harita**: kategori katmanları, yıl seçici, her yolda puanın
+   nedenini gösteren açıklama; tek dosyalık çevrimdışı sürüm ve GitHub Pages sürümü.
+7. **Belirsizlik analizi**: ölçekleme, ağırlık ve birleştirme kararlarını 500
+   kez rastgele değiştirip her yolun ve mahallenin "en riskliler arasında kalma
+   olasılığını" hesaplar.
+8. **Veri paketi**: Excel, CSV, GeoPackage, görseller ve yazdırılabilir özet.
+9. **Çok yıllı analiz paketi (isteğe bağlı)**: üç veya daha fazla yılı
+   ERA5-Land hava anomalisiyle karşılaştırır; ağaçlandırma ve gölgeleme what-if
+   senaryolarını ayrı bir haritada gösterir.
 
 ## Başka bir şehre/bölgeye uyarlama
 
@@ -282,7 +324,7 @@ HVI        = geometrik_ortalama(Tehlike, Maruziyet, Kırılganlık) × 100
 | Grup | Bileşen | Ne ölçer | Kaynak |
 |---|---|---|---|
 | Tehlike | Yüzey sıcaklığı | LST risk skoru (yıl bazlı) | Landsat termal bant |
-| Maruziyet | Nüfus yoğunluğu | Kişi/km² | Şehir adapter'ı (belediye açık verisi ya da TÜİK) |
+| Maruziyet | Nüfus yoğunluğu | Yolun 150 m çevresindeki kişi/km², resmi nüfusa kalibre 30 m ızgaradan | Şehir adapter'ı (belediye açık verisi ya da TÜİK) + Meta/CIESIN HRSL ızgarası |
 | Maruziyet | Yapılaşma yoğunluğu | Yolun 150 m çevresindeki bina yoğunluğu | OSM bina (`building`) katmanı |
 | Kırılganlık | Yaşlı oranı | 65+ nüfus oranı (ilçe) | Şehir adapter'ı |
 | Kırılganlık | Çocuk oranı | 0-14 nüfus oranı (ilçe) | Şehir adapter'ı |
@@ -290,6 +332,40 @@ HVI        = geometrik_ortalama(Tehlike, Maruziyet, Kırılganlık) × 100
 | Kırılganlık | Sağlık erişimi | En yakın haritalı hastane/klinik/doktor/eczane geometrisine uzaklık | OSM ([`amenity=*` ve `healthcare=*`](https://wiki.openstreetmap.org/wiki/Healthcare); GDAL [`other_tags`](https://gdal.org/en/stable/drivers/vector/osm.html)) |
 | Kırılganlık | Yeşil alan erişimi | En yakın park/orman/çayır poligonuna uzaklık | OSM (`leisure=park`, `landuse=forest` vb.) |
 | Kırılganlık | Ağaç örtüsü | Yol tamponundaki ortalama NDVI'nin tersi | Landsat NDVI |
+
+**Nüfus yoğunluğu yol ölçeğinde (dasimetrik dağıtım).** Resmi nüfus
+yalnızca mahalle (İzmir) ya da ilçe (TÜİK şablonlu şehirler) düzeyinde
+biliniyor; v2.0'a kadar aynı mahalledeki ana cadde ile boş sanayi sokağı
+aynı yoğunluğu alıyordu. Maruziyet grubu sıralamayı en çok belirleyen grup
+olduğu için bu kabalık doğrudan sonuca yansıyordu. Artık Meta ve CIESIN'in
+[High Resolution Settlement Layer](https://registry.opendata.aws/dataforgood-fb-hrsl/)
+ızgarası (30 m, CC BY 4.0) kullanılıyor: sayım nüfusunu uydu görüntüsünde
+bina tespit edilen hücrelere dağıtan, dünya geneli tek bir COG/VRT. Şehrin
+penceresi HTTP üzerinden okunur, ülke dosyası indirilmez (İzmir için ~9 sn).
+
+Izgara doğrudan kullanılmaz, resmi sayıma kalibre edilir: her birimin
+hücreleri, birim toplamı adapter'ın verdiği resmi nüfusa eşit olacak şekilde
+ölçeklenir. Böylece toplam resmi kaynaktan, birim içi dağılım ızgaradan
+gelir. Kalibrasyon birimi verinin gerçek çözünürlüğüdür: İzmir'de mahalle,
+ilçe yoğunluğunu mahallelere kopyalayan şehirlerde ilçe. Yolun yoğunluğu,
+bina yoğunluğuyla aynı 150 m tampondaki kalibre nüfusun tampon alanına
+bölümüdür. Birim başına kalibrasyon çarpanı
+`data/processed/<şehir>/nufus_izgarasi_kalibrasyon.csv` dosyasına yazılır;
+çarpanı 1'den çok uzak birimler ızgara ile resmi kaynağın ayrıştığı yerlerdir.
+
+İzmir'de (45.874 yol) ızgara yoğunluğu ile eski mahalle yoğunluğunun sıra
+korelasyonu 0,93: yeni ölçüm aynı sinyalin daha ince hâli. Ama yol
+yoğunluğunun logaritmik varyansının %20'si mahalle **içinde** ve eski yöntem
+bunu tümüyle siliyordu; maruziyette ilk %10'luk yol kümesinin %28'i değişti.
+Eski birim yoğunluğu `nufus_yogunlugu_birim` sütununda tanı için kalır.
+Kapatmak için şehrin `config.yaml` dosyasına `population_grid: false`,
+başka bir ızgara için `population_grid: {url: ...}` yazılır.
+
+HRSL'nin yaş katmanları (60+, 0-5) kullanılmıyor: İzmir'de 282 bin dolu
+hücrede 60+/toplam oranı yalnızca 19 farklı değer alıyor, yani yaş payı
+idari birim içinde sabit dağıtılmış ve mevcut ilçe düzeyi yaş verisine
+bilgi eklemiyor. HRSL 2020 tarihlidir; kalibrasyon toplamı günceller ama
+2020'den sonra yapılaşan alanlarda birim içi dağılım eksik kalabilir.
 
 Sağlık erişimi, OSM'de haritalanmış tesis noktası veya poligonuna olan
 projeksiyonlu düz çizgi mesafesidir. Tesis kapasitesini, çalışma saatini,
@@ -498,6 +574,58 @@ python -m http.server 8000
 
 Ardından `http://localhost:8000/analysis_map.html` adresini açın.
 
+## Belirsizlik ve duyarlılık analizi
+
+HVI bir ölçüm değil, bir dizi tasarım kararının sonucu: bileşenlerin nasıl
+ölçekleneceği, grupların ve bileşenlerin ağırlığı, grupların birbirini
+telafi edip edemeyeceği, geometrik ortalamanın tabanı, hangi bileşenin
+endekse gireceği. `uncertainty_analysis.py` bu kararları Monte Carlo ile
+değiştirip yolların sırasının ne kadar oynadığını ölçer. Yöntem, bileşik
+göstergeler literatüründeki standart belirsizlik/duyarlılık analizidir
+(OECD/JRC, *Handbook on Constructing Composite Indicators*, 2008; Saisana,
+Saltelli ve Tarantola, 2005). Ana pipeline çıktısını okur, uydu verisi
+indirmez:
+
+```bash
+python uncertainty_analysis.py --city izmir --year 2026
+```
+
+Her koşuda (varsayılan 500, tohum 42) şu kararlar rastgele çekilir:
+
+| Karar | Dağılım | Varsayılan endeksteki değer |
+|---|---|---|
+| Ölçekleme | %2-%98 yüzdelik, min-max ya da sıra yüzdeliği (eşit olasılık) | %2-%98 |
+| Grup ağırlıkları | Dirichlet(8, 8, 8): her grup ~%90 olasılıkla 0,19-0,49 | 1/3 |
+| Grup içi bileşen ağırlıkları | Dirichlet(4, ..., 4) | eşit |
+| Gruplar arası birleştirme | geometrik ya da aritmetik ortalama | geometrik |
+| Geometrik ortalama tabanı | 0,01-0,10 arası düzgün | 0,05 |
+| Bileşen dışlama | %25 olasılıkla bir bileşen çıkarılır (tek üyeli tehlike hariç) | yok |
+
+İlk koşu varsayılan endeksin kendisidir ve yayımlanan skoru birebir yeniden
+üretmesi denetlenir (`default_run_reproduces_published_index_pearson`).
+Dağılımlar bir yargıdır; `--group-concentration`,
+`--component-concentration` ve `--exclusion-probability` ile değiştirilip
+rapora yazılır.
+
+Çıktılar `data/processed/<şehir>/uncertainty/` altında:
+
+- `belirsizlik_yollar.geojson`: yol başına sıra yüzdeliğinin medyanı ve
+  %5-%95 aralığı (`sira_p05`, `sira_p95`, `sira_bandi`), ilk %10 ve ilk %20
+  riskli dilime girme olasılığı (`olasilik_ilk_yuzde10`, `olasilik_ilk_yuzde20`).
+- `belirsizlik_mahalleler.csv`: en az 20 yollu mahallelerin ortalama skora
+  göre sırasının dağılımı ve ilk 5'e / ilk 20'ye girme olasılığı.
+- `belirsizlik_duyarlilik.csv`: her kararın birinci derece duyarlılık indeksi
+  S<sub>i</sub> = Var(E[Y|X<sub>i</sub>]) / Var(Y); Y, koşunun varsayılan
+  endeksle Spearman korelasyonu ve ilk %10 örtüşmesi. Sürekli kararlar 10
+  yüzdelik dilimle kestirilir; 500 koşuda ~0,02'nin altı gürültüdür.
+- `belirsizlik_kosular.csv`, `belirsizlik_ozet.json`: koşu başına kararlar ve
+  sonuçlar, özet istatistikler ve kullanılan ayarlar.
+
+Kapsam dışı: yol tamponu genişliği (`analyze_pipeline.py` 10/30/50 m ile
+ayrıca ölçer) ve verinin kendi ölçüm hatası (LST, OSM eksikliği, nüfus).
+Bu yüzden aralıklar yalnızca yöntem kararlarından gelen belirsizliğin alt
+sınırıdır; endeksin sağlık sonuçlarıyla doğrulanmasının yerini tutmaz.
+
 ## 2020 → 2026: Bulgular
 
 *(İzmir, 6 yıllık pencere. Her yıl için 4 uydu karosunda karo başına 3,
@@ -507,7 +635,7 @@ roads_timeseries.geojson` ve `roads_with_hvi.geojson`. Hangi sahnelerin
 kullanıldığı `docs/izmir/manifest.json` içinde.)*
 
 **Sıcaklık - genel eğilim:**
-- 44.041 yol segmentinin ortalama yüzey sıcaklığı 2020'de 42,6 °C, 2026'da
+- 44.068 yol segmentinin ortalama yüzey sıcaklığı 2020'de 42,6 °C, 2026'da
   43,1 °C: ortalama değişim **+0,47 °C**.
 - En çok ısınan yol: **+13,5 °C** · en çok soğuyan yol: **-7,6 °C**
 - Yolların **%49'u** ısındı (+0,5 °C'den fazla), **%23'ü** soğudu, **%27'si**
@@ -520,50 +648,66 @@ kullanıldığı `docs/izmir/manifest.json` içinde.)*
 > +0,47 °C'ye iniyor. Ders: tek bir uydu geçişinden yıllar arası ısınma
 > sonucu çıkarılmaz.
 
-**HVI - risk dağılımı (gruplu metodoloji, 5 kategori, iki yılın ortak
-Jenks sınırlarıyla; demografisi eşlenen 43.183 yol):**
+**HVI - risk dağılımı (formül sürümü 7: gruplu endeks, yol ölçeğinde nüfus;
+5 kategori, iki yılın ortak Jenks sınırlarıyla; demografisi eşlenen 43.210 yol):**
 
 | Kategori | 2020 | 2026 | Değişim |
 |---|---|---|---|
-| Düşük | 7.462 | 5.659 | -1.803 |
-| Orta | 11.902 | 12.091 | +189 |
-| Yüksek | 9.569 | 10.739 | +1.170 |
-| Kritik | 9.694 | 9.799 | +105 |
-| Aşırı Kritik | 4.556 | 4.895 | +339 |
+| Düşük | 7.476 | 5.709 | -1.767 |
+| Orta | 11.721 | 11.789 | +68 |
+| Yüksek | 9.769 | 10.830 | +1.061 |
+| Kritik | 9.391 | 9.670 | +279 |
+| Aşırı Kritik | 4.853 | 5.212 | +359 |
 
 Kategori sınırları iki yılın ortak dağılımından bir kez hesaplandığı için
 "Kritik" her iki yılda aynı eşiği ifade eder. Kayma esas olarak alt uçta:
 Düşük kategorisinden çıkan yollar Orta ve Yüksek'e geçmiş; Kritik ve Aşırı
-Kritik toplamı **%3 artmış** (14.250'den 14.694'e). Demografi ve OSM
-bileşenleri iki yılda aynı olduğu için bu değişimin tamamı sıcaklık ve
+Kritik toplamı **%4 artmış** (14.244'ten 14.882'ye). Demografi ve OSM
+bileşenleri iki yılda aynı tutulduğu için bu değişimin tamamı sıcaklık ve
 bitki örtüsünden gelir.
 
-> Not: bu sayılar v1.x'tekilerle karşılaştırılamaz. v2.0.0'da endeks gruplu
-> yapıya geçti, ölçekleme değişti ve sıcaklık girdisi tek sahne yerine
-> medyan kompozitten geliyor.
+> Not: bu sayılar önceki sürümlerle karşılaştırılamaz. v2.0.0'da endeks gruplu
+> yapıya geçti; sürüm 7'de nüfus yoğunluğu mahalle sabiti yerine yolun kendi
+> çevresinden ölçülüyor.
 
 **En yüksek ortalama HVI'ye sahip 5 mahalle (2026, en az 20 yol segmenti
-olan 418 mahalle arasından):**
+olan 416 mahalle arasından) ve belirsizlik analizinde ilk 20 mahalle arasında
+kalma olasılıkları:**
 
-1. Umut Mahallesi (Karabağlar) - %90,4
-2. Sarıyer Mahallesi (Karabağlar) - %89,7
-3. Uğur Mumcu Mahallesi (Karabağlar) - %89,4
-4. İhsan Alyanak Mahallesi (Karabağlar) - %88,5
-5. Bozyaka Mahallesi (Karabağlar) - %86,4
+1. Sarıyer Mahallesi (Karabağlar): 87,0 (%97)
+2. Uğur Mumcu Mahallesi (Karabağlar): 86,8 (%98)
+3. Umut Mahallesi (Karabağlar): 86,3 (%98)
+4. İhsan Alyanak Mahallesi (Karabağlar): 84,7 (%96)
+5. Abdi İpekçi Mahallesi (Karabağlar): 84,0 (%97)
 
-İlçe ortalamasında Karabağlar (%70,5) açık ara önde; ardından Buca (%56,2),
-Bayraklı (%55,3) ve Karşıyaka (%53,7) geliyor. Listenin başı v1.x ile büyük
-ölçüde aynı mahalleler: sonuç, formül değişikliğine karşı kararlı.
+İlçe ortalamasında Karabağlar (69,2) açık ara önde; ardından Buca (55,8),
+Bayraklı (54,5) ve Karşıyaka (53,3) geliyor. Listenin başı v1.x ve v2.0 ile
+büyük ölçüde aynı mahalleler.
+
+**Sonuç ne kadar sağlam? (belirsizlik analizi, 500 koşu, 2026)** Mahalle
+düzeyindeki sıralama yöntem kararlarına dayanıklı: ilk beş mahallenin her biri
+koşuların %96-98'inde ilk 20 içinde kalıyor. **Yol düzeyindeki sıralama ise
+belirgin biçimde daha oynak:** bir koşunun varsayılan endeksle sıra korelasyonu
+medyanda 0,87 (%5'te 0,66), en riskli %10'luk yol kümesinin medyanda %76'sı
+korunuyor, ve varsayılan ilk %10'daki 4.321 yolun yalnızca **%35'i** koşuların
+en az %90'ında yine ilk %10'da kalıyor. Bir yolun sıra yüzdeliğinin %5-%95
+aralığı medyanda 39 puan genişliğinde. Sıralamayı en çok oynatan iki karar
+maruziyet grubunun ağırlığı (birinci derece duyarlılık indeksi 0,25) ve
+grupların geometrik mi aritmetik mi birleştirildiği (0,14); bileşen ölçekleme
+yöntemi ve tek tek bileşen ağırlıkları daha az etkili. Pratik sonuç:
+**karar mahalle düzeyinde verilmeli; yol düzeyindeki liste, mahalle içinde
+nereye bakılacağını gösteren ikinci bir adım olarak kullanılmalı**, tercihen
+`olasilik_ilk_yuzde10` sütunu yüksek olan yollardan başlanarak.
 
 **Grupların endekse gerçek etkisi (2026, grup skoru ile HVI arasındaki sıra
-korelasyonu):** maruziyet 0,82 · tehlike 0,39 · kırılganlık 0,23. Üç grubun
+korelasyonu):** maruziyet 0,82 · tehlike 0,40 · kırılganlık 0,25. Üç grubun
 ağırlığı eşit olsa da etkileri eşit değil: İzmir'de riskin mekânsal
 dağılımını en çok nüfus ve yapılaşma yoğunluğu belirliyor. Yani bu harita
 ağırlıklı olarak "sıcak VE kalabalık" yerleri öne çıkarır; kırılganlık
 bileşenleri ilçe düzeyinde olduğu için mahalle içi ayrımı zayıftır.
 
 **Ne yapılabilir?**
-- Kritik/Aşırı Kritik kategorisindeki 14.694 yol segmenti (skorlu yolların
+- Kritik/Aşırı Kritik kategorisindeki 14.882 yol segmenti (skorlu yolların
   ~%34'ü) ağaçlandırma, gölgelendirme, açık renk yüzey gibi müdahaleler için
   önceliklendirilebilir.
 - Bir yolun HVI'si haritadaki tooltip'ten "neden" sorusuyla birlikte
@@ -582,12 +726,16 @@ tek-günlük anomalileri azaltır ama o yazın genel hava koşullarını
 
 ## Kurulum ve çalıştırma
 
+**Desteklenen Python sürümleri: 3.12, 3.13 ve 3.14** (CI üçünü de test eder).
+3.11 desteklenmez: `constraints.txt`'teki numpy 2.5 ve rasterio 1.5 en az 3.12
+ister.
+
 ```bash
-git clone <bu-repo>
+git clone https://github.com/Ayberkrk/turkiye-heat-risk.git
 cd turkiye-heat-risk
-python3 -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+python3.12 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[dev]" -c constraints.txt   # ya da: pip install -r requirements.txt
 ```
 
 `requirements.txt`'teki sürüm aralıkları major sürüm kırılımlarına karşı
@@ -614,11 +762,16 @@ python pipeline.py --city izmir --years 2020 2026 --main-year 2026 --open
 - `--force`: yol risk skoru ve HVI önbelleğini yok say, yeniden hesapla
 - `--night-lst`: mahalle ölçeğinde MODIS gece ısı adası katmanını da üret
   (isteğe bağlı, ek bir uydu kaynağı indirir - bkz. Metodoloji)
+- `--uncertainty-runs N`: belirsizlik analizinin koşu sayısı (varsayılan 500,
+  İzmir'de ~15 sn); `0` ile atlanır
+- `--no-export`: Excel/CSV/GeoPackage/görsel veri paketini üretme
 
 Her adım, çıktısı zaten diskte varsa atlanır - script yarıda kesilse bile
-`python pipeline.py --city izmir` ile kaldığı yerden devam eder. İlk
-çalıştırma (4 Landsat sahnesi × 2 yıl + OSM özütü) makul bir internet
-bağlantısında ~15-25 dakika ve ~5-6 GB disk alanı gerektirir.
+`python pipeline.py --city izmir` ile kaldığı yerden devam eder. Landsat
+bantlarının yalnızca şehir penceresi okunduğu için İzmir'in iki yıllık ilk
+çalıştırması (24 sahne, OSM özütü, gece katmanı) bu geliştirme makinesinde
+~12,5 dakika ve ~0,5 GB disk aldı; tam sahne indiren eski sürümde bu ~3 saat
+ve ~6 GB idi.
 
 Yol risk skoru ve HVI çıktıları formül sürümü değiştiğinde otomatik
 olarak yeniden hesaplanır (bkz. `src/core/cache.py`); veri kaynağı aynı
@@ -639,9 +792,9 @@ etiketleme, config doğrulama, önbellek geçerliliği) için birim testler
 içinde çalışır:
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt
+pip install -e ".[dev]" -c constraints.txt
 python -m ruff check .
-pytest
+pytest            # yol ayarı pyproject.toml'da, PYTHONPATH gerekmez
 ```
 
 `.github/workflows/tests.yml` her push ve PR'da önce `ruff check`'i
@@ -716,6 +869,7 @@ python -m json.tool docs/izmir/manifest.json
 turkiye-heat-risk/
 ├── pipeline.py               # Tek üst seviye giriş noktası: python pipeline.py --city izmir
 ├── analyze_pipeline.py       # Çok yıllı hava/duyarlılık/what-if analiz paketi
+├── uncertainty_analysis.py   # HVI sıralamasının Monte Carlo belirsizlik/duyarlılık analizi
 ├── validate_city.py           # Yeni bir şehir config.yaml'ını hızlıca doğrular
 ├── validate_city_data.py      # Tüm şehir kayıtları için çevrimdışı kalite/kapsam raporu
 ├── build_docs_index.py        # docs/ altındaki şehirler için karşılaştırma sayfası üretir
@@ -728,6 +882,8 @@ turkiye-heat-risk/
 │   │   ├── raster.py          #   LST/NDVI hesaplama + bellek-güvenli mozaikleme
 │   │   ├── roads.py           #   OSM yol ağı + yıllık sıcaklık/NDVI eşleme
 │   │   ├── impact_analysis.py #   hava düzeltmesi, HVI duyarlılığı ve müdahale senaryoları
+│   │   ├── population_grid.py #   30 m nüfus ızgarasının resmi nüfusa kalibre edilip yollara dağıtılması
+│   │   ├── uncertainty.py     #   Monte Carlo belirsizlik ve birinci derece duyarlılık indeksleri
 │   │   ├── osm_amenities.py   #   sağlık/yeşil alan/bina katmanları (OSM'den)
 │   │   ├── hvi.py             #   çok bileşenli HVI hesaplama
 │   │   ├── map_builder.py     #   interaktif Folium haritası (çevrimdışı + barındırma sürümü)
@@ -842,12 +998,16 @@ turkiye-heat-risk/
   bir kademe daha kaba çözünürlük**: İzmir'in mahalle seviyesinde CKAN
   nüfus verisinin aksine bu adapter'lar yaşlı/çocuk oranı için ilçe bazlı
   bir TÜİK yayını bulamadığından İL'in genel yaş dağılımını (0-14 ve 65+)
-  tüm ilçelere aynı şekilde uyguluyor; nüfus yoğunluğu da mahalle değil
-  ilçe bazında sabit (ilçe alanı OSM idari sınırından hesaplandığı için
-  kırsal hinterlandı geniş ilçelerde yoğunluk düşük çıkar). Gerçek
-  ilçe-içi/mahalle-içi eşitsizlik bu yüzden İzmir'e göre daha az görünür
+  tüm ilçelere aynı şekilde uyguluyor. Nüfus yoğunluğu ilçe toplamına
+  kalibre 30 m ızgaradan geldiği için yol ölçeğinde değişir, ama yaş ve
+  sosyoekonomik bileşenler ilçe içinde sabittir. Gerçek ilçe-içi
+  kırılganlık eşitsizliği bu yüzden İzmir'e göre daha az görünür
   (bkz. `core/ilce_table_adapter.py` ve her şehrin `adapter.py`
   docstring'i).
+- **Nüfus ızgarası bir modeldir**: HRSL sayım nüfusunu bina tespit edilen
+  hücrelere dağıtır; tespit hatası, 2020 sonrası yapılaşma ve konut dışı
+  binalar (sanayi, depo) birim içi dağılımı bozabilir. Toplam resmi
+  kaynağa kalibre edildiği için hata birim içi paylaşımla sınırlıdır.
 
 ## Lisans
 

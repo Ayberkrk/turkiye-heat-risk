@@ -5,6 +5,41 @@ değişiklikleri sürüm sürüm listeler.
 
 ## Unreleased
 
+- **Şehir veri paketi**: pipeline son adımda Excel çalışma kitabı (Özet,
+  Mahalleler, İlçeler, Öncelikli yollar, Sütun sözlüğü, Kaynaklar ve lisans),
+  CSV'ler, GeoPackage (yollar + mahalle poligonları), dört PNG görsel ve
+  yazdırılabilir `ozet.html` üretiyor (`core/export.py`, `export_city.py`).
+  Küçük dosyalar `docs/<şehir>/indir/` altında sitede, tam paket release
+  zip'inde. Paket OSM türevi olduğu için ODbL 1.0 altında.
+- **Landsat pencere okuma**: bantlar tam sahne yerine şehir penceresi olarak
+  HTTP Range ile okunuyor; pikseller tam sahnedekiyle birebir aynı. İzmir'in
+  iki yıllık ilk çalıştırması ~3 saat/6 GB'tan ~12,5 dakika/0,5 GB'a indi.
+  `SCENE_FETCH_VERSION` 3.
+- **Belirsizlik analizi pipeline'da**: `pipeline.py` varsayılan olarak 500
+  koşu yürütür (`--uncertainty-runs 0` ile atlanır). İzmir 2026: mahalle
+  sıralaması sağlam (ilk beş mahalle koşuların %96-98'inde ilk 20'de), yol
+  sıralaması oynak (varsayılan ilk %10'un yalnızca %35'i kararlı).
+- **Barındırılan harita verisi yarıya indi**: yol açıklamaları dosya başına
+  bir sözlükle sıkıştırılıp tarayıcıda geri kuruluyor, koordinatlar 5 ondalığa
+  yuvarlanıyor. `docs/izmir/data` 80 MB'tan 37 MB'a indi.
+- Haritanın göstergesine ve şehirler sayfasına indirme bağlantıları eklendi.
+- `pyproject.toml` (editable kurulum, pytest yol ayarı) ve CI'da Python 3.12,
+  3.13, 3.14 matrisi (#32). 3.11, numpy 2.5 ve rasterio 1.5 nedeniyle desteklenmiyor.
+- README yeniden düzenlendi: kim için ne var, veri indirme, hızlı başlangıç,
+  akış şeması; bulgular sürüm 7 ve belirsizlik sonuçlarıyla güncellendi.
+- **Yol ölçeğinde nüfus yoğunluğu**: maruziyet bileşeni artık mahalle/ilçe
+  sabiti değil; Meta ve CIESIN'in 30 m HRSL nüfus ızgarası (CC BY 4.0)
+  adapter'ın resmi nüfusuna birim birim kalibre edilip yolun 150 m
+  çevresinde ölçülüyor (`core/population_grid.py`). Izgara penceresi HTTP
+  üzerinden okunur, sabitlenmiş sürüm `v1.5.69`. İzmir'de eski yoğunlukla
+  sıra korelasyonu 0,93, log varyansın %20'si mahalle içinde. Eski değer
+  `nufus_yogunlugu_birim` sütununda; `population_grid: false` ile kapatılır.
+  `HVI_FORMULA_VERSION` 7'ye çıktı, skorlar önceki sürümle karşılaştırılamaz.
+- **Belirsizlik ve duyarlılık analizi**: `uncertainty_analysis.py`, ölçekleme,
+  ağırlık, birleştirme, taban ve bileşen seçimi kararlarını Monte Carlo ile
+  değiştirip yol ve mahalle başına sıra aralığı, ilk %10'a girme olasılığı
+  ve kararların birinci derece duyarlılık indekslerini raporluyor
+  (`core/uncertainty.py`).
 - Şehir config doğrulaması artık coğrafi veya metre cinsinden olmayan CRS'leri
   reddediyor; UTM CRS'inin bbox merkezinin dilimiyle uyumunu da denetliyor.
 

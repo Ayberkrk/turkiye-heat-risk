@@ -1,7 +1,7 @@
 {
   "city_id": "izmir",
   "city_name": "İzmir",
-  "generated_at": "2026-10-03T09:23:33+00:00",
+  "generated_at": "2026-11-06T18:37:59+00:00",
   "years": [
     "2020",
     "2026"
@@ -20,7 +20,8 @@
     "buffer_meters": 10,
     "admin_level_ilce": "6",
     "admin_level_mahalle": "8",
-    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/aegean-latest.osm.pbf"
+    "osm_pbf_url": "https://download.openstreetmap.fr/extracts/europe/turkey/aegean-latest.osm.pbf",
+    "population_grid_url": "https://dataforgood-fb-data.s3.amazonaws.com/hrsl-cogs/hrsl_general/hrsl_general-v1.5.69.vrt"
   },
   "scenes": {
     "2020": [
@@ -173,10 +174,29 @@
     ]
   },
   "versions": {
-    "hvi_formula_version": 4,
-    "risk_timeseries_version": 1,
-    "mosaic_version": 2,
-    "scene_fetch_version": 1
+    "hvi_formula_version": 7,
+    "risk_timeseries_version": 2,
+    "mosaic_version": 3,
+    "scene_fetch_version": 3
+  },
+  "health_access": {
+    "metric": "road_centroid_to_nearest_osm_facility_euclidean_distance_m",
+    "facility_classes": [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pharmacy"
+    ],
+    "limitations": [
+      "osm_mapping_completeness_not_measured",
+      "facility_capacity_and_opening_hours_not_modeled",
+      "entrances_and_walking_network_travel_time_not_modeled"
+    ]
+  },
+  "validation": {
+    "source_values": "not_independently_verified_by_pipeline",
+    "osm_coverage": "not_measured_by_pipeline",
+    "health_outcomes": "not_validated"
   },
   "night_lst_requested": true
 }
