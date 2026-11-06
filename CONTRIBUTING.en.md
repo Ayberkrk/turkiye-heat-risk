@@ -50,6 +50,12 @@ population:
   adapter: "cities.<city>.adapter"    # step 3 below
   # You can add here the extra keys your adapter needs
   # (CKAN dataset IDs, file paths, API keys, etc.)
+
+# Optional. If omitted, exposure comes from the global 30 m HRSL grid
+# calibrated to the adapter's official population (see core/population_grid.py).
+# population_grid: false              # use the unit (neighbourhood/district) density
+# population_grid:
+#   url: "https://.../other-grid.vrt"  # an EPSG:4326 raster of people counts
 ```
 
 `validate_city.py` checks this CRS rule automatically: the CRS must be projected

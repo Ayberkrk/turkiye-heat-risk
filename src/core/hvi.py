@@ -9,7 +9,9 @@ cevap bulabilir.
 
 Bileşenler:
   - hazard              : LST risk skoru (yıl bazlı, zaten vardı)
-  - exposure             : nüfus yoğunluğu (zaten vardı)
+  - exposure             : nüfus yoğunluğu; varsayılan olarak resmi birim
+                             nüfusuna kalibre 30 m ızgaradan yolun 150 m
+                             çevresinde ölçülür (bkz. core/population_grid.py)
   - sensitivity_yasli     : 65+ nüfus oranı (zaten vardı)
   - sensitivity_cocuk     : 0-14 nüfus oranı (yeni - aynı CSV'den, ek maliyetsiz)
   - sensitivity_agac      : yol tamponundaki ortalama NDVI'nin tersi (yeni -
@@ -82,6 +84,7 @@ from core.osm_amenities import (
     load_health_points,
 )
 from core.paths import city_data_proc, resolve_pbf_path
+from core.population_grid import compute_road_population_density
 
 CATEGORY_COLORS_5 = {
     "Düşük": "#3182bd",
@@ -110,7 +113,7 @@ COMPONENT_FLOOR = 0.05
 # Çıktı sürümü - bileşen sayısı/formülü, yapılaşma tamponu veya
 # `roads_with_hvi.geojson` sütun şeması değiştiğinde artırılır; eski önbellek
 # güncel çıktı gibi kullanılmamalıdır (bkz. core/cache.py).
-HVI_FORMULA_VERSION = 6
+HVI_FORMULA_VERSION = 7
 
 
 # Sağlam (aykırı değere dayanıklı) ölçeklemede kullanılan alt/üst yüzdelikler.
@@ -371,6 +374,7 @@ def _hvi_input_fingerprint(
         "config": config.raw,
         "years": list(years),
         "formula_version": HVI_FORMULA_VERSION,
+        "population_grid_url": config.population_grid_url,
         "roads_file": file_signature(city_data_proc(config.city_id) / "roads_timeseries.geojson"),
         "roads_content_sha256": road_digest,
         "osm_pbf": file_signature(pbf_path),
@@ -431,6 +435,21 @@ def compute_heat_vulnerability_index(config: CityConfig, years: list[str],
     # sonradan yapılacak halk sağlığı yakınsaklık kontrollerinde de gerekir.
     roads["ilce_adi"] = joined["ilce_adi"].values
     roads["nufus_yogunlugu"] = joined["nufus_yogunlugu"].values
+    if config.population_grid_url:
+        # Birim (mahalle/ilçe) yoğunluğu tanı sütunu olarak kalır; maruziyet
+        # aynı resmi toplama kalibre edilmiş 30 m ızgaradan, yolun kendi
+        # çevresinden ölçülür (bkz. core/population_grid.py). Tampon bina
+        # yoğunluğuyla aynı: dar tampon yolların çoğunda dolu hücre bulmazdı.
+        print(f"Nüfus ızgarası yollara dağıtılıyor ({BUILDING_DENSITY_BUFFER_M} m tampon)...")
+        grid_density, calibration = compute_road_population_density(
+            config, roads_utm, mahalle_gdf, BUILDING_DENSITY_BUFFER_M, force=force,
+        )
+        roads["nufus_yogunlugu_birim"] = roads["nufus_yogunlugu"]
+        # Demografisi eşlenmemiş yol izgarada nüfus bulsa da NaN kalır;
+        # kapsam ölçümü ve eksiklik denetimi buna dayanır.
+        roads["nufus_yogunlugu"] = grid_density.where(roads["nufus_yogunlugu_birim"].notna()).round(1)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        calibration.to_csv(output_path.parent / "nufus_izgarasi_kalibrasyon.csv", index=False)
     roads["yasli_oran"] = joined["yasli_oran"].values
     roads["cocuk_oran"] = joined["cocuk_oran"].values
     if has_sosyoekonomik:
