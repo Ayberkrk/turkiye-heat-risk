@@ -1,0 +1,36 @@
+name: Site
+
+# docs/ klasörünü GitHub Pages'e yayımlar. Varsayılan "pages build and
+# deployment" akışının dağıtım adımı 10 dakikada zaman aşımına uğruyor; 70
+# şehrin harita verisiyle (~1.500 dosya) GitHub'ın işleme süresi bunu aşabiliyor.
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 1800000
