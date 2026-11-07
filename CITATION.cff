@@ -21,6 +21,7 @@ authors:
     given-names: Ayberk
 repository-code: "https://github.com/Ayberkrk/turkiye-heat-risk"
 url: "https://ayberkrk.github.io/turkiye-heat-risk/"
+doi: "10.5281/zenodo.24028997"
 license: MIT
 keywords:
   - urban-heat-island

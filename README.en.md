@@ -10,6 +10,7 @@ OpenStreetMap and official population data. Open data, open code, reproducible w
 [![code license](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
 [![data license](https://img.shields.io/badge/data-ODbL%201.0-green)](https://opendatacommons.org/licenses/odbl/1-0/)
 [![version](https://img.shields.io/github/v/tag/Ayberkrk/turkiye-heat-risk?label=version&color=informational)](https://github.com/Ayberkrk/turkiye-heat-risk/releases)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24028997.svg)](https://doi.org/10.5281/zenodo.24028997)
 [![good first issues](https://img.shields.io/github/issues/Ayberkrk/turkiye-heat-risk/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/Ayberkrk/turkiye-heat-risk/labels/good%20first%20issue)
 
 [**Live map**](https://ayberkrk.github.io/turkiye-heat-risk/) ·
