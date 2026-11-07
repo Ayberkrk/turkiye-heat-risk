@@ -5,6 +5,13 @@ değişiklikleri sürüm sürüm listeler.
 
 ## Unreleased
 
+## 2.1.1 - 2026-11-07
+
+- Site artık kendi iş akışıyla (`.github/workflows/pages.yml`) yayımlanıyor;
+  varsayılan Pages dağıtımı 70 şehirlik sitede 10 dakika sınırına takılıyordu.
+- Antalya ve Eskişehir haritaları da açılışta Kritik ve Aşırı Kritik yolları
+  gösteriyor.
+- İlk Zenodo arşivi (DOI) bu sürümle oluşturuldu.
 ## 2.1.0 - 2026-11-07
 
 - **70 şehrin tamamı yayında**: her şehir için harita, özet rapor ve
