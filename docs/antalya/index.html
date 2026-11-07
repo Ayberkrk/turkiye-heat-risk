@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_409981d0c1e2f07faae8e64aaab9b4b3 {
+                #map_3a4150195cfda0c5439ab103cbb74ff8 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -176,7 +176,9 @@
         <hr style='border-color:#555; margin:8px 0'>
         <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3182bd;margin-right:6px;vertical-align:middle;"></span>Düşük (0.9-24.0)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdae6b;margin-right:6px;vertical-align:middle;"></span>Orta (24.0-37.7)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fd8d3c;margin-right:6px;vertical-align:middle;"></span>Yüksek (37.8-49.5)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#de2d26;margin-right:6px;vertical-align:middle;"></span>Kritik (49.5-62.7)<br><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#800026;margin-right:6px;vertical-align:middle;"></span>Aşırı Kritik (62.7-100.0)<br>
         <hr style='border-color:#555; margin:8px 0'>
-        <small>Bir yola tıklayınca/üzerine gelince skoru oluşturan tüm
+        <small>Açılışta yalnızca Kritik ve Aşırı Kritik yollar gösterilir; diğer
+        kategoriler ve gece katmanı sağ üstteki katman düğmesinden açılır.
+        Bir yola tıklayınca/üzerine gelince skoru oluşturan tüm
         bileşenler görünür.<br>
         Nüfus: TÜİK ADNKS 2025, SEGE-2022 (T.C. Sanayi ve Teknoloji Bakanlığı).<br>Nüfus ızgarası: Meta &amp; CIESIN, High Resolution Settlement Layer (CC BY 4.0).<br>
         Alan: Antalya (metro alanı)</small>
@@ -185,6 +187,14 @@
            style='color:#fdae6b; font-size:13px;'>&#8681; Verileri indir (Excel, CSV, görseller)</a>
         </div>
     </div>
+    
+    
+    <script>
+    if (window.innerWidth < 700) {
+        document.getElementById('hviPanelIcerik').style.display = 'none';
+        document.getElementById('hviPanelKapat').textContent = '+';
+    }
+    </script>
     
     
     <div id='yukleniyorKutusu' style='display:none; position: fixed; top: 10px; left: 50%;
@@ -196,10 +206,10 @@
     
     <script>
     window.addEventListener('load', function() {
-        var harita = map_409981d0c1e2f07faae8e64aaab9b4b3;
+        var harita = map_3a4150195cfda0c5439ab103cbb74ff8;
         var dosyaYollari = {"2020": {"Düşük": "data/dusuk_2020.geojson", "Orta": "data/orta_2020.geojson", "Yüksek": "data/yuksek_2020.geojson", "Kritik": "data/kritik_2020.geojson", "Aşırı Kritik": "data/asiri-kritik_2020.geojson"}, "2026": {"Düşük": "data/dusuk_2026.geojson", "Orta": "data/orta_2026.geojson", "Yüksek": "data/yuksek_2026.geojson", "Kritik": "data/kritik_2026.geojson", "Aşırı Kritik": "data/asiri-kritik_2026.geojson"}};
-        var geoJsonAdlari = {"D\u00fc\u015f\u00fck": "geo_json_8b0400fb851c33ea75b3d14753cf6538", "Orta": "geo_json_503cfe0c3731bf67a4cbecd59d6e68ee", "Y\u00fcksek": "geo_json_90b7ed3f3329ed131777627d7ce32960", "Kritik": "geo_json_5b7d67a1f6f267494890bac1f270e1a0", "A\u015f\u0131r\u0131 Kritik": "geo_json_dcf1025383a3d4706634c3ab1bc6292b"};
-        var grupAdlari = {"D\u00fc\u015f\u00fck": "feature_group_a634ab5cfa3757e28ceb0a508a48b29d", "Orta": "feature_group_0c340e35c49f5a5109042edab89eac5a", "Y\u00fcksek": "feature_group_8fcc7a17452de7aeb4127377b9547abb", "Kritik": "feature_group_564fa462da300ffc385c0cbba2469f8b", "A\u015f\u0131r\u0131 Kritik": "feature_group_e925718ee74af3a4bbb09f58065e91aa"};
+        var geoJsonAdlari = {"D\u00fc\u015f\u00fck": "geo_json_3271658f407cf74a704da58816fb33d2", "Orta": "geo_json_160010e63631c7297053aec569830319", "Y\u00fcksek": "geo_json_7d994d451b0b261ab683a309cfd90eb3", "Kritik": "geo_json_2bbc9565fc19e9893035b16523e27c2a", "A\u015f\u0131r\u0131 Kritik": "geo_json_f7c89b5a67714480a169d153b5d0c253"};
+        var grupAdlari = {"D\u00fc\u015f\u00fck": "feature_group_a327dd7464beefd33cf99259770f6cb0", "Orta": "feature_group_13b9d8a37f768e7c8e9039a30ff80dc8", "Y\u00fcksek": "feature_group_0a9a9161faeeb8aa84ea97b28056c552", "Kritik": "feature_group_becfff54698537aa0913125cc328cca6", "A\u015f\u0131r\u0131 Kritik": "feature_group_944aabe9ce0f29974a78e55ce81cb384"};
         var mevcutYil = '2026';
         var onbellek = {};  // "{yil}|{kategori}" -> zaten indirilmiş veri
 
@@ -276,21 +286,28 @@
             }
         });
 
+        // Sayfa açıldığında en riskli kategoriler görünür olsun: tüm
+        // katmanlar kapalı başlayınca ziyaretçi boş bir altlık görüyor ve
+        // sağ üstteki katman düğmesini çoğu zaman fark etmiyordu.
+        ["Kritik", "Aşırı Kritik"].forEach(function(kategori) {
+            if (grupAdlari[kategori]) { harita.addLayer(window[grupAdlari[kategori]]); }
+        });
+
         
     });
     </script>
     
     
-            <div class="folium-map" id="map_409981d0c1e2f07faae8e64aaab9b4b3" ></div>
+            <div class="folium-map" id="map_3a4150195cfda0c5439ab103cbb74ff8" ></div>
         
 </body>
 <script>
     
     
-            var map_409981d0c1e2f07faae8e64aaab9b4b3 = L.map(
-                "map_409981d0c1e2f07faae8e64aaab9b4b3",
+            var map_3a4150195cfda0c5439ab103cbb74ff8 = L.map(
+                "map_3a4150195cfda0c5439ab103cbb74ff8",
                 {
-                    center: [36.937007300000005, 30.71050035],
+                    center: [36.930275013250444, 30.721410251514747],
                     crs: L.CRS.EPSG3857,
                     ...{
   "zoom": 12,
@@ -300,13 +317,13 @@
 
                 }
             );
-            L.control.scale().addTo(map_409981d0c1e2f07faae8e64aaab9b4b3);
+            L.control.scale().addTo(map_3a4150195cfda0c5439ab103cbb74ff8);
 
             
 
         
     
-            var tile_layer_ec573859fd57e91aee51d9ba7b72159c = L.tileLayer(
+            var tile_layer_8d0c04a9d2cd25d1ffce1ecd76883a0d = L.tileLayer(
                 "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                 {
   "minZoom": 0,
@@ -323,44 +340,50 @@
             );
         
     
-            tile_layer_ec573859fd57e91aee51d9ba7b72159c.addTo(map_409981d0c1e2f07faae8e64aaab9b4b3);
+            tile_layer_8d0c04a9d2cd25d1ffce1ecd76883a0d.addTo(map_3a4150195cfda0c5439ab103cbb74ff8);
         
     
-            var feature_group_a634ab5cfa3757e28ceb0a508a48b29d = L.featureGroup(
+            map_3a4150195cfda0c5439ab103cbb74ff8.fitBounds(
+                [[36.87763840816606, 30.650585557502456], [36.98291161833483, 30.792234945527042]],
+                {}
+            );
+        
+    
+            var feature_group_a327dd7464beefd33cf99259770f6cb0 = L.featureGroup(
                 {
 }
             );
         
     
-        function geo_json_8b0400fb851c33ea75b3d14753cf6538_styler(feature) {
+        function geo_json_3271658f407cf74a704da58816fb33d2_styler(feature) {
             switch(feature.id) {
                 default:
                     return {"color": "#3182bd", "opacity": 0.85, "weight": 2.5};
             }
         }
 
-        function geo_json_8b0400fb851c33ea75b3d14753cf6538_onEachFeature(feature, layer) {
+        function geo_json_3271658f407cf74a704da58816fb33d2_onEachFeature(feature, layer) {
 
             layer.on({
             });
         };
-        var geo_json_8b0400fb851c33ea75b3d14753cf6538 = L.geoJson(null, {
-                onEachFeature: geo_json_8b0400fb851c33ea75b3d14753cf6538_onEachFeature,
+        var geo_json_3271658f407cf74a704da58816fb33d2 = L.geoJson(null, {
+                onEachFeature: geo_json_3271658f407cf74a704da58816fb33d2_onEachFeature,
             
-                style: geo_json_8b0400fb851c33ea75b3d14753cf6538_styler,
+                style: geo_json_3271658f407cf74a704da58816fb33d2_styler,
             ...{
 }
         });
 
-        function geo_json_8b0400fb851c33ea75b3d14753cf6538_add (data) {
-            geo_json_8b0400fb851c33ea75b3d14753cf6538
+        function geo_json_3271658f407cf74a704da58816fb33d2_add (data) {
+            geo_json_3271658f407cf74a704da58816fb33d2
                 .addData(data);
         }
-            geo_json_8b0400fb851c33ea75b3d14753cf6538_add({"bbox": [30.8064836, 36.9281271, 30.8086192, 36.9306005], "features": [{"bbox": [30.8064836, 36.9281271, 30.8086192, 36.9306005], "geometry": {"coordinates": [[30.8086192, 36.9281271], [30.8081363, 36.9288088], [30.8080496, 36.9289047], [30.8074586, 36.9295589], [30.8068995, 36.9301562], [30.8064836, 36.9306005]], "type": "LineString"}, "id": "4", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: \u00e7ok y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: uzak\u003cbr\u003eYe\u015fil alana uzakl\u0131k: \u00e7ok yak\u0131n\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 7,060 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 2,671 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 6,863 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 1,023 m", "_hvi_str": "%20", "_mahalle_str": "G\u00fczelyurt Mahallesi", "name": ""}, "type": "Feature"}], "type": "FeatureCollection"});
+            geo_json_3271658f407cf74a704da58816fb33d2_add({"bbox": [30.8064836, 36.9281271, 30.8086192, 36.9306005], "features": [{"bbox": [30.8064836, 36.9281271, 30.8086192, 36.9306005], "geometry": {"coordinates": [[30.8086192, 36.9281271], [30.8081363, 36.9288088], [30.8080496, 36.9289047], [30.8074586, 36.9295589], [30.8068995, 36.9301562], [30.8064836, 36.9306005]], "type": "LineString"}, "id": "4", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: \u00e7ok y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: uzak\u003cbr\u003eYe\u015fil alana uzakl\u0131k: \u00e7ok yak\u0131n\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 7,060 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 2,671 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 6,863 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 1,023 m", "_hvi_str": "%20", "_mahalle_str": "G\u00fczelyurt Mahallesi", "name": ""}, "type": "Feature"}], "type": "FeatureCollection"});
 
         
     
-    geo_json_8b0400fb851c33ea75b3d14753cf6538.bindTooltip(
+    geo_json_3271658f407cf74a704da58816fb33d2.bindTooltip(
     function(layer){
     let div = L.DomUtil.create('div');
     
@@ -395,44 +418,44 @@
 });
                      
     
-            geo_json_8b0400fb851c33ea75b3d14753cf6538.addTo(feature_group_a634ab5cfa3757e28ceb0a508a48b29d);
+            geo_json_3271658f407cf74a704da58816fb33d2.addTo(feature_group_a327dd7464beefd33cf99259770f6cb0);
         
     
-            var feature_group_0c340e35c49f5a5109042edab89eac5a = L.featureGroup(
+            var feature_group_13b9d8a37f768e7c8e9039a30ff80dc8 = L.featureGroup(
                 {
 }
             );
         
     
-        function geo_json_503cfe0c3731bf67a4cbecd59d6e68ee_styler(feature) {
+        function geo_json_160010e63631c7297053aec569830319_styler(feature) {
             switch(feature.id) {
                 default:
                     return {"color": "#fdae6b", "opacity": 0.85, "weight": 2.5};
             }
         }
 
-        function geo_json_503cfe0c3731bf67a4cbecd59d6e68ee_onEachFeature(feature, layer) {
+        function geo_json_160010e63631c7297053aec569830319_onEachFeature(feature, layer) {
 
             layer.on({
             });
         };
-        var geo_json_503cfe0c3731bf67a4cbecd59d6e68ee = L.geoJson(null, {
-                onEachFeature: geo_json_503cfe0c3731bf67a4cbecd59d6e68ee_onEachFeature,
+        var geo_json_160010e63631c7297053aec569830319 = L.geoJson(null, {
+                onEachFeature: geo_json_160010e63631c7297053aec569830319_onEachFeature,
             
-                style: geo_json_503cfe0c3731bf67a4cbecd59d6e68ee_styler,
+                style: geo_json_160010e63631c7297053aec569830319_styler,
             ...{
 }
         });
 
-        function geo_json_503cfe0c3731bf67a4cbecd59d6e68ee_add (data) {
-            geo_json_503cfe0c3731bf67a4cbecd59d6e68ee
+        function geo_json_160010e63631c7297053aec569830319_add (data) {
+            geo_json_160010e63631c7297053aec569830319
                 .addData(data);
         }
-            geo_json_503cfe0c3731bf67a4cbecd59d6e68ee_add({"bbox": [30.8049354, 36.9172273, 30.8055547, 36.9199705], "features": [{"bbox": [30.8049354, 36.9172273, 30.8055547, 36.9199705], "geometry": {"coordinates": [[30.8049354, 36.9172273], [30.8049528, 36.91743], [30.8049781, 36.9176249], [30.8050462, 36.9182534], [30.8051266, 36.9187752], [30.8052127, 36.9191433], [30.8052891, 36.9193614], [30.805292, 36.9193706], [30.8053654, 36.9196074], [30.8055547, 36.9199705]], "type": "LineString"}, "id": "8", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: \u00e7ok y\u00fcksek\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eHastaneye uzakl\u0131k: orta\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok y\u00fcksek\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 6,331 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 2,626 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 6,632 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 526 m", "_hvi_str": "%34", "_mahalle_str": "Yenig\u00f6l Mahallesi", "name": ""}, "type": "Feature"}], "type": "FeatureCollection"});
+            geo_json_160010e63631c7297053aec569830319_add({"bbox": [30.8049354, 36.9172273, 30.8055547, 36.9199705], "features": [{"bbox": [30.8049354, 36.9172273, 30.8055547, 36.9199705], "geometry": {"coordinates": [[30.8049354, 36.9172273], [30.8049528, 36.91743], [30.8049781, 36.9176249], [30.8050462, 36.9182534], [30.8051266, 36.9187752], [30.8052127, 36.9191433], [30.8052891, 36.9193614], [30.805292, 36.9193706], [30.8053654, 36.9196074], [30.8055547, 36.9199705]], "type": "LineString"}, "id": "8", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: \u00e7ok y\u00fcksek\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: \u00e7ok d\u00fc\u015f\u00fck\u003cbr\u003eHastaneye uzakl\u0131k: orta\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: seyrek\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok seyrek\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok y\u00fcksek\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 6,331 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 2,626 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 6,632 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 526 m", "_hvi_str": "%34", "_mahalle_str": "Yenig\u00f6l Mahallesi", "name": ""}, "type": "Feature"}], "type": "FeatureCollection"});
 
         
     
-    geo_json_503cfe0c3731bf67a4cbecd59d6e68ee.bindTooltip(
+    geo_json_160010e63631c7297053aec569830319.bindTooltip(
     function(layer){
     let div = L.DomUtil.create('div');
     
@@ -467,44 +490,44 @@
 });
                      
     
-            geo_json_503cfe0c3731bf67a4cbecd59d6e68ee.addTo(feature_group_0c340e35c49f5a5109042edab89eac5a);
+            geo_json_160010e63631c7297053aec569830319.addTo(feature_group_13b9d8a37f768e7c8e9039a30ff80dc8);
         
     
-            var feature_group_8fcc7a17452de7aeb4127377b9547abb = L.featureGroup(
+            var feature_group_0a9a9161faeeb8aa84ea97b28056c552 = L.featureGroup(
                 {
 }
             );
         
     
-        function geo_json_90b7ed3f3329ed131777627d7ce32960_styler(feature) {
+        function geo_json_7d994d451b0b261ab683a309cfd90eb3_styler(feature) {
             switch(feature.id) {
                 default:
                     return {"color": "#fd8d3c", "opacity": 0.85, "weight": 2.5};
             }
         }
 
-        function geo_json_90b7ed3f3329ed131777627d7ce32960_onEachFeature(feature, layer) {
+        function geo_json_7d994d451b0b261ab683a309cfd90eb3_onEachFeature(feature, layer) {
 
             layer.on({
             });
         };
-        var geo_json_90b7ed3f3329ed131777627d7ce32960 = L.geoJson(null, {
-                onEachFeature: geo_json_90b7ed3f3329ed131777627d7ce32960_onEachFeature,
+        var geo_json_7d994d451b0b261ab683a309cfd90eb3 = L.geoJson(null, {
+                onEachFeature: geo_json_7d994d451b0b261ab683a309cfd90eb3_onEachFeature,
             
-                style: geo_json_90b7ed3f3329ed131777627d7ce32960_styler,
+                style: geo_json_7d994d451b0b261ab683a309cfd90eb3_styler,
             ...{
 }
         });
 
-        function geo_json_90b7ed3f3329ed131777627d7ce32960_add (data) {
-            geo_json_90b7ed3f3329ed131777627d7ce32960
+        function geo_json_7d994d451b0b261ab683a309cfd90eb3_add (data) {
+            geo_json_7d994d451b0b261ab683a309cfd90eb3
                 .addData(data);
         }
-            geo_json_90b7ed3f3329ed131777627d7ce32960_add({"bbox": [30.7047265, 36.8842182, 30.7056862, 36.8852764], "features": [{"bbox": [30.7047265, 36.8842182, 30.7056862, 36.8852764], "geometry": {"coordinates": [[30.7047265, 36.8852764], [30.7048343, 36.8851223], [30.7049082, 36.8851745], [30.7050454, 36.8850712], [30.7053995, 36.8846449], [30.7055733, 36.8843514], [30.7056862, 36.8842182]], "type": "LineString"}, "id": "0", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: yak\u0131n\u003cbr\u003eYe\u015fil alana uzakl\u0131k: yak\u0131n\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok y\u00fcksek\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 1,224 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,472 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 3,222 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 300 m", "_hvi_str": "%49", "_mahalle_str": "Sel\u00e7uk Mahallesi", "name": "Bal\u0131kpazar\u0131 Sokak"}, "type": "Feature"}], "type": "FeatureCollection"});
+            geo_json_7d994d451b0b261ab683a309cfd90eb3_add({"bbox": [30.7047265, 36.8842182, 30.7056862, 36.8852764], "features": [{"bbox": [30.7047265, 36.8842182, 30.7056862, 36.8852764], "geometry": {"coordinates": [[30.7047265, 36.8852764], [30.7048343, 36.8851223], [30.7049082, 36.8851745], [30.7050454, 36.8850712], [30.7053995, 36.8846449], [30.7055733, 36.8843514], [30.7056862, 36.8842182]], "type": "LineString"}, "id": "0", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: yak\u0131n\u003cbr\u003eYe\u015fil alana uzakl\u0131k: yak\u0131n\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok y\u00fcksek\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 1,224 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,472 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 3,222 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 300 m", "_hvi_str": "%49", "_mahalle_str": "Sel\u00e7uk Mahallesi", "name": "Bal\u0131kpazar\u0131 Sokak"}, "type": "Feature"}], "type": "FeatureCollection"});
 
         
     
-    geo_json_90b7ed3f3329ed131777627d7ce32960.bindTooltip(
+    geo_json_7d994d451b0b261ab683a309cfd90eb3.bindTooltip(
     function(layer){
     let div = L.DomUtil.create('div');
     
@@ -539,44 +562,44 @@
 });
                      
     
-            geo_json_90b7ed3f3329ed131777627d7ce32960.addTo(feature_group_8fcc7a17452de7aeb4127377b9547abb);
+            geo_json_7d994d451b0b261ab683a309cfd90eb3.addTo(feature_group_0a9a9161faeeb8aa84ea97b28056c552);
         
     
-            var feature_group_564fa462da300ffc385c0cbba2469f8b = L.featureGroup(
+            var feature_group_becfff54698537aa0913125cc328cca6 = L.featureGroup(
                 {
 }
             );
         
     
-        function geo_json_5b7d67a1f6f267494890bac1f270e1a0_styler(feature) {
+        function geo_json_2bbc9565fc19e9893035b16523e27c2a_styler(feature) {
             switch(feature.id) {
                 default:
                     return {"color": "#de2d26", "opacity": 0.85, "weight": 2.5};
             }
         }
 
-        function geo_json_5b7d67a1f6f267494890bac1f270e1a0_onEachFeature(feature, layer) {
+        function geo_json_2bbc9565fc19e9893035b16523e27c2a_onEachFeature(feature, layer) {
 
             layer.on({
             });
         };
-        var geo_json_5b7d67a1f6f267494890bac1f270e1a0 = L.geoJson(null, {
-                onEachFeature: geo_json_5b7d67a1f6f267494890bac1f270e1a0_onEachFeature,
+        var geo_json_2bbc9565fc19e9893035b16523e27c2a = L.geoJson(null, {
+                onEachFeature: geo_json_2bbc9565fc19e9893035b16523e27c2a_onEachFeature,
             
-                style: geo_json_5b7d67a1f6f267494890bac1f270e1a0_styler,
+                style: geo_json_2bbc9565fc19e9893035b16523e27c2a_styler,
             ...{
 }
         });
 
-        function geo_json_5b7d67a1f6f267494890bac1f270e1a0_add (data) {
-            geo_json_5b7d67a1f6f267494890bac1f270e1a0
+        function geo_json_2bbc9565fc19e9893035b16523e27c2a_add (data) {
+            geo_json_2bbc9565fc19e9893035b16523e27c2a
                 .addData(data);
         }
-            geo_json_5b7d67a1f6f267494890bac1f270e1a0_add({"bbox": [30.7056588, 36.8821093, 30.7062902, 36.8825951], "features": [{"bbox": [30.7056588, 36.8821093, 30.7062902, 36.8825951], "geometry": {"coordinates": [[30.7056588, 36.8825951], [30.7056845, 36.882555], [30.7061119, 36.8822571], [30.7062902, 36.8821093]], "type": "LineString"}, "id": "1", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: orta\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok y\u00fcksek\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 1,242 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,599 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 2,982 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 432 m", "_hvi_str": "%52", "_mahalle_str": "K\u0131l\u0131n\u00e7arslan Mahallesi", "name": "2. Sakarya Sokak"}, "type": "Feature"}], "type": "FeatureCollection"});
+            geo_json_2bbc9565fc19e9893035b16523e27c2a_add({"bbox": [30.7056588, 36.8821093, 30.7062902, 36.8825951], "features": [{"bbox": [30.7056588, 36.8821093, 30.7062902, 36.8825951], "geometry": {"coordinates": [[30.7056588, 36.8825951], [30.7056845, 36.882555], [30.7061119, 36.8822571], [30.7062902, 36.8821093]], "type": "LineString"}, "id": "1", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: d\u00fc\u015f\u00fck\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: orta\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: \u00e7ok y\u00fcksek\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 1,242 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 1,599 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 2,982 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 432 m", "_hvi_str": "%52", "_mahalle_str": "K\u0131l\u0131n\u00e7arslan Mahallesi", "name": "2. Sakarya Sokak"}, "type": "Feature"}], "type": "FeatureCollection"});
 
         
     
-    geo_json_5b7d67a1f6f267494890bac1f270e1a0.bindTooltip(
+    geo_json_2bbc9565fc19e9893035b16523e27c2a.bindTooltip(
     function(layer){
     let div = L.DomUtil.create('div');
     
@@ -611,44 +634,44 @@
 });
                      
     
-            geo_json_5b7d67a1f6f267494890bac1f270e1a0.addTo(feature_group_564fa462da300ffc385c0cbba2469f8b);
+            geo_json_2bbc9565fc19e9893035b16523e27c2a.addTo(feature_group_becfff54698537aa0913125cc328cca6);
         
     
-            var feature_group_e925718ee74af3a4bbb09f58065e91aa = L.featureGroup(
+            var feature_group_944aabe9ce0f29974a78e55ce81cb384 = L.featureGroup(
                 {
 }
             );
         
     
-        function geo_json_dcf1025383a3d4706634c3ab1bc6292b_styler(feature) {
+        function geo_json_f7c89b5a67714480a169d153b5d0c253_styler(feature) {
             switch(feature.id) {
                 default:
                     return {"color": "#800026", "opacity": 0.85, "weight": 2.5};
             }
         }
 
-        function geo_json_dcf1025383a3d4706634c3ab1bc6292b_onEachFeature(feature, layer) {
+        function geo_json_f7c89b5a67714480a169d153b5d0c253_onEachFeature(feature, layer) {
 
             layer.on({
             });
         };
-        var geo_json_dcf1025383a3d4706634c3ab1bc6292b = L.geoJson(null, {
-                onEachFeature: geo_json_dcf1025383a3d4706634c3ab1bc6292b_onEachFeature,
+        var geo_json_f7c89b5a67714480a169d153b5d0c253 = L.geoJson(null, {
+                onEachFeature: geo_json_f7c89b5a67714480a169d153b5d0c253_onEachFeature,
             
-                style: geo_json_dcf1025383a3d4706634c3ab1bc6292b_styler,
+                style: geo_json_f7c89b5a67714480a169d153b5d0c253_styler,
             ...{
 }
         });
 
-        function geo_json_dcf1025383a3d4706634c3ab1bc6292b_add (data) {
-            geo_json_dcf1025383a3d4706634c3ab1bc6292b
+        function geo_json_f7c89b5a67714480a169d153b5d0c253_add (data) {
+            geo_json_f7c89b5a67714480a169d153b5d0c253
                 .addData(data);
         }
-            geo_json_dcf1025383a3d4706634c3ab1bc6292b_add({"bbox": [30.6918647, 36.9110256, 30.6979782, 36.924167], "features": [{"bbox": [30.6918647, 36.9110256, 30.6979782, 36.924167], "geometry": {"coordinates": [[30.6979782, 36.9110256], [30.6977873, 36.9113398], [30.6973997, 36.9121529], [30.6969773, 36.9127683], [30.6963452, 36.9136203], [30.6962159, 36.9138445], [30.696108, 36.9140742], [30.6957874, 36.9147506], [30.6955641, 36.9151827], [30.6953017, 36.9157681], [30.695026, 36.9163089], [30.6949838, 36.9163918], [30.6948535, 36.9166578], [30.694734, 36.9169583], [30.6944946, 36.9175874], [30.6942793, 36.9181084], [30.6942081, 36.9182989], [30.6941356, 36.9184939], [30.6941105, 36.9185786], [30.694099, 36.9186175], [30.69407, 36.9187152], [30.6940089, 36.9189905], [30.6938186, 36.919992], [30.6937093, 36.9204156], [30.6936381, 36.9205677], [30.6936254, 36.9205947], [30.6935325, 36.9207449], [30.693362, 36.9210207], [30.6929254, 36.9216842], [30.6927365, 36.9219781], [30.6925473, 36.9222724], [30.6924376, 36.9224512], [30.6924206, 36.9224938], [30.6922424, 36.9229387], [30.6920554, 36.9234165], [30.6919475, 36.9237835], [30.6918647, 36.924167]], "type": "LineString"}, "id": "10", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: y\u00fcksek\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: \u00e7ok yak\u0131n\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: d\u00fc\u015f\u00fck\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 41 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 654 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 1,718 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 17 m", "_hvi_str": "%69", "_mahalle_str": "Kar\u015f\u0131yaka Mahallesi", "name": "Y\u0131ld\u0131r\u0131m Beyaz\u0131t Caddesi"}, "type": "Feature"}], "type": "FeatureCollection"});
+            geo_json_f7c89b5a67714480a169d153b5d0c253_add({"bbox": [30.6918647, 36.9110256, 30.6979782, 36.924167], "features": [{"bbox": [30.6918647, 36.9110256, 30.6979782, 36.924167], "geometry": {"coordinates": [[30.6979782, 36.9110256], [30.6977873, 36.9113398], [30.6973997, 36.9121529], [30.6969773, 36.9127683], [30.6963452, 36.9136203], [30.6962159, 36.9138445], [30.696108, 36.9140742], [30.6957874, 36.9147506], [30.6955641, 36.9151827], [30.6953017, 36.9157681], [30.695026, 36.9163089], [30.6949838, 36.9163918], [30.6948535, 36.9166578], [30.694734, 36.9169583], [30.6944946, 36.9175874], [30.6942793, 36.9181084], [30.6942081, 36.9182989], [30.6941356, 36.9184939], [30.6941105, 36.9185786], [30.694099, 36.9186175], [30.69407, 36.9187152], [30.6940089, 36.9189905], [30.6938186, 36.919992], [30.6937093, 36.9204156], [30.6936381, 36.9205677], [30.6936254, 36.9205947], [30.6935325, 36.9207449], [30.693362, 36.9210207], [30.6929254, 36.9216842], [30.6927365, 36.9219781], [30.6925473, 36.9222724], [30.6924376, 36.9224512], [30.6924206, 36.9224938], [30.6922424, 36.9229387], [30.6920554, 36.9234165], [30.6919475, 36.9237835], [30.6918647, 36.924167]], "type": "LineString"}, "id": "10", "properties": {"_aciklama_str": "S\u0131cakl\u0131k: y\u00fcksek\u003cbr\u003eA\u011fa\u00e7 \u00f6rt\u00fcs\u00fc: y\u00fcksek\u003cbr\u003eHastaneye uzakl\u0131k: \u00e7ok yak\u0131n\u003cbr\u003eYe\u015fil alana uzakl\u0131k: orta\u003cbr\u003eYap\u0131la\u015fma yo\u011funlu\u011fu: \u00e7ok yo\u011fun\u003cbr\u003eN\u00fcfus yo\u011funlu\u011fu: yo\u011fun\u003cbr\u003eYa\u015fl\u0131 n\u00fcfus oran\u0131: orta\u003cbr\u003e\u00c7ocuk n\u00fcfus oran\u0131: orta\u003cbr\u003eSosyoekonomik geli\u015fmi\u015flik: d\u00fc\u015f\u00fck\u003cbr\u003eEn yak\u0131n harital\u0131 hastane: 41 m\u003cbr\u003eEn yak\u0131n harital\u0131 klinik: 654 m\u003cbr\u003eEn yak\u0131n harital\u0131 doktor: 1,718 m\u003cbr\u003eEn yak\u0131n harital\u0131 eczane: 17 m", "_hvi_str": "%69", "_mahalle_str": "Kar\u015f\u0131yaka Mahallesi", "name": "Y\u0131ld\u0131r\u0131m Beyaz\u0131t Caddesi"}, "type": "Feature"}], "type": "FeatureCollection"});
 
         
     
-    geo_json_dcf1025383a3d4706634c3ab1bc6292b.bindTooltip(
+    geo_json_f7c89b5a67714480a169d153b5d0c253.bindTooltip(
     function(layer){
     let div = L.DomUtil.create('div');
     
@@ -683,30 +706,30 @@
 });
                      
     
-            geo_json_dcf1025383a3d4706634c3ab1bc6292b.addTo(feature_group_e925718ee74af3a4bbb09f58065e91aa);
+            geo_json_f7c89b5a67714480a169d153b5d0c253.addTo(feature_group_944aabe9ce0f29974a78e55ce81cb384);
         
     
-            var layer_control_5fd8b46df81f4af08ef00e3d6b6652f8_layers = {
+            var layer_control_63011935f129adfdf5e6d511b29c39fb_layers = {
                 base_layers : {
-                    "openstreetmap" : tile_layer_ec573859fd57e91aee51d9ba7b72159c,
+                    "openstreetmap" : tile_layer_8d0c04a9d2cd25d1ffce1ecd76883a0d,
                 },
                 overlays :  {
-                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#3182bd;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eD\u00fc\u015f\u00fck (0.9-24.0)" : feature_group_a634ab5cfa3757e28ceb0a508a48b29d,
-                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdae6b;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eOrta (24.0-37.7)" : feature_group_0c340e35c49f5a5109042edab89eac5a,
-                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#fd8d3c;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eY\u00fcksek (37.8-49.5)" : feature_group_8fcc7a17452de7aeb4127377b9547abb,
-                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#de2d26;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eKritik (49.5-62.7)" : feature_group_564fa462da300ffc385c0cbba2469f8b,
-                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#800026;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eA\u015f\u0131r\u0131 Kritik (62.7-100.0)" : feature_group_e925718ee74af3a4bbb09f58065e91aa,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#3182bd;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eD\u00fc\u015f\u00fck (0.9-24.0)" : feature_group_a327dd7464beefd33cf99259770f6cb0,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdae6b;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eOrta (24.0-37.7)" : feature_group_13b9d8a37f768e7c8e9039a30ff80dc8,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#fd8d3c;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eY\u00fcksek (37.8-49.5)" : feature_group_0a9a9161faeeb8aa84ea97b28056c552,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#de2d26;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eKritik (49.5-62.7)" : feature_group_becfff54698537aa0913125cc328cca6,
+                    "\u003cspan style=\"display:inline-block;width:10px;height:10px;border-radius:2px;background:#800026;margin-right:6px;vertical-align:middle;\"\u003e\u003c/span\u003eA\u015f\u0131r\u0131 Kritik (62.7-100.0)" : feature_group_944aabe9ce0f29974a78e55ce81cb384,
                 },
             };
-            let layer_control_5fd8b46df81f4af08ef00e3d6b6652f8 = L.control.layers(
-                layer_control_5fd8b46df81f4af08ef00e3d6b6652f8_layers.base_layers,
-                layer_control_5fd8b46df81f4af08ef00e3d6b6652f8_layers.overlays,
+            let layer_control_63011935f129adfdf5e6d511b29c39fb = L.control.layers(
+                layer_control_63011935f129adfdf5e6d511b29c39fb_layers.base_layers,
+                layer_control_63011935f129adfdf5e6d511b29c39fb_layers.overlays,
                 {
   "position": "topright",
   "collapsed": true,
   "autoZIndex": true,
 }
-            ).addTo(map_409981d0c1e2f07faae8e64aaab9b4b3);
+            ).addTo(map_3a4150195cfda0c5439ab103cbb74ff8);
 
         
 </script>

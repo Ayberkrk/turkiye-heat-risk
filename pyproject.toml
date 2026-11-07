@@ -15,7 +15,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "turkiye-heat-risk"
-version = "2.1.0"
+version = "2.1.1"
 description = "Landsat, OpenStreetMap ve resmi nüfus verisinden sokak ölçekli, açıklanabilir Isı Hassasiyet Endeksi (HVI)"
 readme = "README.md"
 license = "MIT"
