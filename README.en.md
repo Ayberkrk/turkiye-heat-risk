@@ -145,6 +145,9 @@ city does **not** require changing the constants in `src/core/` - for the
 step-by-step process see [CONTRIBUTING.md](CONTRIBUTING.md). In short
 (`<city>` below stands for the city identifier you choose):
 
+<details>
+<summary>Step by step: a new city configuration and adapter</summary>
+
 **1. Create `src/cities/<city>/config.yaml`**
 Here you write `bbox` (as [west, south, east, north] in degrees), the target
 UTM `crs`, the OSM `.osm.pbf` extract URL
@@ -202,7 +205,14 @@ group (hazard, exposure, vulnerability). To add a new component, produce its
 column with `robust_normalize_0_1`, add it to the relevant group and increment
 `HVI_FORMULA_VERSION`.
 
+</details>
+
 ## Methodology
+
+How land surface temperature (LST) is computed, how roads are matched to temperature, the multi-component Heat Vulnerability Index, Jenks natural breaks classification, the shared normalization behind the 2020 to 2026 comparison, and the optional night-time heat island.
+
+<details>
+<summary>The full method: formulas, weights and rationale</summary>
 
 ### Land surface temperature (LST)
 
@@ -465,11 +475,16 @@ MODIS is at 1 km resolution (unlike Landsat's 30 m), this layer is presented at
 **neighbourhood** scale rather than per road segment and is not included in the
 HVI score - it is a separate layer on the map, off by default.
 
+</details>
+
 ## Multi-year sensitivity and intervention analysis
 
 The main pipeline's map can compare two or more years. For a longer period,
 weather correction and decision scenarios, run the second command after the main
 pipeline outputs for at least three years are ready. Example:
+
+<details>
+<summary>Commands, outputs and scenarios</summary>
 
 ```bash
 python pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
@@ -531,6 +546,8 @@ python -m http.server 8000
 
 Then open `http://localhost:8000/analysis_map.html`.
 
+</details>
+
 ## Uncertainty and sensitivity analysis
 
 The HVI is not a measurement but the outcome of design decisions: how components
@@ -541,6 +558,9 @@ much road ranks move. This is the standard uncertainty/sensitivity analysis for
 composite indicators (OECD/JRC, *Handbook on Constructing Composite Indicators*,
 2008; Saisana, Saltelli and Tarantola, 2005). It reads the main pipeline output and
 downloads no satellite data:
+
+<details>
+<summary>The decisions varied, commands and results</summary>
 
 ```bash
 python uncertainty_analysis.py --city izmir --year 2026
@@ -582,10 +602,15 @@ separately) and measurement error in the data itself (LST, OSM gaps, population)
 The ranges are therefore a lower bound on uncertainty from method choices only;
 they do not replace validating the index against health outcomes.
 
+</details>
+
 ## Validation and additional sensitivity checks
 
 `validation_analysis.py` runs three checks on the main pipeline output and writes
 the results to `data/processed/<city>/validation/`:
+
+<details>
+<summary>Details and results of the three checks</summary>
 
 ```bash
 python validation_analysis.py --city izmir
@@ -643,6 +668,8 @@ contributions and the category transition table are in the folder. **Not measure
 the 2020 score is computed with a later year's population (İzmir: 2023 TÜİK
 neighbourhood population); open data has no 2020 neighbourhood population, so the
 effect of this is unknown.
+
+</details>
 
 ## 2020 → 2026: Findings
 
@@ -882,6 +909,11 @@ python -m json.tool docs/izmir/manifest.json
 
 ## Project structure
 
+A directory tree showing where each part of the code lives.
+
+<details>
+<summary>Directory tree and what each file does</summary>
+
 ```
 turkiye-heat-risk/
 ├── pipeline.py               # Single top-level entry point: python pipeline.py --city izmir
@@ -951,6 +983,8 @@ turkiye-heat-risk/
 ├── LICENSE                    # MIT
 └── README.md                  # Turkish original (English: README.en.md)
 ```
+
+</details>
 
 ## Known limitations
 
@@ -1032,6 +1066,16 @@ turkiye-heat-risk/
   non-residential buildings (industry, warehouses) can distort the within-unit
   distribution. Because totals are calibrated to the official source, the error is
   limited to the within-unit split.
+
+## Contributors
+
+Thanks to everyone who has contributed:
+
+<a href="https://github.com/Ayberkrk/turkiye-heat-risk/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Ayberkrk/turkiye-heat-risk" alt="Contributors" />
+</a>
+
+New here? The [good first issues](https://github.com/Ayberkrk/turkiye-heat-risk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) each come with a clear "done when" check, and questions are welcome in [Discussions](https://github.com/Ayberkrk/turkiye-heat-risk/discussions). If the project is useful to you, a star helps others find it.
 
 ## License
 

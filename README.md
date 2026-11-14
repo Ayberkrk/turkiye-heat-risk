@@ -168,6 +168,9 @@ izole edilmiştir. Yeni bir şehir eklemek `src/core/` içindeki
 sabitleri değiştirmeyi **gerektirmez** - adım adım süreç için
 [CONTRIBUTING.md](CONTRIBUTING.md)'ye bakın. Özetle:
 
+<details>
+<summary>Adım adım: yeni şehir yapılandırması ve adapter</summary>
+
 **1. `src/cities/<sehir>/config.yaml` oluştur**
 `bbox` (derece cinsinden [batı, güney, doğu, kuzey]), hedef UTM `crs`'i,
 OSM `.osm.pbf` özüt URL'i ([openstreetmap.fr](https://download.openstreetmap.fr/extracts/)
@@ -251,7 +254,14 @@ karşılaştırmaz ve OSM kapsamını ölçmez; rapor bu iki durumu açıkça
 eklemek için sütununu `robust_normalize_0_1` ile üret, ilgili gruba ekle ve
 `HVI_FORMULA_VERSION`'ı artır.
 
+</details>
+
 ## Metodoloji
+
+Yüzey sıcaklığının (LST) hesaplanması, yol ile sıcaklık eşlemesi, çok bileşenli Isı Hassasiyet Endeksi, Jenks doğal kırılımıyla kategorilere ayırma, 2020-2026 karşılaştırması için ortak normalizasyon ve isteğe bağlı gece ısı adası.
+
+<details>
+<summary>Yöntemin tamamı: formüller, ağırlıklar ve gerekçeler</summary>
 
 ### Yüzey sıcaklığı (LST)
 
@@ -525,11 +535,16 @@ aksine) bu katman yol segmenti değil **mahalle** ölçeğinde sunulur ve
 HVI skoruna dahil edilmez - haritada ayrı, varsayılan olarak kapalı bir
 katmandır.
 
+</details>
+
 ## Çok yıllı duyarlılık ve müdahale analizi
 
 Ana hattın haritası iki ya da daha fazla yılı karşılaştırabilir. Daha uzun
 dönem, hava düzeltmesi ve karar senaryoları için en az üç yılın ana pipeline
 çıktıları hazır olduktan sonra ikinci komutu çalıştırın. Örnek:
+
+<details>
+<summary>Komutlar, çıktılar ve senaryolar</summary>
 
 ```bash
 python pipeline.py --city izmir --years 2013 2016 2019 2022 2024 2026 --main-year 2026
@@ -591,6 +606,8 @@ python -m http.server 8000
 
 Ardından `http://localhost:8000/analysis_map.html` adresini açın.
 
+</details>
+
 ## Belirsizlik ve duyarlılık analizi
 
 HVI bir ölçüm değil, bir dizi tasarım kararının sonucu: bileşenlerin nasıl
@@ -602,6 +619,9 @@ göstergeler literatüründeki standart belirsizlik/duyarlılık analizidir
 (OECD/JRC, *Handbook on Constructing Composite Indicators*, 2008; Saisana,
 Saltelli ve Tarantola, 2005). Ana pipeline çıktısını okur, uydu verisi
 indirmez:
+
+<details>
+<summary>Değiştirilen kararlar, komutlar ve sonuçlar</summary>
 
 ```bash
 python uncertainty_analysis.py --city izmir --year 2026
@@ -643,10 +663,15 @@ ayrıca ölçer) ve verinin kendi ölçüm hatası (LST, OSM eksikliği, nüfus)
 Bu yüzden aralıklar yalnızca yöntem kararlarından gelen belirsizliğin alt
 sınırıdır; endeksin sağlık sonuçlarıyla doğrulanmasının yerini tutmaz.
 
+</details>
+
 ## Doğrulama ve ek duyarlılık kontrolleri
 
 `validation_analysis.py` ana pipeline çıktısı üzerinde üç kontrol yürütür ve
 sonuçları `data/processed/<şehir>/validation/` altına yazar:
+
+<details>
+<summary>Üç kontrolün ayrıntıları ve sonuçları</summary>
 
 ```bash
 python validation_analysis.py --city izmir
@@ -705,6 +730,8 @@ arttı; iki etkenli Shapley ayrıştırmasına göre bunun **+1,11 puanı sıcak
 2020 skoru 2020 nüfusuyla değil sonraki bir yılın verisiyle (İzmir'de 2023 TÜİK
 mahalle nüfusu) hesaplanır; açık veride 2020 mahalle nüfusu olmadığı için bunun
 etkisi bilinmiyor.
+
+</details>
 
 ## 2020 → 2026: Bulgular
 
@@ -947,6 +974,11 @@ python -m json.tool docs/izmir/manifest.json
 
 ## Proje yapısı
 
+Kodun hangi dosyada olduğunu gösteren dizin ağacı.
+
+<details>
+<summary>Dizin ağacı ve dosyaların görevleri</summary>
+
 ```
 turkiye-heat-risk/
 ├── pipeline.py               # Tek üst seviye giriş noktası: python pipeline.py --city izmir
@@ -1017,6 +1049,8 @@ turkiye-heat-risk/
 ├── LICENSE                    # MIT
 └── README.md                  # (İngilizcesi: README.en.md)
 ```
+
+</details>
 
 ## Bilinen sınırlamalar
 
@@ -1095,6 +1129,16 @@ turkiye-heat-risk/
   hücrelere dağıtır; tespit hatası, 2020 sonrası yapılaşma ve konut dışı
   binalar (sanayi, depo) birim içi dağılımı bozabilir. Toplam resmi
   kaynağa kalibre edildiği için hata birim içi paylaşımla sınırlıdır.
+
+## Katkıda bulunanlar
+
+Katkıda bulunan herkese teşekkürler:
+
+<a href="https://github.com/Ayberkrk/turkiye-heat-risk/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Ayberkrk/turkiye-heat-risk" alt="Contributors" />
+</a>
+
+Yeni misiniz? [Başlangıç için uygun issue'ların](https://github.com/Ayberkrk/turkiye-heat-risk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) her biri net bir "bitti" ölçütüyle yazıldı; sorularınızı [Discussions](https://github.com/Ayberkrk/turkiye-heat-risk/discussions) bölümünde sorabilirsiniz. Proje işinize yaradıysa bir yıldız, başkalarının da onu bulmasına yardımcı olur.
 
 ## Lisans
 
