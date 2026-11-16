@@ -19,6 +19,8 @@ abstract: >-
 authors:
   - family-names: Korkmaz
     given-names: Ayberk
+    orcid: "https://orcid.org/0009-0009-0699-090X"
+    affiliation: "Eskişehir Osmangazi University"
 repository-code: "https://github.com/Ayberkrk/turkiye-heat-risk"
 url: "https://ayberkrk.github.io/turkiye-heat-risk/"
 doi: "10.5281/zenodo.24028997"

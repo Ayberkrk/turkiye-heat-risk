@@ -120,6 +120,9 @@ dosyasındaki bilgiyle atıf verin (GitHub'ın sağ panelindeki **Cite this
 repository** düğmesi biçimlendirilmiş hâlini verir). Sürüm geçmişi:
 [CHANGELOG.md](CHANGELOG.md).
 
+Yazar: Ayberk Korkmaz, Eskişehir Osmangazi Üniversitesi
+([ORCID 0009-0009-0699-090X](https://orcid.org/0009-0009-0699-090X)).
+
 ## İçindekiler
 
 - [Ne yapıyor?](#ne-yapıyor)

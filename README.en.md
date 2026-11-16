@@ -98,6 +98,9 @@ If you use the pipeline or a data package, cite it with the details in
 [CITATION.cff](CITATION.cff) (GitHub's **Cite this repository** button formats it).
 Release history: [CHANGELOG.md](CHANGELOG.md).
 
+Author: Ayberk Korkmaz, Eskişehir Osmangazi University
+([ORCID 0009-0009-0699-090X](https://orcid.org/0009-0009-0699-090X)).
+
 ## Table of contents
 
 - [What does it do?](#what-does-it-do)
