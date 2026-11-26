@@ -44,3 +44,8 @@ def test_non_string_input_is_coerced_to_string():
     # composite_key oluşturma zaten bu değerleri eşleşmeyen bir anahtara
     # yönlendirmeyi bekliyor, TypeError'a değil.
     assert normalize_name(float("nan")) == "NAN"
+
+
+def test_decomposed_turkish_characters_match_composed_names():
+    assert normalize_name("I\u0307zmir") == normalize_name("İzmir")
+    assert normalize_name("C\u0327ig\u0306li Mahallesi") == "CIGLI"
