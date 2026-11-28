@@ -1,4 +1,6 @@
 import json
+import shutil
+import subprocess
 
 import pytest
 
@@ -86,3 +88,38 @@ def test_download_links_appear_only_for_cities_with_a_package(tmp_path, monkeypa
     assert "paketsiz/indir" not in html
     # Kart artık iç içe bağlantı taşımaz (geçersiz HTML).
     assert '<a class="kart"' not in html
+
+
+def test_index_contains_accessible_city_search(tmp_path, monkeypatch):
+    _write_city(tmp_path, "izmir", "İzmir", HVI_FORMULA_VERSION)
+    monkeypatch.setattr(build_docs_index, "DOCS_DIR", tmp_path)
+
+    html = build_docs_index.build_index().read_text(encoding="utf-8")
+
+    assert '<label for="sehir-arama">Şehir ara</label>' in html
+    assert '<input id="sehir-arama" type="search"' in html
+    assert 'kart.hidden = !normalize(' in html
+
+
+def test_city_search_filters_turkish_names(tmp_path, monkeypatch):
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("JavaScript çalışma zamanı bulunamadı")
+    _write_city(tmp_path, "izmir", "İzmir", HVI_FORMULA_VERSION)
+    _write_city(tmp_path, "sanliurfa", "Şanlıurfa", HVI_FORMULA_VERSION)
+    monkeypatch.setattr(build_docs_index, "DOCS_DIR", tmp_path)
+    html = build_docs_index.build_index().read_text(encoding="utf-8")
+    script = html.split("<script>", 1)[1].split("</script>", 1)[0]
+    harness = """
+const assert = require('node:assert/strict');
+const input = {value: '', addEventListener: (_, fn) => { input.update = fn; }};
+const cards = ['İzmir', 'Şanlıurfa'].map(name => ({hidden: false, querySelector: () => ({textContent: name})}));
+const document = {getElementById: () => input, querySelectorAll: () => cards};
+""" + script + """
+for (const [query, expected] of [['IZMIR', [false, true]], ['sanliurfa', [true, false]], ['zzz', [true, true]], ['', [false, false]]]) {
+    input.value = query;
+    input.update();
+    assert.deepEqual(cards.map(card => card.hidden), expected);
+}
+"""
+    subprocess.run([node, "-e", harness], check=True, capture_output=True, text=True)

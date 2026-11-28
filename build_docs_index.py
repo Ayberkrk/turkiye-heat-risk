@@ -169,6 +169,10 @@ def build_index() -> Path:
   .kart {{ display: block; width: 260px; max-width: 100%; box-sizing: border-box; background: #262626;
            border-radius: 10px; padding: 20px; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
            transition: transform 0.15s; }}
+  .kart[hidden] {{ display: none; }}
+  .arama {{ max-width: 900px; margin: 0 auto 20px; }}
+  .arama input {{ display: block; width: 100%; box-sizing: border-box; padding: 12px;
+                  border: 1px solid #aaa; border-radius: 6px; font-size: 16px; }}
   .kart:hover {{ transform: translateY(-4px); }}
   .kart h2 {{ margin: 0 0 12px; font-size: 18px; }}
   .kart h2 a {{ color: inherit; text-decoration: none; }}
@@ -193,9 +197,25 @@ tıklayarak yol bazlı interaktif haritayı açabilirsiniz.</p>
 ve yazdırılabilir bir özet indirilebilir. Veri ODbL 1.0 (OpenStreetMap
 türevi), kod MIT lisanslıdır. Yöntem, sınırlamalar ve kod:
 <a href="{REPO_URL}">GitHub</a>.</p>
+<div class="arama">
+<label for="sehir-arama">Şehir ara</label>
+<input id="sehir-arama" type="search" placeholder="Şehir adı" autocomplete="off">
+</div>
 <div class="kartlar">
 {cards_html}
 </div>
+<script>
+  const arama = document.getElementById("sehir-arama");
+  const kartlar = document.querySelectorAll(".kart");
+  const normalize = text => text.toLocaleLowerCase("tr").normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/ı/g, "i");
+  arama.addEventListener("input", () => {{
+    const query = normalize(arama.value.trim());
+    kartlar.forEach(kart => {{
+      kart.hidden = !normalize(kart.querySelector("h2").textContent).includes(query);
+    }});
+  }});
+</script>
 </body>
 </html>
 """.strip() + "\n"
